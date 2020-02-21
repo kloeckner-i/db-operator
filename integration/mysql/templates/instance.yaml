@@ -1,0 +1,21 @@
+apiVersion: kci.rocks/v1alpha1
+kind: DbInstance
+metadata:
+  name: my-local-test
+spec:
+  adminSecretRef:
+    Namespace: {{ .Release.Namespace }}
+    Name: my-local-db-password
+  engine: mysql
+  generic:
+    host: {{ .Values.mysql.serviceName }}.{{ .Release.Namespace }}
+    port: 3306
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-local-db-password
+type: Opaque
+data:
+  password: {{ .Values.mysql.adminPassword | b64enc }}
+  user: {{ .Values.mysql.adminUser | b64enc }}

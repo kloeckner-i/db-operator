@@ -1,0 +1,21 @@
+apiVersion: kci.rocks/v1alpha1
+kind: DbInstance
+metadata:
+  name: pg-local-test
+spec:
+  adminSecretRef:
+    Namespace: {{ .Release.Namespace }}
+    Name: pg-local-db-password
+  engine: postgres
+  generic:
+    host: {{ .Values.postgres.serviceName }}.{{ .Release.Namespace }}
+    port: 5432
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pg-local-db-password
+type: Opaque
+data:
+  password: {{ .Values.postgres.adminPassword | b64enc }}
+  user: {{ .Values.postgres.adminUser | b64enc }}

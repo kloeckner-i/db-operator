@@ -1,0 +1,107 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "kci-db-operator.name" . }}
+  labels:
+    app: {{ template "kci-db-operator.name" . }}
+    chart: {{ template "kci-db-operator.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: {{ template "kci-db-operator.name" . }}
+      app: {{ template "kci-db-operator.name" . }}
+      release: {{ .Release.Name }}
+      heritage: {{ .Release.Service }}
+  template:
+    metadata:
+      labels:
+        name: {{ template "kci-db-operator.name" . }}
+        app: {{ template "kci-db-operator.name" . }}
+        chart: {{ template "kci-db-operator.chart" . }}
+        release: {{ .Release.Name }}
+        heritage: {{ .Release.Service }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/config.yaml") . | sha256sum }}
+{{- if .Values.annotations }}
+{{ toYaml .Values.annotations | indent 8 }}
+{{- end }}
+    spec:
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ template "kci-db-operator.name" . }}-sa
+      {{- end }}
+      containers:
+        - name: operator
+          image: "{{ .Values.image.repository }}:{{ template "kci-db-operator.image_version" . }}"
+          ports:
+          - containerPort: 60000
+            name: metrics
+          - containerPort: 8686
+            name: op-metrics
+          command:
+          - db-operator
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: LOG_LEVEL
+              value: info
+            - name: OPERATOR_NAME
+              value: "db-operator"
+            - name: WATCH_NAMESPACE
+              value: "" # it's necessary to set "" to watch cluster wide 
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            {{- if .Values.secrets.gsql }}
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: "/run/secrets/gcloudsqladmin/credentials.json"
+            - name: GCSQL_CLIENT_CREDENTIALS
+              value: "/run/secrets/gcloudsqlclient/credentials.json"
+            {{- end }}
+            - name: CONFIG_PATH
+              value: "/run/config/config.yaml"
+          volumeMounts:
+          {{- if .Values.secrets.gsql }}
+          - mountPath: /run/secrets/gcloudsqladmin
+            name: serviceaccount-cloudsql-admin
+            readOnly: true
+          - mountPath: /run/secrets/gcloudsqlclient
+            name: serviceaccount-cloudsql-client
+            readOnly: true
+          {{- end }}
+          - mountPath: /run/config/
+            name: config-volume
+            readOnly: true
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+      affinity:
+{{ toYaml .Values.affinity  | indent 8 }}
+      tolerations:
+{{ toYaml .Values.tolerations | indent 8 }}
+    {{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName }}
+    {{- end }}
+    {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+{{ toYaml .Values.imagePullSecrets | indent 8 }}
+    {{- end }}
+      volumes:
+      {{- if .Values.secrets.gsql }}
+        - name: serviceaccount-cloudsql-admin
+          secret:
+            defaultMode: 420
+            secretName: cloudsql-admin-serviceaccount
+        - name: serviceaccount-cloudsql-client
+          secret:
+            defaultMode: 420
+            secretName: cloudsql-readonly-serviceaccount
+      {{- end }}
+        - name: config-volume
+          configMap: 
+            name: {{ template "kci-db-operator.name" . }}-config

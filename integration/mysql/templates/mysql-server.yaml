@@ -1,0 +1,40 @@
+{{- if .Values.mysql }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.mysql.serviceName }}
+spec:
+  ports:
+  - port: 3306
+  selector:
+    app: mysql
+    role: test
+  type: ClusterIP
+---
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ .Values.mysql.serviceName }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+      role: test
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mysql
+        role: test
+    spec:
+      containers:
+      - image: {{ .Values.mysql.image }}
+        name: mysql
+        env:
+          # Use secret in real usage
+        - name: MYSQL_ROOT_PASSWORD
+          value: {{ .Values.mysql.adminPassword }}
+{{- end }}

@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "kci-db-operator.name" . }}-config
+  labels:
+    app: {{ template "kci-db-operator.name" . }}
+    chart: {{ template "kci-db-operator.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  config.yaml: |
+    instance:
+      google:
+        clientSecretName: "cloudsql-readonly-serviceaccount"
+        proxy:
+          nodeSelector:
+  {{ toYaml .Values.config.instance.google.proxy.nodeSelector | indent 10 }}
+          image: {{ .Values.config.instance.google.proxy.image }}
+      generic: {}
+    backup:
+      nodeSelector:
+{{ toYaml .Values.config.backup.nodeSelector | indent 8 }}
+      postgres:
+        image: {{ .Values.config.backup.postgres.image }}
+      mysql: {}
+    monitoring:
+      nodeSelector:
+{{ toYaml .Values.config.monitoring.nodeSelector | indent 8 }}
+      postgres:
+        image: {{ .Values.config.monitoring.postgres.image }}
+        queries: |-
+{{ toYaml .Values.config.monitoring.postgres.queries | indent 10 }}
+      mysql: {}

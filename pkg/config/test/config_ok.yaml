@@ -1,0 +1,19 @@
+instance:
+  google:
+    clientSecretName: "cloudsql-readonly-serviceaccount"
+    proxy:
+      nodeSelector: {}
+      image: gcr.io/cloudsql-docker/gce-proxy:1.11
+  generic: {}
+backup:
+  nodeSelector: {}
+  postgres:
+    image: image2:latest
+  mysql: {}
+monitoring:
+  nodeSelector: {}
+  postgres:
+    image: wrouesnel/postgres_exporter:latest
+    queries: |-
+      test
+  mysql: {}
