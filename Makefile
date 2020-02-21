@@ -31,7 +31,7 @@ minidashboard:
 
 build:
 	@eval $$(minikube docker-env) ;\
-	operator-sdk build db-operator:local
+	operator-sdk build my-db-operator:local
 
 helm: helm-init
 	@helm upgrade --install --namespace default kci-db-operator helm/kci-db-operator -f helm/kci-db-operator/values.yaml -f helm/kci-db-operator/values-local.yaml -f helm/kci-db-operator/secrets-local.yaml

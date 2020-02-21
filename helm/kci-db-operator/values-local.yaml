@@ -1,7 +1,5 @@
 image:
-  repository: db-operator
+  repository: my-db-operator
   tag: "local"
   pullPolicy: IfNotPresent
 
-nodeSelector:
-  kubernetes.io/hostname: minikube
