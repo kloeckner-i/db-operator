@@ -31,6 +31,7 @@ check_instance_status() {
             item=$($KUBECTL_CMD get dbin -o json | jq -c .items[$n-1])
             if [ ! $(echo $item | jq '.status.status') ]; then
                 echo "[DbInstance] $(echo $item | jq -r '.metadata.name') status false"
+                $KUBECTL_CMD get dbin -n ${TEST_NAMESPACE}
                 break; # re check with interval
             fi
 
@@ -70,6 +71,7 @@ check_databases_status() {
             item=$($KUBECTL_CMD get db -n ${TEST_NAMESPACE} -o json | jq -c .items[$n-1])
             if [ "$(echo $item | jq -r '.status.phase')" != "Ready" ]; then
                 echo "[Database] $(echo $item | jq -r '.metadata.name') status false"
+                $KUBECTL_CMD get db -n ${TEST_NAMESPACE}
                 break; # re check with interval
             fi
             echo "[Database] $(echo $item | jq -r '.metadata.name') status true"
