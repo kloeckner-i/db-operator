@@ -22,9 +22,12 @@ DB Operator provides following features:
 TODO: update when public helm repo set up done to not use local helm chart
 
 ### To install DB Operator with helm:
+
 ```
-$ helm install --name my-release helm/db-operator
+$ helm repo add myhelmrepo https://kloeckner-i.github.io/db-operator/helm/
+$ helm install --name my-release db-operator
 ```
+
 To see more options of helm values [here](helm/README.md)
 
 ## Development
