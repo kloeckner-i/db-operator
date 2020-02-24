@@ -16,6 +16,10 @@ case $TEST_K8S in
         export KUBECTL_CMD="kubectl"
 esac
 
+check_dboperator_log() {
+    $KUBECTL_CMD logs -l app=kci-db-operator -n ${OPERATOR_NAMESPACE}
+}
+
 check_instance_status() {
     echo "[DbInstance] checking"
     for i in `seq 1 $retry`
@@ -41,10 +45,11 @@ check_instance_status() {
                 return 0 # finish check
             fi
         done
+        check_dboperator_log
         echo "Retrying after $interval seconds..."
         sleep $interval; # retry with interval
     done # end retry
-
+    check_dboperator_log
     echo "DbInstance not healthy"
     exit 1 # return false
 }
@@ -80,9 +85,11 @@ check_databases_status() {
                 return 0 # finish check
             fi
         done
+        check_dboperator_log
         echo "Retrying after $interval seconds..."
         sleep $interval; # retry with interval
     done
+    check_dboperator_log
     echo "Database not healthy"
     exit 1 # return false
 }
@@ -106,11 +113,13 @@ check_databases_deleted() {
         count=$($KUBECTL_CMD get db -n ${TEST_NAMESPACE} -o json | jq '.items | length')
         if [ $count -ne 0 ]; then
             echo "[Database] $(echo $item | jq -r '.metadata.name') not deleted"
+            check_dboperator_log
             continue;
         fi
         echo "[Database] All deleted!"
         return 0 # all good
     done
+    check_dboperator_log
     echo "[Database] not deleted"
     exit 1 # return false
 }
