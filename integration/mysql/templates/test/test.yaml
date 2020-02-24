@@ -1,0 +1,95 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mysql-tester-app-{{ randAlphaNum 5 | lower }}
+  annotations:
+    "helm.sh/hook": test-success
+  labels:
+    app: mysql
+    role: tester
+spec:
+  containers:
+  - name: mysql-writer
+    image: imega/mysql-client
+    command:
+      - sh
+      - -c
+      - exec sh /app/write.sh
+    env:
+      - name: MYSQL_PASSWORD_FILE
+        value: /run/secrets/mysql/PASSWORD
+      - name: MYSQL_USERNAME
+        valueFrom:
+          secretKeyRef:
+            name: my-db-test-credentials
+            key: USER
+      - name: MYSQL_DB
+        valueFrom:
+          secretKeyRef:
+            name: my-db-test-credentials
+            key: DB
+      - name: MYSQL_HOST
+        valueFrom:
+          configMapKeyRef:
+            name: my-db-test-credentials
+            key: DB_CONN
+    volumeMounts:
+      - name: db-secret
+        mountPath: /run/secrets/mysql/
+        readOnly: true
+      - name: script
+        mountPath: /app/
+      - name: shared-data
+        mountPath: /tmp
+    imagePullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+  - name: mysql-reader
+    image: imega/mysql-client
+    command:
+      - sh
+      - -c
+      - exec sh /app/read.sh
+    env:
+      - name: MYSQL_PASSWORD_FILE
+        value: /run/secrets/mysql/PASSWORD
+      - name: MYSQL_USERNAME
+        valueFrom:
+          secretKeyRef:
+            name: my-db-test-credentials
+            key: USER
+      - name: MYSQL_DB
+        valueFrom:
+          secretKeyRef:
+            name: my-db-test-credentials
+            key: DB
+      - name: MYSQL_HOST
+        valueFrom:
+          configMapKeyRef:
+            name: my-db-test-credentials
+            key: DB_CONN
+    volumeMounts:
+      - name: db-secret
+        mountPath: /run/secrets/mysql/
+        readOnly: true
+      - name: script
+        mountPath: /app/
+      - name: shared-data
+        mountPath: /tmp
+    imagePullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+  restartPolicy: Never
+  volumes:
+    - name: db-secret
+      secret:
+        secretName: my-db-test-credentials
+    - name: script
+      configMap:
+        name: mysql-test-script
+    - name: shared-data
+      emptyDir: {}

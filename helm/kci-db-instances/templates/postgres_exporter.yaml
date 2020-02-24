@@ -1,0 +1,77 @@
+{{- $release := .Release.Name }}
+{{- $heritage := .Release.Service }}
+{{- $chart := .Chart.Name }}
+{{- $nodeSelector := .Values.nodeSelector }}
+{{- $configSha := include (print $.Template.BasePath "/postgres_exporter_query.yaml") . | sha256sum }}
+{{- $exporter := .Values.exporter.postgres }}
+{{- if .Values.dbinstances }}
+{{- range $name, $value := .Values.dbinstances }}
+{{- if eq $value.engine "postgres" }}
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: dbinstance-{{ $name }}-pgexporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      chart: {{ $chart }}
+      release: {{ $release }}
+      heritage: {{ $heritage }}
+      db-instance: {{ $name }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        prometheus.io/port: "60000"
+        prometheus.io/scrape: "true"
+        checksum/config: {{ $configSha }}
+      labels:
+        chart: {{ $chart }}
+        release: {{ $release }}
+        heritage: {{ $heritage }}
+        db-instance: {{ $name }}
+    spec:
+      containers:
+      - env:
+        - name: DATA_SOURCE_URI
+          value: dbinstance-{{ $name }}-svc:5432/postgres?sslmode=disable
+        - name: DATA_SOURCE_PASS_FILE
+          value: /run/secrets/db-secrets/password
+        - name: DATA_SOURCE_USER_FILE
+          value: /run/secrets/db-secrets/user
+        - name: PG_EXPORTER_WEB_LISTEN_ADDRESS
+          value: :60000
+        - name: PG_EXPORTER_EXTEND_QUERY_PATH
+          value: /run/cm/queries/queries.yaml
+        - name: PG_EXPORTER_CONSTANT_LABELS
+          value: dbinstance={{ $name }}
+        image: {{ $exporter.image }}
+        imagePullPolicy: Always
+        name: exporter
+        volumeMounts:
+        - mountPath: /run/secrets/db-secrets
+          name: db-secrets
+        - mountPath: /run/cm/queries/queries.yaml
+          name: queries
+          subPath: queries.yaml
+      nodeSelector:
+{{ toYaml $nodeSelector | nindent 8 }}
+      volumes:
+      - name: db-secrets
+        secret:
+          defaultMode: 420
+  {{- if $value.adminUserSecret }}
+          secretName: {{ $value.adminUserSecret }}
+  {{- else }}
+          secretName: {{ $name }}-admin-secret
+  {{- end }}
+      - configMap:
+          defaultMode: 420
+          name: dbinstance-pgexporter-query
+        name: queries
+{{- end }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,75 @@
+{{- $release := .Release }}
+{{- $heritage := .Release.Service }}
+{{- $chart := .Chart.Name }}
+{{- $test := .Values.test }}
+{{- $operatorNs := include "db-instances.name" . -}}
+{{- if .Values.dbinstances }}
+{{- range $name, $value := .Values.dbinstances }}
+---
+apiVersion: "kci.rocks/v1alpha1"
+kind: "DbInstance"
+metadata:
+  name: {{ $name }}
+  annotations:
+    {{- if $value.google }}
+    checksum/config: {{ $value.google.configMap.data | sha256sum }}
+    {{- end }}
+  labels:
+    chart: {{ $chart }}
+    release: {{ $release.Name }}
+    heritage: {{ $heritage }}
+spec:
+  engine: {{ $value.engine }}
+  adminSecretRef: 
+    Namespace: {{ $operatorNs }}
+    Name: {{ $value.adminUserSecretName }}
+  {{- if $value.backup }}
+  backup:
+{{ toYaml $value.backup | indent 4 }}
+  {{- end }}
+  {{- if $value.google }}
+  google:
+    instance: {{ $value.google.instanceName }}
+    configmapRef: 
+      Namespace: {{ $operatorNs }}
+      Name: {{ $value.google.configMap.name }}
+  {{- end }}
+  {{- if $value.generic }}
+  generic:
+    host: {{ $value.generic.host }}
+    port: {{ $value.generic.port }}
+  {{- if $value.generic.publicIp }}
+    publicIp: {{ $value.generic.publicIp }}
+  {{- end }}
+  {{- end }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $value.adminUserSecretName }}
+  namespace: {{ $operatorNs }}
+  labels:
+    chart: {{ $chart }}
+    release: {{ $release.Name }}
+    heritage: {{ $heritage }}
+type: Opaque
+data:
+  user: {{ $value.secrets.adminUser | b64enc }}
+  password: {{ $value.secrets.adminPassword | b64enc }}
+---
+{{- if $value.google }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $value.google.configMap.name }}
+  namespace: {{ $operatorNs }}
+  labels:
+    chart: {{ $chart }}
+    release: {{ $release.Name }}
+    heritage: {{ $heritage }}
+data:
+  config: |
+{{ $value.google.configMap.data | indent 4 }}
+{{- end }}
+{{- end }}
+{{- end }}

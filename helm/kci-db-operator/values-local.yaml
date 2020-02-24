@@ -1,0 +1,5 @@
+image:
+  repository: my-db-operator
+  tag: "local"
+  pullPolicy: IfNotPresent
+

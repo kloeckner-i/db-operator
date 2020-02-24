@@ -1,0 +1,56 @@
+language: go
+
+go:
+  - 1.13.x
+  - master
+
+# TODO: caching docker image https://stackoverflow.com/questions/32866599/can-travis-ci-cache-docker-images
+go_import_path: github.com/kloeckner-i/db-operator
+
+env:
+  global:
+    - GO111MODULE=on
+
+install: skip
+
+cache:
+  directories:
+    - $GOPATH/pkg/mod
+
+jobs:
+  # allow_failures:
+  #   - env:
+  #       - ALLOW_FAIL=true
+  include:
+    - stage: test
+      name: "Unit Tests"
+      script: go test -tags tests ./... -v -cover
+      services:
+        - postgresql
+        - mysql
+      env:
+        - POSTGRES_PASSWORD=""
+        - MYSQL_PASSWORD=""
+        - MYSQL_HOST="127.0.0.1"
+    - name: "Go Lint"
+      script: 
+        - go get -u golang.org/x/lint/golint
+        - find . -type f -name "*\.go" | grep -v "zz_generated" | while read line; do
+            golint -set_exit_status $line || exit 1;
+          done
+    - stage: build
+      name: "Docker Build"
+      services:
+        - docker
+      script: docker build -t kci/db-operator .
+    - stage: integration
+      name: "Integration test"
+      services:
+        - snap
+        - docker
+        - jq
+      env:
+        - TEST_K8S=microk8s
+      script: 
+        - make microsetup
+        - sh integration/test.sh

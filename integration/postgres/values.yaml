@@ -1,0 +1,5 @@
+postgres:
+  serviceName: pg-test-db
+  adminUser: postgres
+  adminPassword: test1234
+  image: postgres:10.4

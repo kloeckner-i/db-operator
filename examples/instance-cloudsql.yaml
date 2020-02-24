@@ -1,0 +1,50 @@
+apiVersion: kci.rocks/v1alpha1
+kind: DbInstance
+metadata:
+  name: example-gsql
+spec:
+  adminSecretRef:
+    Name: example-instance-admin-secret
+    Namespace: << namespace of admin secret >>
+  engine: postgres
+  google:
+    instance: dboperator-example-gsql
+    configmapRef:
+      Name: example-gsql-config
+      Namespace: << namespace of configmap >>
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example-gsql-config
+  namespace: << operator namespace >>
+data:
+  config: |
+    {
+      "databaseVersion": "POSTGRES_9_6",
+      "settings": {
+        "tier": "db-f1-micro",
+        "availabilityType": "ZONAL",
+        "pricingPlan": "PER_USE",
+        "replicationType": "SYNCHRONOUS",
+        "activationPolicy": "ALWAYS",
+        "dataDiskType": "PD_SSD",
+        "backupConfiguration": {
+          "enabled": false
+        },
+        "storageAutoResizeLimit": "0",
+        "storageAutoResize": true
+      },
+      "backendType": "SECOND_GEN",
+      "region": "europe-west1"
+    }
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: example-instance-admin-secret
+  namespace: << operator namespace >>
+type: Opaque
+data:
+  user: cG9zdGdyZXM=
+  password: c2VjdXJlcGFzc3dvcmQK

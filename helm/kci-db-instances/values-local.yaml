@@ -1,0 +1,67 @@
+nodeSelector:
+  kubernetes.io/hostname: minikube
+
+operatorNamespace: ""
+
+dbinstances:
+  my-local-test:
+    engine: mysql
+    adminUserSecretName: my-local-db-password
+    secrets:
+      adminUser: root
+      adminPassword: pa$$w0rd
+    generic:
+      host: my-local-test-db
+      port: 3306
+  pg-gsql-test:
+    engine: postgres
+    adminUserSecretName: pg-gsql-db-password
+    secrets:
+      adminUser: postgres
+      adminPassword: Pa33w0rd
+    google:
+      instanceName: devops-test
+      accessSecretName: cloudsql-readonly-serviceaccount
+      configMap:
+        name: postgres-test-instance-config
+        data: |
+          {
+            "databaseVersion": "POSTGRES_9_6",
+            "settings": {
+              "tier": "db-f1-micro",
+              "availabilityType": "ZONAL",
+              "pricingPlan": "PER_USE",
+              "replicationType": "SYNCHRONOUS",
+              "activationPolicy": "ALWAYS",
+              "ipConfiguration": {
+                "authorizedNetworks": [
+                  {
+                    "value": "213.61.177.187/32",
+                    "name": "office2",
+                    "kind": "sql#aclEntry"
+                  },
+                  {
+                    "value": "213.61.177.186/32",
+                    "name": "office",
+                    "kind": "sql#aclEntry"
+                  }
+                ],
+                "ipv4Enabled": true
+              },
+              "dataDiskType": "PD_SSD",
+              "maintenanceWindow": {
+                "updateTrack": "canary",
+                "kind": "sql#maintenanceWindow",
+                "hour": 5,
+                "day": 5
+              },
+              "backupConfiguration": {
+                "startTime": "22:00",
+                "kind": "sql#backupConfiguration",
+                "enabled": true
+              },
+              "storageAutoResizeLimit": "0",
+              "storageAutoResize": false,
+              "dataDiskSizeGb": "10"
+            }
+          }
