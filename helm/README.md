@@ -5,12 +5,26 @@ DB Operator is Kubernetes operator
 * Kubernetes 1.13+
 * Helm 2.11+
 
+## Configuring helm client
+```
+$ helm repo add myhelmrepo https://kloeckner-i.github.io/db-operator/helm/
+```
+Test the helm chart repository
+```
+$ helm search db-operator
+```
+
 ## Installing Chart
 To install the chart with the release name my-release:
 ```
-$ helm install --name my-release ./db-operator
+$ helm install --name my-release myhelmrepo/db-operator
 ```
 The command deploys DB Operator on Kubernetes with default configuration. For the configuration options see details [Parameters](#Parameters)
+
+## Adding new charts to an existing repository
+```
+helm repo index --url https://kloeckner-i.github.io/db-operator/helm/ --merge index.yaml .
+```
 
 ## Uninstalling Chart
 To uninstall the `my-release` deployment:
