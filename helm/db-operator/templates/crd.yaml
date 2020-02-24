@@ -4,8 +4,8 @@ kind: CustomResourceDefinition
 metadata:
   name: databases.kci.rocks
   labels:
-    app: {{ template "kci-db-operator.name" . }}
-    chart: {{ template "kci-db-operator.chart" . }}
+    app: {{ template "db-operator.name" . }}
+    chart: {{ template "db-operator.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
@@ -50,8 +50,8 @@ kind: CustomResourceDefinition
 metadata:
   name: dbinstances.kci.rocks
   labels:
-    app: {{ template "kci-db-operator.name" . }}
-    chart: {{ template "kci-db-operator.chart" . }}
+    app: {{ template "db-operator.name" . }}
+    chart: {{ template "db-operator.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:

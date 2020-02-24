@@ -17,7 +17,7 @@ case $TEST_K8S in
 esac
 
 check_dboperator_log() {
-    $KUBECTL_CMD logs -l app=kci-db-operator -n ${OPERATOR_NAMESPACE}
+    $KUBECTL_CMD logs -l app=db-operator -n ${OPERATOR_NAMESPACE}
 }
 
 check_instance_status() {

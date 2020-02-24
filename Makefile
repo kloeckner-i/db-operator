@@ -1,5 +1,3 @@
-minikube_env := $(shell minikube docker-env)
-
 .PHONY: all deploy build
 
 all: help
@@ -34,15 +32,15 @@ build:
 	operator-sdk build my-db-operator:local
 
 helm: helm-init
-	@helm upgrade --install --namespace default kci-db-operator helm/kci-db-operator -f helm/kci-db-operator/values.yaml -f helm/kci-db-operator/values-local.yaml -f helm/kci-db-operator/secrets-local.yaml
-	@helm upgrade --install --namespace default kci-db-instances helm/kci-db-instances --set operatorNamespace="default" -f helm/kci-db-instances/values.yaml -f helm/kci-db-instances/values-local.yaml
+	@helm upgrade --install --namespace default kci-db-operator helm/db-operator -f helm/db-operator/values.yaml -f helm/db-operator/values-local.yaml
+	@helm upgrade --install --namespace default kci-db-instances helm/db-instances --set operatorNamespace="default" -f helm/db-instances/values.yaml -f helm/db-instances/values-local.yaml
 
 helm-init:
 	@helm init --upgrade --wait
 
 helm-lint:
-	@helm lint -f helm/kci-db-operator/values.yaml -f helm/kci-db-operator/ci/ci-1.yaml --strict ./helm/kci-db-operator
-	@helm lint -f helm/kci-db-instances/values.yaml --strict ./helm/kci-db-instances
+	@helm lint -f helm/db-operator/values.yaml -f helm/db-operator/ci/ci-1.yaml --strict ./helm/db-operator
+	@helm lint -f helm/db-instances/values.yaml --strict ./helm/db-instances
 
 addexamples:
 	cd ./examples/; ls | while read line; do kubectl apply -f $$line; done
@@ -50,8 +48,8 @@ addexamples:
 setup: build helm
 
 deploy:
-	@kubectl delete pod -l app=kci-db-operator &
-	watch -n0.2 -c 'kubectl logs -l app=kci-db-operator --all-containers=true'
+	@kubectl delete pod -l app=db-operator &
+	watch -n0.2 -c 'kubectl logs -l app=db-operator --all-containers=true'
 
 update: build deploy
 
@@ -84,4 +82,4 @@ microbuild:
 	@sudo microk8s.ctr image import my-image.tar
 
 microinstall:
-	@sudo microk8s.helm upgrade --install --namespace operator db-operator helm/kci-db-operator -f helm/kci-db-operator/values.yaml -f helm/kci-db-operator/values-local.yaml
+	@sudo microk8s.helm upgrade --install --namespace operator db-operator helm/db-operator -f helm/db-operator/values.yaml -f helm/db-operator/values-local.yaml
