@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "kci-db-operator.name" . }}-config
+  name: {{ template "db-operator.name" . }}-config
   labels:
-    app: {{ template "kci-db-operator.name" . }}
-    chart: {{ template "kci-db-operator.chart" . }}
+    app: {{ template "db-operator.name" . }}
+    chart: {{ template "db-operator.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 data:

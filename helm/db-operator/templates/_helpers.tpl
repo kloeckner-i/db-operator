@@ -2,7 +2,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "kci-db-operator.name" -}}
+{{- define "db-operator.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
@@ -11,7 +11,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "kci-db-operator.fullname" -}}
+{{- define "db-operator.fullname" -}}
 {{- if .Values.fullnameOverride -}}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
@@ -27,23 +27,23 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "kci-db-operator.chart" -}}
+{{- define "db-operator.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
 Image version definition;
 */}}
-{{- define "kci-db-operator.image_version" -}}
+{{- define "db-operator.image_version" -}}
 {{ default .Chart.AppVersion .Values.image.tag }}
 {{- end -}}
 
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "kci-db-operator.serviceAccountName" -}}
+{{- define "db-operator.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create -}}
-{{- printf "%s-sa" (include "kci-db-operator.name" .) -}}
+{{- printf "%s-sa" (include "db-operator.name" .) -}}
 {{- else -}}
 {{ default "default" .Values.serviceAccount.name }}
 {{- end -}}

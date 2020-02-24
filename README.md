@@ -23,7 +23,7 @@ TODO: update when public helm repo set up done to not use local helm chart
 
 ### To install DB Operator with helm:
 ```
-$ helm install --name my-release helm/kci-db-operator
+$ helm install --name my-release helm/db-operator
 ```
 To see more options of helm values [here](helm/README.md)
 

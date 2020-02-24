@@ -58,7 +58,7 @@ Create service account on a GCP project (check [Creating and managing service ac
 Upgrade db-operator helm release with service account
 
 ```
-$ helm upgrade my-release helm/kci-db-operator --set secrets.gsql.admin="<< Service Account Cloud SQL Admin >>" --set secrets.gsql.readonly="<< Service Account Cloud SQL Client >>"
+$ helm upgrade my-release helm/db-operator --set secrets.gsql.admin="<< Service Account Cloud SQL Admin >>" --set secrets.gsql.readonly="<< Service Account Cloud SQL Client >>"
 ```
 
 Create a configmap containing a Google Cloud SQL configuration, according to its [API specification](https://cloud.google.com/sql/docs/mysql/admin-api/rest/v1beta4/instances#DatabaseInstance)
