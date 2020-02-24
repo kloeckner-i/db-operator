@@ -25,7 +25,7 @@ TODO: update when public helm repo set up done to not use local helm chart
 
 ```
 $ helm repo add myhelmrepo https://kloeckner-i.github.io/db-operator/helm/
-$ helm install --name my-release db-operator
+$ helm install --name my-release myhelmrepo/db-operator
 ```
 
 To see more options of helm values [here](helm/README.md)
