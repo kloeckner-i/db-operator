@@ -30,26 +30,19 @@ check_instance_status() {
             continue;
         fi
 
-        for n in `seq 1 $count`
-        do
-            item=$($KUBECTL_CMD get dbin -o json | jq -c .items[$n-1])
-            if [ ! $(echo $item | jq '.status.status') ]; then
-                echo "[DbInstance] $(echo $item | jq -r '.metadata.name') status false"
-                $KUBECTL_CMD get dbin -n ${TEST_NAMESPACE}
-                break; # re check with interval
-            fi
+        ready_count=$($KUBECTL_CMD get dbin -o json | jq '[.items[] | select(.status.status == true)] | length')
 
-            echo "[DbInstance] $(echo $item | jq -r '.metadata.name') status true"
-            if [ $n -eq $count ]; then
-                echo "[DbInstance] Status OK!"
-                return 0 # finish check
-            fi
-        done
+        if [ $ready_count -eq $count ]; then
+            echo "[DbInstance] Status OK!"
+            return 0 # finish check
+        fi
+
+        echo "[DbInstance] Status false"
+        $KUBECTL_CMD get dbin
         check_dboperator_log
         echo "Retrying after $interval seconds..."
         sleep $interval; # retry with interval
     done # end retry
-    check_dboperator_log
     echo "DbInstance not healthy"
     exit 1 # return false
 }
@@ -59,6 +52,9 @@ create_test_resources() {
     $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-mysql integration/mysql \
     && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-pg integration/postgres \
     && echo "[Test] created"
+    if [ $? -ne 0 ]; then
+        exit 1;
+    fi
 }
 
 check_databases_status() {
@@ -71,25 +67,19 @@ check_databases_status() {
             continue;
         fi
 
-        for n in `seq 1 $count`
-        do
-            item=$($KUBECTL_CMD get db -n ${TEST_NAMESPACE} -o json | jq -c .items[$n-1])
-            if [ "$(echo $item | jq -r '.status.phase')" != "Ready" ]; then
-                echo "[Database] $(echo $item | jq -r '.metadata.name') status false"
-                $KUBECTL_CMD get db -n ${TEST_NAMESPACE}
-                break; # re check with interval
-            fi
-            echo "[Database] $(echo $item | jq -r '.metadata.name') status true"
-            if [ $n -eq $count ]; then
-                echo "[Database] Status OK!"
-                return 0 # finish check
-            fi
-        done
+        ready_count=$($KUBECTL_CMD get db -n ${TEST_NAMESPACE} -o json | jq '[.items[] | select(.status.status == true)] | length')
+
+        if [ $ready_count -eq $count ]; then
+            echo "[Database] Status OK!"
+            return 0 # finish check
+        fi
+
+        echo "[Database] Status false"
+        $KUBECTL_CMD get db -n ${TEST_NAMESPACE}
         check_dboperator_log
         echo "Retrying after $interval seconds..."
         sleep $interval; # retry with interval
-    done
-    check_dboperator_log
+    done # end retry
     echo "Database not healthy"
     exit 1 # return false
 }

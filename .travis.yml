@@ -2,11 +2,9 @@ language: go
 
 go:
   - 1.13.x
-  - master
+  # - master
 
 # TODO: caching docker image https://stackoverflow.com/questions/32866599/can-travis-ci-cache-docker-images
-go_import_path: github.com/kloeckner-i/db-operator
-
 env:
   global:
     - GO111MODULE=on
@@ -32,12 +30,17 @@ jobs:
         - POSTGRES_PASSWORD=""
         - MYSQL_PASSWORD=""
         - MYSQL_HOST="127.0.0.1"
-    - name: "Go Lint"
+    - stage: test
+      name: "Go Lint"
       script: 
         - go get -u golang.org/x/lint/golint
         - find . -type f -name "*\.go" | grep -v "zz_generated" | while read line; do
             golint -set_exit_status $line || exit 1;
           done
+    - stage: test
+      name: "Go Vet"
+      script:
+        - go vet ./...
     - stage: build
       name: "Docker Build"
       services:
