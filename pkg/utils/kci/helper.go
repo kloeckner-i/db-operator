@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/mitchellh/hashstructure"
-	"github.com/sethvargo/go-password/password"
 	"github.com/sirupsen/logrus"
 )
 
@@ -31,22 +30,6 @@ func removeItem(slice []string, s string) []string {
 		}
 	}
 	return newslice
-}
-
-// GeneratePass generates secure password string
-func GeneratePass() string {
-	// include only uri safe special charactors
-	generatorInput := password.GeneratorInput{Symbols: "-_"}
-	pwGenerator, err := password.NewGenerator(&generatorInput)
-	if err != nil {
-		logrus.Fatalf("Failed to create Password Generator: %v", err)
-	}
-	password, err := pwGenerator.Generate(20, 8, 2, false, false)
-	if err != nil {
-		logrus.Fatalf("Failed to generate new password: %v", err)
-	}
-
-	return password
 }
 
 // StringNotEmpty return the first not empty string

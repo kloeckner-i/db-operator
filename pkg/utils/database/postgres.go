@@ -10,6 +10,8 @@ import (
 	"github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 
+	// Don't delete below package. Used for driver "postgres"
+	_ "github.com/lib/pq"
 	// Don't delete below package. Used for driver "cloudsqlpostgres"
 	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
 )
@@ -117,7 +119,7 @@ func (p Postgres) isRowExist(database, query, user, password string) bool {
 	var name string
 	err = db.QueryRow(query).Scan(&name)
 	if err != nil {
-		logrus.Debug(err)
+		logrus.Debugf("failed executing query %s - %s", query, err)
 		return false
 	}
 	return true
@@ -129,12 +131,14 @@ func (p Postgres) createDatabase(admin AdminCredentials) error {
 	if !p.isDbExist(admin) {
 		err := p.executeQuery("postgres", create, admin)
 		if err != nil {
+			logrus.Errorf("failed creating postgres database %s", err)
 			return err
 		}
 	}
 
 	err := p.addExtensions(admin)
 	if err != nil {
+		logrus.Errorf("failed creating postgres extensions %s", err)
 		return err
 	}
 
@@ -149,17 +153,20 @@ func (p Postgres) createUser(admin AdminCredentials) error {
 	if !p.isUserExist(admin) {
 		err := p.executeQuery("postgres", create, admin)
 		if err != nil {
+			logrus.Errorf("failed creating postgres user - %s", err)
 			return err
 		}
 	} else {
 		err := p.executeQuery("postgres", update, admin)
 		if err != nil {
+			logrus.Errorf("failed updating postgres user %s - %s", update, err)
 			return err
 		}
 	}
 
 	err := p.executeQuery("postgres", grant, admin)
 	if err != nil {
+		logrus.Errorf("failed granting postgres user %s - %s", grant, err)
 		return err
 	}
 
@@ -173,6 +180,7 @@ func (p Postgres) deleteDatabase(admin AdminCredentials) error {
 	if p.isDbExist(admin) {
 		err := p.executeQuery("postgres", revoke, admin)
 		if err != nil {
+			logrus.Errorf("failed revoking connection on database %s - %s", revoke, err)
 			return err
 		}
 
@@ -226,6 +234,7 @@ func (p Postgres) addExtensions(admin AdminCredentials) error {
 		query := fmt.Sprintf("CREATE EXTENSION IF NOT EXISTS \"%s\";", ext)
 		err := p.executeExec(p.Database, query, admin)
 		if err != nil {
+			logrus.Errorf("failed creating extensions %s - %s", query, err)
 			return err
 		}
 	}
