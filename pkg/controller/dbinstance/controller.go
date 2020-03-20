@@ -34,6 +34,7 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 	i, err := strconv.ParseInt(interval, 10, 64)
 	if err != nil {
 		i = 60
+		logrus.Infof("Set default reconcile period to %d s for dbinstance-controller", i)
 	}
 	return &ReconcileDbInstance{client: mgr.GetClient(), scheme: mgr.GetScheme(), interval: time.Duration(i)}
 }
