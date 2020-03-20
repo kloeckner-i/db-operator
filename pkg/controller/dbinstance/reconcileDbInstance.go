@@ -46,6 +46,7 @@ func (r *ReconcileDbInstance) create(dbin *kciv1alpha1.DbInstance) error {
 		instance = &dbinstance.Generic{
 			Host:     dbin.Spec.Generic.Host,
 			Port:     dbin.Spec.Generic.Port,
+			PublicIP: dbin.Spec.Generic.PublicIP,
 			Engine:   dbin.Spec.Engine,
 			User:     cred.Username,
 			Password: cred.Password,
