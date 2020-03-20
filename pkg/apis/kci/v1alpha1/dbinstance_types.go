@@ -43,7 +43,7 @@ type GoogleInstance struct {
 type GenericInstance struct {
 	Host     string `json:"host"`
 	Port     int32  `json:"port"`
-	PublicIP string `json:"publicIp",omitempty`
+	PublicIP string `json:"publicIp,omitempty"`
 }
 
 // DbInstanceBackup defines name of google bucket to use for storing database dumps for backup when backup is enabled
