@@ -32,8 +32,7 @@ build:
 	operator-sdk build my-db-operator:local
 
 helm: helm-init
-	@helm upgrade --install --namespace default my-dboperator helm/db-operator -f helm/db-operator/values.yaml -f helm/db-operator/values-local.yaml
-	@helm upgrade --install --namespace default my-dbins helm/db-instances --set operatorNamespace="default" -f helm/db-instances/values.yaml -f helm/db-instances/values-local.yaml
+	@helm upgrade --install --namespace operator my-dboperator helm/db-operator -f helm/db-operator/values.yaml -f helm/db-operator/values-local.yaml
 
 helm-init:
 	@helm init --upgrade --wait

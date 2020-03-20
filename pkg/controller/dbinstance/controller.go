@@ -3,6 +3,8 @@ package dbinstance
 import (
 	"context"
 	"errors"
+	"os"
+	"strconv"
 	"time"
 
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/pkg/apis/kci/v1alpha1"
@@ -28,7 +30,13 @@ func Add(mgr manager.Manager) error {
 
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileDbInstance{client: mgr.GetClient(), scheme: mgr.GetScheme()}
+	interval := os.Getenv("RECONCILE_INTERVAL")
+	i, err := strconv.ParseInt(interval, 10, 64)
+	if err != nil {
+		i = 60
+		logrus.Infof("Set default reconcile period to %d s for dbinstance-controller", i)
+	}
+	return &ReconcileDbInstance{client: mgr.GetClient(), scheme: mgr.GetScheme(), interval: time.Duration(i)}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -55,8 +63,9 @@ var _ reconcile.Reconciler = &ReconcileDbInstance{}
 type ReconcileDbInstance struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client client.Client
-	scheme *runtime.Scheme
+	client   client.Client
+	scheme   *runtime.Scheme
+	interval time.Duration
 }
 
 var (
@@ -75,7 +84,7 @@ var (
 func (r *ReconcileDbInstance) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	// reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	// reqLogger.Info("Reconciling DbInstance")
-	reconcilePeriod := 60 * time.Second
+	reconcilePeriod := r.interval * time.Second
 	reconcileResult := reconcile.Result{RequeueAfter: reconcilePeriod}
 
 	ctx := context.TODO()

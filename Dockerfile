@@ -4,8 +4,14 @@ RUN apk update && apk upgrade && \
     apk add --no-cache bash build-base
 
 WORKDIR /opt/db-operator
-COPY . .
 
+# to reduce docker build time download dependency first before building
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
+
+# build
+COPY . .
 RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -tags build -o /usr/local/bin/db-operator ./cmd/manager
 
 FROM alpine:3.11

@@ -3,6 +3,8 @@ package database
 import (
 	"context"
 	"errors"
+	"os"
+	"strconv"
 	"time"
 
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/pkg/apis/kci/v1alpha1"
@@ -34,7 +36,13 @@ func Add(mgr manager.Manager) error {
 
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileDatabase{client: mgr.GetClient(), scheme: mgr.GetScheme(), recorder: mgr.GetEventRecorderFor("database-controller")}
+	interval := os.Getenv("RECONCILE_INTERVAL")
+	i, err := strconv.ParseInt(interval, 10, 64)
+	if err != nil {
+		i = 60
+		logrus.Infof("Set default reconcile period to %d s for database-controller", i)
+	}
+	return &ReconcileDatabase{client: mgr.GetClient(), scheme: mgr.GetScheme(), recorder: mgr.GetEventRecorderFor("database-controller"), interval: time.Duration(i)}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -74,6 +82,7 @@ type ReconcileDatabase struct {
 	client   client.Client
 	scheme   *runtime.Scheme
 	recorder record.EventRecorder
+	interval time.Duration
 }
 
 var (
@@ -100,7 +109,7 @@ func (r *ReconcileDatabase) Reconcile(request reconcile.Request) (reconcile.Resu
 	// reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	// reqLogger.Info("Reconciling Database")
 
-	reconcilePeriod := 60 * time.Second
+	reconcilePeriod := r.interval * time.Second
 	reconcileResult := reconcile.Result{RequeueAfter: reconcilePeriod}
 
 	ctx := context.TODO()

@@ -8,6 +8,7 @@ image:
 # imagePullSecrets:
 #   - name: myRegistrySecret
 
+reconcileInterval: "60"
 
 rbac:
   create: true
