@@ -3,3 +3,5 @@ image:
   tag: "local"
   pullPolicy: IfNotPresent
 
+
+reconcileInterval: "10"
