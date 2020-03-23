@@ -3,7 +3,7 @@ entries:
   db-instances:
   - apiVersion: v1
     appVersion: "1.0"
-    created: "2020-02-24T12:58:15.707145+01:00"
+    created: "2020-03-20T15:16:44.935374+01:00"
     description: Database Instances for db operator
     digest: 0a9f5c620c9ee8d8e33ea96f797be989efab296fbeeca24e26c84fdb2136d704
     name: db-instances
@@ -13,11 +13,20 @@ entries:
   db-operator:
   - apiVersion: v1
     appVersion: "1.0"
-    created: "2020-02-24T12:58:15.708725+01:00"
+    created: "2020-03-20T15:16:44.937122+01:00"
+    description: A Database Operator
+    digest: d2d2a7f6b7913585283d72cea95770067e6c9625479e349c2e18b7dc3fbd3a52
+    name: db-operator
+    urls:
+    - https://kloeckner-i.github.io/db-operator/helm/db-operator-0.1.1.tgz
+    version: 0.1.1
+  - apiVersion: v1
+    appVersion: "1.0"
+    created: "2020-03-20T15:16:44.936196+01:00"
     description: A Database Operator
     digest: 6f41f18fe10b74edaec021defdcca99e2c65b5ed60b3c53b3d7ee7b124ccfeb0
     name: db-operator
     urls:
     - https://kloeckner-i.github.io/db-operator/helm/db-operator-0.1.0.tgz
     version: 0.1.0
-generated: "2020-02-24T12:58:15.705135+01:00"
+generated: "2020-03-20T15:16:44.933707+01:00"
