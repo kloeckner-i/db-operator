@@ -13,12 +13,11 @@ import (
 type DatabaseSpec struct {
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
-	SecretName        string             `json:"secretName"`
-	Instance          string             `json:"instance"`
-	DeletionProtected bool               `json:"deletionProtected"`
-	Backup            DatabaseBackup     `json:"backup"`
-	Monitoring        DatabaseMonitoring `json:"monitoring"`
-	Extensions        []string           `json:"extensions,omitempty"`
+	SecretName        string         `json:"secretName"`
+	Instance          string         `json:"instance"`
+	DeletionProtected bool           `json:"deletionProtected"`
+	Backup            DatabaseBackup `json:"backup"`
+	Extensions        []string       `json:"extensions,omitempty"`
 }
 
 // DatabaseStatus defines the observed state of Database
@@ -36,12 +35,6 @@ type DatabaseStatus struct {
 type DatabaseBackup struct {
 	Enable bool   `json:"enable"`
 	Cron   string `json:"cron"`
-}
-
-// DatabaseMonitoring defines wheather prometheus exporter will be created for database or not
-// If so, defines which monitoring query to execute against database from prometheus exporter
-type DatabaseMonitoring struct {
-	Enable bool `json:"enable,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
