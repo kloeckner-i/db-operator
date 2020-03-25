@@ -173,7 +173,6 @@ Possible phases and meanings
 | `Creating`            | On going creation of database in the database server |
 | `InfoConfigMapCreating` | Generating and building configmap data with database server information |
 | `InstanceAccessSecretCreating`  | When instance type is `google`, it's creating access secret in the namespace where `Database` exists.  |
-| `MonitoringCreating`  | Creating Prometheus exporter `Deployment` and `Service` when monitoring is enabled in the `spec` |
 | `BackupJobCreating`   | Creating backup `Cronjob` when backup is enabled in the `spec` |
 | `Finishing`           | Setting status of `Database` to true |
 | `Ready`               | `Database` is created and all the configs are applied. Healthy status. |
