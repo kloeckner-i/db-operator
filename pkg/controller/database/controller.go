@@ -231,12 +231,6 @@ func (r *ReconcileDatabase) Reconcile(request reconcile.Request) (reconcile.Resu
 			if err != nil {
 				return r.manageError(dbcr, err, true)
 			}
-			dbcr.Status.Phase = phaseMonitoring
-		case phaseMonitoring:
-			err := r.createMonitoringExporter(dbcr)
-			if err != nil {
-				return r.manageError(dbcr, err, true)
-			}
 			dbcr.Status.Phase = phaseFinish
 		case phaseFinish:
 			dbcr.Status.Status = true

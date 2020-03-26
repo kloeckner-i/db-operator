@@ -9,14 +9,12 @@ DB Operator provides following features:
 * Create/Delete databases on the database server running outside/inside Kubernetes by creating `Database` custom resource;
 * Create Google Cloud SQL instances by creating `DbInstance` custom resource;
 * Automatically create backup `CronJob` with defined schedule (limited feature);
-* Automatically create Prometheus exporter `Deployment` for database metrics (limited feature);
 
 ## Documentations
 * [How it works](docs/howitworks.md) - a general overview and definitions
 * [Creating Instances](docs/creatinginstances.md) - make database instances available for the operator
 * [Creating Databases](docs/creatingdatabases.md) - creating databases in those instances
 * [Enabling regular Backup](docs/enablingbackup.md) - and schedule cronjob
-* [Enabling monitoring](docs/enablingmonitoring.md) - Prometheus exporter
 
 ## Quickstart
 TODO: update when public helm repo set up done to not use local helm chart
