@@ -2,10 +2,11 @@ package database
 
 import (
 	"errors"
+	"strconv"
+
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/pkg/apis/kci/v1alpha1"
 	database "github.com/kloeckner-i/db-operator/pkg/utils/database"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
-	"strconv"
 
 	"github.com/sirupsen/logrus"
 )
@@ -38,6 +39,8 @@ func determinDatabaseType(dbcr *kciv1alpha1.Database, dbCred database.Credential
 
 	switch engine {
 	case "postgres":
+		extList := append(dbcr.Spec.Extensions, "pg_stat_statements") // enable pg_stat_statements extension by default
+
 		db := database.Postgres{
 			Backend:    backend,
 			Host:       host,
@@ -45,7 +48,7 @@ func determinDatabaseType(dbcr *kciv1alpha1.Database, dbCred database.Credential
 			Database:   dbCred.Name,
 			User:       dbCred.Username,
 			Password:   dbCred.Password,
-			Extensions: dbcr.Spec.Extensions,
+			Extensions: extList,
 		}
 
 		return db, nil
