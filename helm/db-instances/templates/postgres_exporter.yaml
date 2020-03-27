@@ -7,6 +7,7 @@
 {{- if .Values.dbinstances }}
 {{- range $name, $value := .Values.dbinstances }}
 {{- if eq $value.engine "postgres" }}
+{{- if $value.monitoring.enabled }}
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -72,6 +73,7 @@ spec:
           defaultMode: 420
           name: dbinstance-pgexporter-query
         name: queries
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
