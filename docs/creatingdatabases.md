@@ -181,8 +181,8 @@ Possible phases and meanings
 
 ### PostgreSQL
 
-PostgreSQL extensions can be enabled by listing under `spec.extensions`.
-DB Operator will execute `CREATE EXTENSION IF NOT EXISTS` on the database.
+PostgreSQL extensions listed under `spec.extensions` will be enabled by DB Operator.
+DB Operator execute `CREATE EXTENSION IF NOT EXISTS` on the target database.
 
 ```YAML
 apiVersion: "kci.rocks/v1alpha1"
@@ -199,7 +199,7 @@ spec:
     - plpgsql
 ```
 By default, `pg_stat_statements` extension will be enabled.
-If below error occurs during database creation, the module must be loaded by adding pg_stat_statements to shared_preload_libraries in postgresql.conf of the server side.
+If below error occurs during database creation, the module must be loaded by adding pg_stat_statements to shared_preload_libraries in postgresql.conf on the server side.
 ```
 ERROR: pg_stat_statements must be loaded via shared_preload_libraries
 ```
