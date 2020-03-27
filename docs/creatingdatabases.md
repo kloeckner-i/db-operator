@@ -198,7 +198,7 @@ spec:
     - uuid-ossp
     - plpgsql
 ```
-By default, `pg_stat_statements` extension will be enabled.
+When monitoring is enabled on DbInstance spec, `pg_stat_statements` extension will be enabled.
 If below error occurs during database creation, the module must be loaded by adding pg_stat_statements to shared_preload_libraries in postgresql.conf on the server side.
 ```
 ERROR: pg_stat_statements must be loaded via shared_preload_libraries
