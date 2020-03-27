@@ -26,6 +26,8 @@ spec:
   {{- if $value.backup }}
   backup:
 {{ toYaml $value.backup | indent 4 }}
+  monitoring:
+    enabled: {{ $value.monitoring.enabled }}
   {{- end }}
   {{- if $value.google }}
   google:

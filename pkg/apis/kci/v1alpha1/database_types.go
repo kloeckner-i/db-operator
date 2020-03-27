@@ -92,3 +92,13 @@ func (db *Database) GetBackendType() (string, error) {
 
 	return instance.GetBackendType()
 }
+
+// IsMonitoringEnabled returns true if monitoring is enabled in DbInstance spec.
+func (db *Database) IsMonitoringEnabled() (bool, error) {
+	instance, err := db.GetInstanceRef()
+	if err != nil {
+		return false, err
+	}
+
+	return instance.IsMonitoringEnabled(), nil
+}

@@ -16,6 +16,7 @@ type DbInstanceSpec struct {
 	Engine          string               `json:"engine"`
 	AdminUserSecret types.NamespacedName `json:"adminSecretRef"`
 	Backup          DbInstanceBackup     `json:"backup"`
+	Monitoring      DbInstanceMonitoring `json:"monitoring"`
 	Google          *GoogleInstance      `json:"google,omitempty"`
 	Generic         *GenericInstance     `json:"generic,omitempty"`
 }
@@ -49,6 +50,11 @@ type GenericInstance struct {
 // DbInstanceBackup defines name of google bucket to use for storing database dumps for backup when backup is enabled
 type DbInstanceBackup struct {
 	Bucket string `json:"bucket"`
+}
+
+// DbInstanceMonitoring defines if exporter
+type DbInstanceMonitoring struct {
+	Enabled bool `json:"enabled"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -118,4 +124,13 @@ func (dbin *DbInstance) GetBackendType() (string, error) {
 	}
 
 	return "", errors.New("no backend type defined")
+}
+
+// IsMonitoringEnabled returns boolean value if monitoring is enabled for the instance
+func (dbin *DbInstance) IsMonitoringEnabled() bool {
+	if dbin.Spec.Monitoring.Enabled == false {
+		return false
+	}
+
+	return true
 }

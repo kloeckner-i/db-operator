@@ -37,9 +37,18 @@ func determinDatabaseType(dbcr *kciv1alpha1.Database, dbCred database.Credential
 		return nil, err
 	}
 
+	monitoringEnabled, err := dbcr.IsMonitoringEnabled()
+	if err != nil {
+		logrus.Errorf("could not check if monitoring is enabled %s - %s", dbcr.Name, err)
+		return nil, err
+	}
+
 	switch engine {
 	case "postgres":
-		extList := append(dbcr.Spec.Extensions, "pg_stat_statements") // enable pg_stat_statements extension by default
+		extList := dbcr.Spec.Extensions
+		if monitoringEnabled {
+			extList = append(dbcr.Spec.Extensions, "pg_stat_statements")
+		}
 
 		db := database.Postgres{
 			Backend:    backend,
