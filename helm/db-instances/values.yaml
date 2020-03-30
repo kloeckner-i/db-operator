@@ -129,6 +129,7 @@ exporter:
           - deadlocks:
               usage: "COUNTER"
               description: "Number of deadlocks detected in this database"
+
         pg_stat_statements:
           query: "SELECT userid, pgss.dbid, pgdb.datname, queryid, query, calls, total_time, mean_time, rows FROM pg_stat_statements pgss LEFT JOIN (select oid as dbid, datname from pg_database) as pgdb on pgdb.dbid = pgss.dbid WHERE not queryid isnull ORDER BY mean_time desc limit 20"
           metrics:
