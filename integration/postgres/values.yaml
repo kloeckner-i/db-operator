@@ -2,4 +2,4 @@ postgres:
   serviceName: pg-test-db
   adminUser: postgres
   adminPassword: test1234
-  image: postgres:11
+  image: postgres:11-alpine

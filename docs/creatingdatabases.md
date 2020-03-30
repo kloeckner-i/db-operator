@@ -23,6 +23,7 @@ For more details about how it works check [here](howitworks.md)
 * [Creating databases](#CreatingDatabases)
 * [Connecting to the database from pods](#ConnectingToTheDatabase)
 * [Checking database status](#CheckingDatabaseStatus)
+* [Enabling postgreSQL extensions](#PostgreSQL)
 
 ### CreatingDatabases
 
@@ -177,3 +178,28 @@ Possible phases and meanings
 | `Finishing`           | Setting status of `Database` to true |
 | `Ready`               | `Database` is created and all the configs are applied. Healthy status. |
 | `Deleting`            | `Database` is being deleted. |
+
+### PostgreSQL
+
+PostgreSQL extensions listed under `spec.extensions` will be enabled by DB Operator.
+DB Operator execute `CREATE EXTENSION IF NOT EXISTS` on the target database.
+
+```YAML
+apiVersion: "kci.rocks/v1alpha1"
+kind: "Database"
+metadata:
+  name: "example-db"
+spec:
+  secretName: example-db-credentials
+  instance: example-gsql
+  deletionProtected: false
+  extensions:
+    - pgcrypto
+    - uuid-ossp
+    - plpgsql
+```
+When monitoring is enabled on DbInstance spec, `pg_stat_statements` extension will be enabled.
+If below error occurs during database creation, the module must be loaded by adding pg_stat_statements to shared_preload_libraries in postgresql.conf on the server side.
+```
+ERROR: pg_stat_statements must be loaded via shared_preload_libraries
+```

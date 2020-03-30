@@ -2,10 +2,11 @@ package database
 
 import (
 	"errors"
+	"strconv"
+
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/pkg/apis/kci/v1alpha1"
 	database "github.com/kloeckner-i/db-operator/pkg/utils/database"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
-	"strconv"
 
 	"github.com/sirupsen/logrus"
 )
@@ -36,8 +37,19 @@ func determinDatabaseType(dbcr *kciv1alpha1.Database, dbCred database.Credential
 		return nil, err
 	}
 
+	monitoringEnabled, err := dbcr.IsMonitoringEnabled()
+	if err != nil {
+		logrus.Errorf("could not check if monitoring is enabled %s - %s", dbcr.Name, err)
+		return nil, err
+	}
+
 	switch engine {
 	case "postgres":
+		extList := dbcr.Spec.Extensions
+		if monitoringEnabled {
+			extList = append(dbcr.Spec.Extensions, "pg_stat_statements")
+		}
+
 		db := database.Postgres{
 			Backend:    backend,
 			Host:       host,
@@ -45,7 +57,7 @@ func determinDatabaseType(dbcr *kciv1alpha1.Database, dbCred database.Credential
 			Database:   dbCred.Name,
 			User:       dbCred.Username,
 			Password:   dbCred.Password,
-			Extensions: dbcr.Spec.Extensions,
+			Extensions: extList,
 		}
 
 		return db, nil

@@ -1,32 +1,33 @@
 package database
 
 import (
-	database "github.com/kloeckner-i/db-operator/pkg/utils/database"
 	"testing"
+
+	database "github.com/kloeckner-i/db-operator/pkg/utils/database"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDeterminPostgresType(t *testing.T) {
-	postgresDbCr := newPostgresTestDbCr()
-	dbcred := database.Credentials{Name: "testdb", Username: "testuser", Password: "password"}
+var testDbcred = database.Credentials{Name: "testdb", Username: "testuser", Password: "password"}
 
-	db, _ := determinDatabaseType(postgresDbCr, dbcred)
+func TestDeterminPostgresType(t *testing.T) {
+	postgresDbCr := newPostgresTestDbCr(newPostgresTestDbInstanceCr())
+
+	db, _ := determinDatabaseType(postgresDbCr, testDbcred)
 	_, ok := db.(database.Postgres)
 	assert.Equal(t, ok, true, "expected true")
 }
 
 func TestDeterminMysqlType(t *testing.T) {
 	mysqlDbCr := newMysqlTestDbCr()
-	dbcred := database.Credentials{Name: "testdb", Username: "testuser", Password: "password"}
 
-	db, _ := determinDatabaseType(mysqlDbCr, dbcred)
+	db, _ := determinDatabaseType(mysqlDbCr, testDbcred)
 	_, ok := db.(database.Mysql)
 	assert.Equal(t, ok, true, "expected true")
 }
 
 func TestParsePostgresSecretData(t *testing.T) {
-	postgresDbCr := newPostgresTestDbCr()
+	postgresDbCr := newPostgresTestDbCr(newPostgresTestDbInstanceCr())
 
 	invalidData := make(map[string][]byte)
 	invalidData["DB"] = []byte("testdb")
@@ -68,7 +69,7 @@ func TestParseMysqlSecretData(t *testing.T) {
 }
 
 func TestParseAdminSecretData(t *testing.T) {
-	postgresDbCr := newPostgresTestDbCr()
+	postgresDbCr := newPostgresTestDbCr(newPostgresTestDbInstanceCr())
 	invalidData := make(map[string][]byte)
 	invalidData["unknownkey"] = []byte("wrong")
 
@@ -83,4 +84,40 @@ func TestParseAdminSecretData(t *testing.T) {
 	assert.NoErrorf(t, err, "expected no error %v", err)
 	assert.Equal(t, string(validData["user"]), cred.Username, "expect same values")
 	assert.Equal(t, string(validData["password"]), cred.Password, "expect same values")
+}
+
+func TestMonitoringNotEnabled(t *testing.T) {
+	instance := newPostgresTestDbInstanceCr()
+	instance.Spec.Monitoring.Enabled = false
+	postgresDbCr := newPostgresTestDbCr(instance)
+	db, _ := determinDatabaseType(postgresDbCr, testDbcred)
+	postgresInterface, _ := db.(database.Postgres)
+
+	found := false
+	for _, ext := range postgresInterface.Extensions {
+		if ext == "pg_stat_statements" {
+			found = true
+			break
+		}
+	}
+	assert.Equal(t, found, false, "expected pg_stat_statement is not included in extension list")
+}
+
+func TestMonitoringEnabled(t *testing.T) {
+	instance := newPostgresTestDbInstanceCr()
+	instance.Spec.Monitoring.Enabled = false
+	postgresDbCr := newPostgresTestDbCr(instance)
+	postgresDbCr.Status.InstanceRef.Spec.Monitoring.Enabled = true
+
+	db, _ := determinDatabaseType(postgresDbCr, testDbcred)
+	postgresInterface, _ := db.(database.Postgres)
+
+	found := false
+	for _, ext := range postgresInterface.Extensions {
+		if ext == "pg_stat_statements" {
+			found = true
+			break
+		}
+	}
+	assert.Equal(t, found, true, "expected pg_stat_statement is included in extension list")
 }
