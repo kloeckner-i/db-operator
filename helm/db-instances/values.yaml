@@ -130,36 +130,36 @@ exporter:
               usage: "COUNTER"
               description: "Number of deadlocks detected in this database"
 
-        pg_stat_statements:
-          query: "SELECT userid, pgss.dbid, pgdb.datname, queryid, query, calls, total_time, mean_time, rows FROM pg_stat_statements pgss LEFT JOIN (select oid as dbid, datname from pg_database) as pgdb on pgdb.dbid = pgss.dbid WHERE not queryid isnull ORDER BY mean_time desc limit 20"
-          metrics:
-            - userid:
-                usage: "LABEL"
-                description: "User ID"
-            - dbid:
-                usage: "LABEL"
-                description: "database ID"
-            - datname:
-                usage: "LABEL"
-                description: "database NAME"
-            - queryid:
-                usage: "LABEL"
-                description: "Query unique Hash Code"
-            - query:
-                usage: "LABEL"
-                description: "Query class"
-            - calls:
-                usage: "COUNTER"
-                description: "Number of times executed"
-            - total_time:
-                usage: "COUNTER"
-                description: "Total time spent in the statement, in milliseconds"
-            - mean_time:
-                usage: "GAUGE"
-                description: "Mean time spent in the statement, in milliseconds"
-            - rows:
-                usage: "COUNTER"
-                description: "Total number of rows retrieved or affected by the statement"
+      pg_stat_statements:
+        query: "SELECT userid, pgss.dbid, pgdb.datname, queryid, query, calls, total_time, mean_time, rows FROM pg_stat_statements pgss LEFT JOIN (select oid as dbid, datname from pg_database) as pgdb on pgdb.dbid = pgss.dbid WHERE not queryid isnull ORDER BY mean_time desc limit 20"
+        metrics:
+          - userid:
+              usage: "LABEL"
+              description: "User ID"
+          - dbid:
+              usage: "LABEL"
+              description: "database ID"
+          - datname:
+              usage: "LABEL"
+              description: "database NAME"
+          - queryid:
+              usage: "LABEL"
+              description: "Query unique Hash Code"
+          - query:
+              usage: "LABEL"
+              description: "Query class"
+          - calls:
+              usage: "COUNTER"
+              description: "Number of times executed"
+          - total_time:
+              usage: "COUNTER"
+              description: "Total time spent in the statement, in milliseconds"
+          - mean_time:
+              usage: "GAUGE"
+              description: "Mean time spent in the statement, in milliseconds"
+          - rows:
+              usage: "COUNTER"
+              description: "Total number of rows retrieved or affected by the statement"
 
 mysql:
   enabled: false
