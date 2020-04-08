@@ -31,7 +31,7 @@ config:
     google:
       proxy:
         nodeSelector: {}
-        image: gcr.io/cloudsql-docker/gce-proxy:1.11
+        image: gcr.io/cloudsql-docker/gce-proxy:1.16
     generic: {}
   backup:
     nodeSelector: {}
