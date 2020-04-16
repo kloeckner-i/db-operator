@@ -31,7 +31,9 @@ kind: DbInstance
 metadata:
   name: example-generic
 spec:
-  adminUserSecret: example-generic-admin-secret
+  adminSecretRef:
+    Name: example-generic-admin-secret
+    Namespace: <namespace of secret existing>
   engine: <postgres or mysql>
   generic:
     host: <host address to connect database server>
@@ -102,7 +104,9 @@ kind: DbInstance
 metadata:
   name: example-gsql
 spec:
-  adminUserSecret: example-gsql-admin-secret
+  adminSecretRef:
+    Name: example-generic-admin-secret
+    Namespace: <namespace of secret existing>
   configmap: example-gsql-config
   engine: <postgres or mysql>
   google:
