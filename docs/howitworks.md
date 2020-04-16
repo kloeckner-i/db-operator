@@ -8,7 +8,7 @@ The DB Operator watches `Database` and `DbInstance` [custom resource](https://ku
 
 * **`Database`:** defines a database that must exist in the `DbInstance`. For database creation in a `DbInstance`, the `DbInstance` must firstly have status **true**; The name of the `DbInstance` previously created is referred in the `spec.instance` of `Database` resource.
 
-The DB Operator requires admin user and password of the database server as `Secret` resource to manage databases. The name of the `Secret` must be provided in `spec.adminUserSecret` of `DbInstance` resource.
+The DB Operator requires admin user and password of the database server as `Secret` resource to manage databases. The name of the `Secret` must be provided in `spec.adminSecretRef` of `DbInstance` resource.
 
 To create a **google** type `DbInstance`, you need to provide [Google Service account](https://cloud.google.com/iam/docs/service-accounts) with Cloud SQL Admin role to the Operator.
 When `DbInstance` is created, the DB Operator creates **[Google Cloud SQL](https://cloud.google.com/sql/docs/features) instances** in GCP. 
