@@ -3,7 +3,16 @@ entries:
   db-instances:
   - apiVersion: v1
     appVersion: "1.0"
-    created: "2020-03-30T14:37:24.662323+02:00"
+    created: "2020-04-20T11:48:05.265244+02:00"
+    description: Database Instances for db operator
+    digest: 03bf897f889ffef2852359c52173abbb836c397bf51c571f1a8da182e0e8855d
+    name: db-instances
+    urls:
+    - https://kloeckner-i.github.io/db-operator/helm/db-instances-0.3.0.tgz
+    version: 0.3.0
+  - apiVersion: v1
+    appVersion: "1.0"
+    created: "2020-04-20T11:48:05.264724+02:00"
     description: Database Instances for db operator
     digest: ba545b09123c5cf0276da24cf16fcaeae1d51a92e253731768b35478fb0294f4
     name: db-instances
@@ -12,7 +21,7 @@ entries:
     version: 0.2.0
   - apiVersion: v1
     appVersion: "1.0"
-    created: "2020-03-30T14:37:24.662097+02:00"
+    created: "2020-04-20T11:48:05.26351+02:00"
     description: Database Instances for db operator
     digest: 0a9f5c620c9ee8d8e33ea96f797be989efab296fbeeca24e26c84fdb2136d704
     name: db-instances
@@ -22,7 +31,16 @@ entries:
   db-operator:
   - apiVersion: v1
     appVersion: "1.0"
-    created: "2020-03-30T14:37:24.664301+02:00"
+    created: "2020-04-20T11:48:05.268488+02:00"
+    description: A Database Operator
+    digest: a00294defa1914f326b363c1cb0d36b22297fefd71e72a83510c70a1a8020d31
+    name: db-operator
+    urls:
+    - https://kloeckner-i.github.io/db-operator/helm/db-operator-0.2.0.tgz
+    version: 0.2.0
+  - apiVersion: v1
+    appVersion: "1.0"
+    created: "2020-04-20T11:48:05.267019+02:00"
     description: A Database Operator
     digest: d2d2a7f6b7913585283d72cea95770067e6c9625479e349c2e18b7dc3fbd3a52
     name: db-operator
@@ -31,11 +49,11 @@ entries:
     version: 0.1.1
   - apiVersion: v1
     appVersion: "1.0"
-    created: "2020-03-30T14:37:24.663298+02:00"
+    created: "2020-04-20T11:48:05.266252+02:00"
     description: A Database Operator
     digest: 6f41f18fe10b74edaec021defdcca99e2c65b5ed60b3c53b3d7ee7b124ccfeb0
     name: db-operator
     urls:
     - https://kloeckner-i.github.io/db-operator/helm/db-operator-0.1.0.tgz
     version: 0.1.0
-generated: "2020-03-30T14:37:24.66125+02:00"
+generated: "2020-04-20T11:48:05.261994+02:00"

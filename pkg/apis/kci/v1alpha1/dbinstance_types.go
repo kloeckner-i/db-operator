@@ -45,6 +45,10 @@ type GenericInstance struct {
 	Host     string `json:"host"`
 	Port     int32  `json:"port"`
 	PublicIP string `json:"publicIp,omitempty"`
+	// BackupHost address will be used for dumping database for backup
+	// Usually slave address for master-slave setup or cluster lb address
+	// It can be same with Host address above.
+	BackupHost string `json:"backupHost"`
 }
 
 // DbInstanceBackup defines name of google bucket to use for storing database dumps for backup when backup is enabled

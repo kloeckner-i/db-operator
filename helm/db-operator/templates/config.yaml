@@ -22,7 +22,8 @@ data:
 {{ toYaml .Values.config.backup.nodeSelector | indent 8 }}
       postgres:
         image: {{ .Values.config.backup.postgres.image }}
-      mysql: {}
+      mysql:
+        image: {{ .Values.config.backup.mysql.image }}
     monitoring:
       nodeSelector:
 {{ toYaml .Values.config.monitoring.nodeSelector | indent 8 }}

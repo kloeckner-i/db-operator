@@ -39,7 +39,7 @@ type postgresBackupConfig struct {
 }
 
 type mysqlBackupConfig struct {
-	// TODO
+	Image string `yaml:"image"`
 }
 
 // monitoringConfig defines prometheus exporter configurations

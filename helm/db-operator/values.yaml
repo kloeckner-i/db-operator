@@ -37,6 +37,8 @@ config:
     nodeSelector: {}
     postgres:
       image: "kloeckneri/pgdump-gcs:latest"
+    mysql:
+      image: "kloeckneri/mydump-gcs:latest"
   monitoring:
     nodeSelector: {}
     postgres:
