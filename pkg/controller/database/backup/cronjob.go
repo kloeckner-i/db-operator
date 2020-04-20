@@ -1,6 +1,8 @@
 package backup
 
 import (
+	"fmt"
+
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/pkg/apis/kci/v1alpha1"
 	"github.com/kloeckner-i/db-operator/pkg/config"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
@@ -52,20 +54,28 @@ func buildCronJobSpec(dbcr *kciv1alpha1.Database) (batchv1beta1.CronJobSpec, err
 func buildJobTemplate(dbcr *kciv1alpha1.Database) (batchv1beta1.JobTemplateSpec, error) {
 	ActiveDeadlineSeconds := int64(60 * 10) // 10m
 	BackoffLimit := int32(3)
+	instance, err := dbcr.GetInstanceRef()
+	if err != nil {
+		logrus.Errorf("can not build job template - %s", err)
+		return batchv1beta1.JobTemplateSpec{}, err
+	}
 
 	var backupContainer v1.Container
 
-	engine, err := dbcr.GetEngineType()
-	if engine == "postgres" {
+	engine := instance.Spec.Engine
+	switch engine {
+	case "postgres":
 		backupContainer, err = postgresBackupContainer(dbcr)
 		if err != nil {
 			return batchv1beta1.JobTemplateSpec{}, err
 		}
-	}
-
-	backupContainer, err = mysqlBackupContainer(dbcr)
-	if err != nil {
-		return batchv1beta1.JobTemplateSpec{}, err
+	case "mysql":
+		backupContainer, err = mysqlBackupContainer(dbcr)
+		if err != nil {
+			return batchv1beta1.JobTemplateSpec{}, err
+		}
+	default:
+		return batchv1beta1.JobTemplateSpec{}, fmt.Errorf("unknown engine type")
 	}
 
 	return batchv1beta1.JobTemplateSpec{
