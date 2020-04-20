@@ -189,7 +189,12 @@ func postgresEnvVars(dbcr *kciv1alpha1.Database) ([]v1.EnvVar, error) {
 			Name: "DB_PORT", Value: port,
 		},
 		v1.EnvVar{
-			Name: "DB_NAME", Value: dbcr.Namespace + "-" + dbcr.Name,
+			Name: "DB_NAME", ValueFrom: &v1.EnvVarSource{
+				SecretKeyRef: &v1.SecretKeySelector{
+					LocalObjectReference: v1.LocalObjectReference{Name: dbcr.Spec.SecretName},
+					Key:                  "POSTGRES_DB",
+				},
+			},
 		},
 		v1.EnvVar{
 			Name: "DB_PASSWORD_FILE", Value: "/srv/k8s/db-cred/POSTGRES_PASSWORD",
@@ -228,13 +233,23 @@ func mysqlEnvVars(dbcr *kciv1alpha1.Database) ([]v1.EnvVar, error) {
 			Name: "DB_PORT", Value: port,
 		},
 		v1.EnvVar{
-			Name: "DB_NAME", Value: dbcr.Namespace + "-" + dbcr.Name,
+			Name: "DB_NAME", ValueFrom: &v1.EnvVarSource{
+				SecretKeyRef: &v1.SecretKeySelector{
+					LocalObjectReference: v1.LocalObjectReference{Name: dbcr.Spec.SecretName},
+					Key:                  "DB",
+				},
+			},
+		},
+		v1.EnvVar{
+			Name: "DB_USER", ValueFrom: &v1.EnvVarSource{
+				SecretKeyRef: &v1.SecretKeySelector{
+					LocalObjectReference: v1.LocalObjectReference{Name: dbcr.Spec.SecretName},
+					Key:                  "USER",
+				},
+			},
 		},
 		v1.EnvVar{
 			Name: "DB_PASSWORD_FILE", Value: "/srv/k8s/db-cred/PASSWORD",
-		},
-		v1.EnvVar{
-			Name: "DB_USERNAME_FILE", Value: "/srv/k8s/db-cred/USER",
 		},
 		v1.EnvVar{
 			Name: "GCS_BUCKET", Value: instance.Spec.Backup.Bucket,
