@@ -45,8 +45,6 @@ spec:
   {{- end }}
   {{- if $value.generic.backupHost }}
     backupHost: {{ $value.generic.backupHost }}
-  {{- else }}
-    backupHost: {{ $value.generic.host }}
   {{- end }}
   {{- end }}
 ---
