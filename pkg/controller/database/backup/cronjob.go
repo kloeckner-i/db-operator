@@ -2,6 +2,7 @@ package backup
 
 import (
 	"errors"
+	"fmt"
 
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/pkg/apis/kci/v1alpha1"
 	"github.com/kloeckner-i/db-operator/pkg/config"
@@ -171,16 +172,9 @@ func postgresEnvVars(dbcr *kciv1alpha1.Database) ([]v1.EnvVar, error) {
 		return nil, err
 	}
 
-	var host string
-	backend, err := dbcr.GetBackendType()
+	host, err := getDbHost(dbcr)
 	if err != nil {
-		return []v1.EnvVar{}, err
-	}
-
-	if backend == "google" {
-		host = "db-" + dbcr.Name + "-svc" // cloud proxy service name
-	} else {
-		host = instance.Spec.Generic.BackupHost
+		return []v1.EnvVar{}, fmt.Errorf("can not build postgres backup job environment variables - %s", err)
 	}
 
 	port := instance.Status.Info["DB_PORT"]
@@ -219,18 +213,10 @@ func mysqlEnvVars(dbcr *kciv1alpha1.Database) ([]v1.EnvVar, error) {
 		return nil, err
 	}
 
-	var host string
-	backend, err := dbcr.GetBackendType()
+	host, err := getDbHost(dbcr)
 	if err != nil {
-		return []v1.EnvVar{}, err
+		return []v1.EnvVar{}, fmt.Errorf("can not build mysql backup job environment variables - %s", err)
 	}
-
-	if backend == "google" {
-		host = "db-" + dbcr.Name + "-svc" //cloud proxy service name
-	} else {
-		host = instance.Spec.Generic.BackupHost
-	}
-
 	port := instance.Status.Info["DB_PORT"]
 
 	return []v1.EnvVar{
@@ -263,4 +249,31 @@ func mysqlEnvVars(dbcr *kciv1alpha1.Database) ([]v1.EnvVar, error) {
 			Name: "GCS_BUCKET", Value: instance.Spec.Backup.Bucket,
 		},
 	}, nil
+}
+
+func getDbHost(dbcr *kciv1alpha1.Database) (string, error) {
+	var host = ""
+
+	instance, err := dbcr.GetInstanceRef()
+	if err != nil {
+		return host, err
+	}
+
+	backend, err := dbcr.GetBackendType()
+	if err != nil {
+		return host, err
+	}
+
+	switch backend {
+	case "google":
+		host = "db-" + dbcr.Name + "-svc" //cloud proxy service name
+		return host, nil
+	case "generic":
+		if instance.Spec.Generic.BackupHost != "" {
+			return instance.Spec.Generic.BackupHost, nil
+		}
+		return instance.Spec.Generic.Host, nil
+	default:
+		return host, errors.New("unknown backend type")
+	}
 }
