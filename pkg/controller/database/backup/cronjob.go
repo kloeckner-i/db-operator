@@ -172,7 +172,7 @@ func postgresEnvVars(dbcr *kciv1alpha1.Database) ([]v1.EnvVar, error) {
 		return nil, err
 	}
 
-	host, err := getDbHost(dbcr)
+	host, err := getBackupHost(dbcr)
 	if err != nil {
 		return []v1.EnvVar{}, fmt.Errorf("can not build postgres backup job environment variables - %s", err)
 	}
@@ -213,7 +213,7 @@ func mysqlEnvVars(dbcr *kciv1alpha1.Database) ([]v1.EnvVar, error) {
 		return nil, err
 	}
 
-	host, err := getDbHost(dbcr)
+	host, err := getBackupHost(dbcr)
 	if err != nil {
 		return []v1.EnvVar{}, fmt.Errorf("can not build mysql backup job environment variables - %s", err)
 	}
@@ -251,7 +251,7 @@ func mysqlEnvVars(dbcr *kciv1alpha1.Database) ([]v1.EnvVar, error) {
 	}, nil
 }
 
-func getDbHost(dbcr *kciv1alpha1.Database) (string, error) {
+func getBackupHost(dbcr *kciv1alpha1.Database) (string, error) {
 	var host = ""
 
 	instance, err := dbcr.GetInstanceRef()
