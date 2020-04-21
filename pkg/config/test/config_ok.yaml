@@ -8,8 +8,9 @@ instance:
 backup:
   nodeSelector: {}
   postgres:
-    image: image2:latest
-  mysql: {}
+    image: postgresbackupimage:latest
+  mysql:
+    image: mysqlbackupimage:latest
 monitoring:
   nodeSelector: {}
   postgres:

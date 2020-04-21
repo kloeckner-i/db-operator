@@ -11,6 +11,7 @@ spec:
     host: {{ .Values.mysql.serviceName }}.{{ .Release.Namespace }}
     port: 3306
     publicIp: "1.2.3.4"
+    backupHost: {{ .Values.mysql.serviceName }}.{{ .Release.Namespace }}
 ---
 apiVersion: v1
 kind: Secret

@@ -1,6 +1,9 @@
 package backup
 
 import (
+	"errors"
+	"fmt"
+
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/pkg/apis/kci/v1alpha1"
 	"github.com/kloeckner-i/db-operator/pkg/config"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
@@ -52,9 +55,28 @@ func buildCronJobSpec(dbcr *kciv1alpha1.Database) (batchv1beta1.CronJobSpec, err
 func buildJobTemplate(dbcr *kciv1alpha1.Database) (batchv1beta1.JobTemplateSpec, error) {
 	ActiveDeadlineSeconds := int64(60 * 10) // 10m
 	BackoffLimit := int32(3)
-	backupContainer, err := buildBackupContainer(dbcr)
+	instance, err := dbcr.GetInstanceRef()
 	if err != nil {
+		logrus.Errorf("can not build job template - %s", err)
 		return batchv1beta1.JobTemplateSpec{}, err
+	}
+
+	var backupContainer v1.Container
+
+	engine := instance.Spec.Engine
+	switch engine {
+	case "postgres":
+		backupContainer, err = postgresBackupContainer(dbcr)
+		if err != nil {
+			return batchv1beta1.JobTemplateSpec{}, err
+		}
+	case "mysql":
+		backupContainer, err = mysqlBackupContainer(dbcr)
+		if err != nil {
+			return batchv1beta1.JobTemplateSpec{}, err
+		}
+	default:
+		return batchv1beta1.JobTemplateSpec{}, errors.New("unknown engine type")
 	}
 
 	return batchv1beta1.JobTemplateSpec{
@@ -79,8 +101,8 @@ func buildJobTemplate(dbcr *kciv1alpha1.Database) (batchv1beta1.JobTemplateSpec,
 	}, nil
 }
 
-func buildBackupContainer(dbcr *kciv1alpha1.Database) (v1.Container, error) {
-	env, err := buildEnvVars(dbcr)
+func postgresBackupContainer(dbcr *kciv1alpha1.Database) (v1.Container, error) {
+	env, err := postgresEnvVars(dbcr)
 	if err != nil {
 		return v1.Container{}, err
 	}
@@ -94,6 +116,21 @@ func buildBackupContainer(dbcr *kciv1alpha1.Database) (v1.Container, error) {
 	}, nil
 }
 
+func mysqlBackupContainer(dbcr *kciv1alpha1.Database) (v1.Container, error) {
+	env, err := mysqlEnvVars(dbcr)
+	if err != nil {
+		return v1.Container{}, err
+	}
+
+	return v1.Container{
+		Name:            "mysql-dump",
+		Image:           conf.Backup.Mysql.Image,
+		ImagePullPolicy: v1.PullAlways,
+		VolumeMounts:    volumeMounts(),
+		Env:             env,
+	}, nil
+}
+
 func volumeMounts() []v1.VolumeMount {
 	return []v1.VolumeMount{
 		v1.VolumeMount{
@@ -101,8 +138,8 @@ func volumeMounts() []v1.VolumeMount {
 			MountPath: "/srv/gcloud/",
 		},
 		v1.VolumeMount{
-			Name:      "postgres-cred",
-			MountPath: "/srv/k8s/postgres-cred/",
+			Name:      "db-cred",
+			MountPath: "/srv/k8s/db-cred/",
 		},
 	}
 }
@@ -118,7 +155,7 @@ func volumes(dbcr *kciv1alpha1.Database) []v1.Volume {
 			},
 		},
 		v1.Volume{
-			Name: "postgres-cred",
+			Name: "db-cred",
 			VolumeSource: v1.VolumeSource{
 				Secret: &v1.SecretVolumeSource{
 					SecretName: dbcr.Spec.SecretName,
@@ -128,33 +165,115 @@ func volumes(dbcr *kciv1alpha1.Database) []v1.Volume {
 	}
 }
 
-func buildEnvVars(dbcr *kciv1alpha1.Database) ([]v1.EnvVar, error) {
+func postgresEnvVars(dbcr *kciv1alpha1.Database) ([]v1.EnvVar, error) {
 	instance, err := dbcr.GetInstanceRef()
 	if err != nil {
 		logrus.Errorf("can not build backup environment variables - %s", err)
 		return nil, err
 	}
 
-	host := "localhost"
-	if backend, _ := dbcr.GetBackendType(); backend == "google" {
-		host = "db-" + dbcr.Name + "-svc"
+	host, err := getBackupHost(dbcr)
+	if err != nil {
+		return []v1.EnvVar{}, fmt.Errorf("can not build postgres backup job environment variables - %s", err)
 	}
+
+	port := instance.Status.Info["DB_PORT"]
 
 	return []v1.EnvVar{
 		v1.EnvVar{
 			Name: "DB_HOST", Value: host,
 		},
 		v1.EnvVar{
-			Name: "DB_NAME", Value: dbcr.Namespace + "-" + dbcr.Name,
+			Name: "DB_PORT", Value: port,
 		},
 		v1.EnvVar{
-			Name: "DB_PASSWORD_FILE", Value: "/srv/k8s/postgres-cred/POSTGRES_PASSWORD",
+			Name: "DB_NAME", ValueFrom: &v1.EnvVarSource{
+				SecretKeyRef: &v1.SecretKeySelector{
+					LocalObjectReference: v1.LocalObjectReference{Name: dbcr.Spec.SecretName},
+					Key:                  "POSTGRES_DB",
+				},
+			},
 		},
 		v1.EnvVar{
-			Name: "DB_USERNAME_FILE", Value: "/srv/k8s/postgres-cred/POSTGRES_USER",
+			Name: "DB_PASSWORD_FILE", Value: "/srv/k8s/db-cred/POSTGRES_PASSWORD",
+		},
+		v1.EnvVar{
+			Name: "DB_USERNAME_FILE", Value: "/srv/k8s/db-cred/POSTGRES_USER",
 		},
 		v1.EnvVar{
 			Name: "GCS_BUCKET", Value: instance.Spec.Backup.Bucket,
 		},
 	}, nil
+}
+
+func mysqlEnvVars(dbcr *kciv1alpha1.Database) ([]v1.EnvVar, error) {
+	instance, err := dbcr.GetInstanceRef()
+	if err != nil {
+		logrus.Errorf("can not build backup environment variables - %s", err)
+		return nil, err
+	}
+
+	host, err := getBackupHost(dbcr)
+	if err != nil {
+		return []v1.EnvVar{}, fmt.Errorf("can not build mysql backup job environment variables - %s", err)
+	}
+	port := instance.Status.Info["DB_PORT"]
+
+	return []v1.EnvVar{
+		v1.EnvVar{
+			Name: "DB_HOST", Value: host,
+		},
+		v1.EnvVar{
+			Name: "DB_PORT", Value: port,
+		},
+		v1.EnvVar{
+			Name: "DB_NAME", ValueFrom: &v1.EnvVarSource{
+				SecretKeyRef: &v1.SecretKeySelector{
+					LocalObjectReference: v1.LocalObjectReference{Name: dbcr.Spec.SecretName},
+					Key:                  "DB",
+				},
+			},
+		},
+		v1.EnvVar{
+			Name: "DB_USER", ValueFrom: &v1.EnvVarSource{
+				SecretKeyRef: &v1.SecretKeySelector{
+					LocalObjectReference: v1.LocalObjectReference{Name: dbcr.Spec.SecretName},
+					Key:                  "USER",
+				},
+			},
+		},
+		v1.EnvVar{
+			Name: "DB_PASSWORD_FILE", Value: "/srv/k8s/db-cred/PASSWORD",
+		},
+		v1.EnvVar{
+			Name: "GCS_BUCKET", Value: instance.Spec.Backup.Bucket,
+		},
+	}, nil
+}
+
+func getBackupHost(dbcr *kciv1alpha1.Database) (string, error) {
+	var host = ""
+
+	instance, err := dbcr.GetInstanceRef()
+	if err != nil {
+		return host, err
+	}
+
+	backend, err := dbcr.GetBackendType()
+	if err != nil {
+		return host, err
+	}
+
+	switch backend {
+	case "google":
+		host = "db-" + dbcr.Name + "-svc" //cloud proxy service name
+		return host, nil
+	case "generic":
+		if instance.Spec.Generic.BackupHost != "" {
+			return instance.Spec.Generic.BackupHost, nil
+		}
+		return instance.Spec.Generic.Host, nil
+	default:
+		return host, errors.New("unknown backend type")
+	}
 }

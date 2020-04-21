@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/pkg/apis/kci/v1alpha1"
 	backup "github.com/kloeckner-i/db-operator/pkg/controller/database/backup"
 
@@ -13,10 +14,6 @@ import (
 func (r *ReconcileDatabase) createBackupJob(dbcr *kciv1alpha1.Database) error {
 	if !dbcr.Spec.Backup.Enable {
 		// if not enabled, skip
-		return nil
-	}
-	if backend, _ := dbcr.GetBackendType(); backend != "google" {
-		// backup job support only gcloud for the moment
 		return nil
 	}
 

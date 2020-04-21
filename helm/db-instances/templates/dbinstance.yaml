@@ -43,6 +43,9 @@ spec:
   {{- if $value.generic.publicIp }}
     publicIp: {{ $value.generic.publicIp }}
   {{- end }}
+  {{- if $value.generic.backupHost }}
+    backupHost: {{ $value.generic.backupHost }}
+  {{- end }}
   {{- end }}
 ---
 apiVersion: v1

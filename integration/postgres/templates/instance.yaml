@@ -10,6 +10,7 @@ spec:
   generic:
     host: {{ .Values.postgres.serviceName }}.{{ .Release.Namespace }}
     port: 5432
+    backupHost: {{ .Values.postgres.serviceName }}.{{ .Release.Namespace }}
 ---
 apiVersion: v1
 kind: Secret
