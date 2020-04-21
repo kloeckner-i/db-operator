@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/kloeckner-i/db-operator/pkg/config"
@@ -94,14 +95,13 @@ func deploymentSpec(conn string, port int32, labels map[string]string, instanceA
 func container(conn string, port int32) (v1.Container, error) {
 	RunAsUser := int64(2)
 	AllowPrivilegeEscalation := false
+	instanceArg := fmt.Sprintf("-instances=%s=tcp:0.0.0.0:%s", conn, strconv.FormatInt(int64(port), 10))
 
 	return v1.Container{
 		Name:    "cloudsql-proxy",
 		Image:   conf.Instances.Google.ProxyConfig.Image,
-		Command: []string{"/bin/sh", "-c"},
-		Args: []string{
-			`/cloud_sql_proxy -instances=${CSQLInstance}=tcp:0.0.0.0:${CSQLPort} -credential_file=/srv/gcloud/credentials.json`,
-		},
+		Command: []string{"/cloud_sql_proxy"},
+		Args:    []string{instanceArg, "-credential_file=/srv/gcloud/credentials.json"},
 		SecurityContext: &v1.SecurityContext{
 			RunAsUser:                &RunAsUser,
 			AllowPrivilegeEscalation: &AllowPrivilegeEscalation,
@@ -118,14 +118,6 @@ func container(conn string, port int32) (v1.Container, error) {
 			v1.VolumeMount{
 				Name:      instanceAccessSecretVolumeName,
 				MountPath: "/srv/gcloud/",
-			},
-		},
-		Env: []v1.EnvVar{
-			v1.EnvVar{
-				Name: "CSQLInstance", Value: conn,
-			},
-			v1.EnvVar{
-				Name: "CSQLPort", Value: strconv.FormatInt(int64(port), 10),
 			},
 		},
 	}, nil
