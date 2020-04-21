@@ -12,11 +12,21 @@ Currently it supports only GCS as backup storage.
 ## Limitation
 
 * Only GCS as backend storage
-* Only Postgres engine 
 
 ## How to enable
 
+Create [Google Service Account](https://cloud.google.com/iam/docs/service-accounts) with `Storage Legacy Bucket Writer` role to the GCS bucket.
+In case the DbInstance type is GSQL, `Cloud SQL Client` role need to be assigned to the Service Account additionally.
+
 Create secret resource with name `google-cloud-storage-bucket-cred` which contains service account json in the same namespace of Database resource.
+
+Creating the secret from file can be done by following command. Service Account json key has to be saved with name `credentials.json` first.
+
+```
+kubectl create secret generic google-cloud-storage-bucket-cred --from-file ./credentials.json
+```
+
+The Secret should look like below.
 
 ```YAML
 apiVersion: v1
@@ -28,7 +38,7 @@ data:
   credentials.json: << google service account json base64 encoded >>
 ```
 
-To set which bucket to use, set bucket name in DbInstance spec.
+Configure bucket name in DbInstance spec.
 
 ```YAML
 apiVersion: kci.rocks/v1alpha1
@@ -38,8 +48,26 @@ metadata:
 spec:
 ...
   backup:
-    bucket: "<< name of google cloud bucket >>"
+    bucket: "<< name of the GCS bucket >>"
 ```
+
+When the DbInstance type is generic, the host address which will be used by backup job can be set differently by adding `backupHost` in spec. For example, slave can be used for backup.
+When it's not specified, backup job will use `host` address by default.
+
+```YAML
+apiVersion: kci.rocks/v1alpha1
+kind: DbInstance
+metadata:
+  name: example-instance
+spec:
+...
+  generic:
+    host: master.host
+    port: 1234
+    backupHost: slave.host
+...
+```
+
 
 Change `backup.enable` to **true** in Database custom resource spec and set schedule with cronjob syntax.
 
