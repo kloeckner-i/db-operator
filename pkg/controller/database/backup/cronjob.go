@@ -1,7 +1,7 @@
 package backup
 
 import (
-	"fmt"
+	"errors"
 
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/pkg/apis/kci/v1alpha1"
 	"github.com/kloeckner-i/db-operator/pkg/config"
@@ -75,7 +75,7 @@ func buildJobTemplate(dbcr *kciv1alpha1.Database) (batchv1beta1.JobTemplateSpec,
 			return batchv1beta1.JobTemplateSpec{}, err
 		}
 	default:
-		return batchv1beta1.JobTemplateSpec{}, fmt.Errorf("unknown engine type")
+		return batchv1beta1.JobTemplateSpec{}, errors.New("unknown engine type")
 	}
 
 	return batchv1beta1.JobTemplateSpec{
@@ -171,8 +171,12 @@ func postgresEnvVars(dbcr *kciv1alpha1.Database) ([]v1.EnvVar, error) {
 		return nil, err
 	}
 
-	host := "localhost"
-	backend, _ := dbcr.GetBackendType()
+	var host string
+	backend, err := dbcr.GetBackendType()
+	if err != nil {
+		return []v1.EnvVar{}, err
+	}
+
 	if backend == "google" {
 		host = "db-" + dbcr.Name + "-svc" // cloud proxy service name
 	} else {
@@ -215,8 +219,12 @@ func mysqlEnvVars(dbcr *kciv1alpha1.Database) ([]v1.EnvVar, error) {
 		return nil, err
 	}
 
-	host := "localhost"
-	backend, _ := dbcr.GetBackendType()
+	var host string
+	backend, err := dbcr.GetBackendType()
+	if err != nil {
+		return []v1.EnvVar{}, err
+	}
+
 	if backend == "google" {
 		host = "db-" + dbcr.Name + "-svc" //cloud proxy service name
 	} else {
