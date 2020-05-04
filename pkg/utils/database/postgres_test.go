@@ -96,3 +96,36 @@ func TestPostgresGetCredentials(t *testing.T) {
 	assert.Equal(t, cred.Name, p.Database)
 	assert.Equal(t, cred.Password, p.Password)
 }
+
+func TestPostgresParseAdminCredentials(t *testing.T) {
+	p := testPostgres()
+
+	invalidData := make(map[string][]byte)
+	invalidData["unknownkey"] = []byte("wrong")
+
+	_, err := p.ParseAdminCredentials(invalidData)
+	assert.Errorf(t, err, "should get error %v", err)
+
+	validData1 := make(map[string][]byte)
+	validData1["user"] = []byte("admin")
+	validData1["password"] = []byte("admin")
+
+	cred, err := p.ParseAdminCredentials(validData1)
+	assert.NoErrorf(t, err, "expected no error %v", err)
+	assert.Equal(t, string(validData1["user"]), cred.Username, "expect same values")
+	assert.Equal(t, string(validData1["password"]), cred.Password, "expect same values")
+
+	validData2 := make(map[string][]byte)
+	validData2["postgresql-password"] = []byte("passw0rd")
+	cred, err = p.ParseAdminCredentials(validData2)
+	assert.NoErrorf(t, err, "expected no error %v", err)
+	assert.Equal(t, "postgres", cred.Username, "expect same values")
+	assert.Equal(t, string(validData2["postgresql-password"]), cred.Password, "expect same values")
+
+	validData3 := make(map[string][]byte)
+	validData3["postgresql-postgres-password"] = []byte("passw0rd")
+	cred, err = p.ParseAdminCredentials(validData3)
+	assert.NoErrorf(t, err, "expected no error %v", err)
+	assert.Equal(t, "postgres", cred.Username, "expect same values")
+	assert.Equal(t, string(validData3["postgresql-postgres-password"]), cred.Password, "expect same values")
+}

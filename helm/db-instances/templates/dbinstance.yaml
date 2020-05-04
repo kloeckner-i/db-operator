@@ -1,7 +1,6 @@
 {{- $release := .Release }}
 {{- $heritage := .Release.Service }}
 {{- $chart := .Chart.Name }}
-{{- $test := .Values.test }}
 {{- $operatorNs := include "db-instances.name" . -}}
 {{- if .Values.dbinstances }}
 {{- range $name, $value := .Values.dbinstances }}
@@ -20,9 +19,15 @@ metadata:
     heritage: {{ $heritage }}
 spec:
   engine: {{ $value.engine }}
+  {{- if $value.existingAdminSecret }}
+  adminSecretRef: 
+    Namespace: {{ $value.existingAdminSecret.namespace }}
+    Name: {{ $value.existingAdminSecret.name }}
+  {{- else }}
   adminSecretRef: 
     Namespace: {{ $operatorNs }}
-    Name: {{ $value.adminUserSecretName }}
+    Name: {{ $name }}-admin-secret
+  {{- end }}
   {{- if $value.backup }}
   backup:
 {{ toYaml $value.backup | indent 4 }}
@@ -47,11 +52,12 @@ spec:
     backupHost: {{ $value.generic.backupHost }}
   {{- end }}
   {{- end }}
+{{- if not $value.existingAdminSecret }}
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{ $value.adminUserSecretName }}
+  name: {{ $name }}-admin-secret
   namespace: {{ $operatorNs }}
   labels:
     chart: {{ $chart }}
@@ -61,6 +67,7 @@ type: Opaque
 data:
   user: {{ $value.secrets.adminUser | b64enc }}
   password: {{ $value.secrets.adminPassword | b64enc }}
+{{- end }}
 ---
 {{- if $value.google }}
 apiVersion: v1

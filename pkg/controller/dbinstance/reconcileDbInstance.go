@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/pkg/apis/kci/v1alpha1"
+	database "github.com/kloeckner-i/db-operator/pkg/utils/database"
 	"github.com/kloeckner-i/db-operator/pkg/utils/dbinstance"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 	"github.com/sirupsen/logrus"
@@ -16,18 +17,18 @@ func (r *ReconcileDbInstance) create(dbin *kciv1alpha1.DbInstance) error {
 		return err
 	}
 
-	cred := &dbinstance.AdminCredentials{
-		Username: string(secret.Data["user"]),
-		Password: string(secret.Data["password"]),
+	db := database.New(dbin.Spec.Engine)
+	cred, err := db.ParseAdminCredentials(secret.Data)
+	if err != nil {
+		return err
 	}
-
-	var instance dbinstance.DbInstance
 
 	backend, err := dbin.GetBackendType()
 	if err != nil {
 		return err
 	}
 
+	var instance dbinstance.DbInstance
 	switch backend {
 	case "google":
 		configmap, err := kci.GetConfigResource(dbin.Spec.Google.ConfigmapName)

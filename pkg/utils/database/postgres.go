@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -250,4 +251,43 @@ func (p Postgres) checkExtensions() error {
 	}
 
 	return nil
+}
+
+// ParseAdminCredentials parse admin username and password of postgres database from secret data
+// If "user" key is not defined, take "postgres" as admin user by default
+func (p Postgres) ParseAdminCredentials(data map[string][]byte) (AdminCredentials, error) {
+	cred := AdminCredentials{}
+
+	_, ok := data["user"]
+	if ok {
+		cred.Username = string(data["user"])
+	} else {
+		// default admin username is "postgres"
+		cred.Username = "postgres"
+	}
+
+	// if "password" key is defined in data, take value as password
+	_, ok = data["password"]
+	if ok {
+		cred.Password = string(data["password"])
+		return cred, nil
+	}
+
+	// take value of "postgresql-password" key as password if "password" key is not defined in data
+	// it's compatible with secret created by stable postgres chart
+	_, ok = data["postgresql-password"]
+	if ok {
+		cred.Password = string(data["postgresql-password"])
+		return cred, nil
+	}
+
+	// take value of "postgresql-password" key as password if "postgresql-password" and "password" key is not defined in data
+	// it's compatible with secret created by stable postgres chart
+	_, ok = data["postgresql-postgres-password"]
+	if ok {
+		cred.Password = string(data["postgresql-postgres-password"])
+		return cred, nil
+	}
+
+	return cred, errors.New("can not find postgres admin credentials")
 }

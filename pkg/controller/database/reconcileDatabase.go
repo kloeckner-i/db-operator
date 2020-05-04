@@ -102,7 +102,7 @@ func (r *ReconcileDatabase) createDatabase(dbcr *kciv1alpha1.Database) error {
 	}
 
 	// found admin secret. parse it to connect database
-	adminCred, err := parseDatabaseAdminSecretData(dbcr, adminSecretResource.Data)
+	adminCred, err := db.ParseAdminCredentials(adminSecretResource.Data)
 	if err != nil {
 		// failed to parse database admin secret
 		return err
@@ -182,7 +182,7 @@ func (r *ReconcileDatabase) deleteDatabase(dbcr *kciv1alpha1.Database) error {
 		return err
 	}
 	// found admin secret. parse it to connect database
-	adminCred, err := parseDatabaseAdminSecretData(dbcr, adminSecretResource.Data)
+	adminCred, err := db.ParseAdminCredentials(adminSecretResource.Data)
 	if err != nil {
 		// failed to parse database admin secret
 		return err

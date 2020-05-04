@@ -132,24 +132,6 @@ func parseDatabaseSecretData(dbcr *kciv1alpha1.Database, data map[string][]byte)
 	}
 }
 
-func parseDatabaseAdminSecretData(dbcr *kciv1alpha1.Database, data map[string][]byte) (database.AdminCredentials, error) {
-	cred := database.AdminCredentials{}
-
-	_, ok := data["user"]
-	if !ok {
-		return cred, errors.New("can not find user in admin secret data")
-	}
-	_, ok = data["password"]
-	if !ok {
-		return cred, errors.New("can not find password in admin secret data")
-	}
-
-	cred.Username = string(data["user"])
-	cred.Password = string(data["password"])
-
-	return cred, nil
-}
-
 func generateDatabaseSecretData(dbcr *kciv1alpha1.Database) (map[string][]byte, error) {
 	engine, err := dbcr.GetEngineType()
 	if err != nil {
