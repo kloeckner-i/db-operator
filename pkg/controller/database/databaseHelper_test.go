@@ -68,24 +68,6 @@ func TestParseMysqlSecretData(t *testing.T) {
 	assert.Equal(t, string(validData["PASSWORD"]), cred.Password, "expect same values")
 }
 
-func TestParseAdminSecretData(t *testing.T) {
-	postgresDbCr := newPostgresTestDbCr(newPostgresTestDbInstanceCr())
-	invalidData := make(map[string][]byte)
-	invalidData["unknownkey"] = []byte("wrong")
-
-	_, err := parseDatabaseAdminSecretData(postgresDbCr, invalidData)
-	assert.Errorf(t, err, "should get error %v", err)
-
-	validData := make(map[string][]byte)
-	validData["user"] = []byte("admin")
-	validData["password"] = []byte("admin")
-
-	cred, err := parseDatabaseAdminSecretData(postgresDbCr, validData)
-	assert.NoErrorf(t, err, "expected no error %v", err)
-	assert.Equal(t, string(validData["user"]), cred.Username, "expect same values")
-	assert.Equal(t, string(validData["password"]), cred.Password, "expect same values")
-}
-
 func TestMonitoringNotEnabled(t *testing.T) {
 	instance := newPostgresTestDbInstanceCr()
 	instance.Spec.Monitoring.Enabled = false

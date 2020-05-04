@@ -21,4 +21,5 @@ type Database interface {
 	deleteUser(admin AdminCredentials) error
 	CheckStatus() error
 	GetCredentials() Credentials
+	ParseAdminCredentials(data map[string][]byte) (AdminCredentials, error)
 }

@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -194,4 +195,34 @@ func (m Mysql) GetCredentials() Credentials {
 		Username: m.User,
 		Password: m.Password,
 	}
+}
+
+// ParseAdminCredentials parse admin username and password of mysql database from secret data
+// If "user" key is not defined, take "root" as admin user by default
+func (m Mysql) ParseAdminCredentials(data map[string][]byte) (AdminCredentials, error) {
+	cred := AdminCredentials{}
+
+	_, ok := data["user"]
+	if ok {
+		cred.Username = string(data["user"])
+	} else {
+		// default admin username is "root"
+		cred.Username = "root"
+	}
+
+	// if "password" key is defined in data, take value as password
+	if ok {
+		cred.Password = string(data["password"])
+		return cred, nil
+	}
+
+	// take value of "mysql-root-password" key as password if "password" key is not defined in data
+	// it's compatible with secret created by stable mysql chart
+	_, ok = data["mysql-root-password"]
+	if ok {
+		cred.Password = string(data["mysql-root-password"])
+		return cred, nil
+	}
+
+	return cred, errors.New("can not find mysql admin credentials")
 }

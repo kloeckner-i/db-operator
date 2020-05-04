@@ -115,3 +115,29 @@ func TestMysqlGetCredentials(t *testing.T) {
 	assert.Equal(t, cred.Name, m.Database)
 	assert.Equal(t, cred.Password, m.Password)
 }
+
+func TestMysqlParseAdminCredentials(t *testing.T) {
+	m := testMysql()
+
+	invalidData := make(map[string][]byte)
+	invalidData["unknownkey"] = []byte("wrong")
+
+	_, err := m.ParseAdminCredentials(invalidData)
+	assert.Errorf(t, err, "should get error %v", err)
+
+	validData1 := make(map[string][]byte)
+	validData1["user"] = []byte("admin")
+	validData1["password"] = []byte("admin")
+
+	cred, err := m.ParseAdminCredentials(validData1)
+	assert.NoErrorf(t, err, "expected no error %v", err)
+	assert.Equal(t, string(validData1["user"]), cred.Username, "expect same values")
+	assert.Equal(t, string(validData1["password"]), cred.Password, "expect same values")
+
+	validData2 := make(map[string][]byte)
+	validData2["mysql-root-password"] = []byte("passw0rd")
+	cred, err = m.ParseAdminCredentials(validData2)
+	assert.NoErrorf(t, err, "expected no error %v", err)
+	assert.Equal(t, "root", cred.Username, "expect same values")
+	assert.Equal(t, string(validData2["mysql-root-password"]), cred.Password, "expect same values")
+}

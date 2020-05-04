@@ -19,10 +19,12 @@ Using existing database server
 #### Prerequisite
 * running database server accessible by ip or hostname
 
-Create secret containing admin username and password of an instance.
+Create a new secret containing admin username and password of an instance.
 ```
 kubectl create secret generic example-generic-admin-secret --from-literal=user=<admin user name> --from-literal=password='<admin user password>'
 ```
+
+Or use existing secret created by stable mysql/postgres helm chart.
 
 Create **DbInstance** custom resource.
 ```YAML
