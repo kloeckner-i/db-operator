@@ -211,6 +211,7 @@ func (m Mysql) ParseAdminCredentials(data map[string][]byte) (AdminCredentials, 
 	}
 
 	// if "password" key is defined in data, take value as password
+	_, ok = data["password"]
 	if ok {
 		cred.Password = string(data["password"])
 		return cred, nil
