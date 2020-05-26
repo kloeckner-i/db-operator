@@ -10,7 +10,7 @@ import (
 func BuildDeployment(proxy Proxy) (*v1apps.Deployment, error) {
 	deploy, err := proxy.buildDeployment()
 	if err != nil {
-		logrus.Error("failed building cloudsql proxy deployment")
+		logrus.Error("failed building proxy deployment")
 		return nil, err
 	}
 
@@ -21,9 +21,20 @@ func BuildDeployment(proxy Proxy) (*v1apps.Deployment, error) {
 func BuildService(proxy Proxy) (*v1.Service, error) {
 	svc, err := proxy.buildService()
 	if err != nil {
-		logrus.Error("failed building cloudsql proxy service")
+		logrus.Error("failed building proxy service")
 		return nil, err
 	}
 
 	return svc, nil
+}
+
+// BuildConfigmap builds kubernetes configmap object used by proxy container of the database
+func BuildConfigmap(proxy Proxy) (*v1.ConfigMap, error) {
+	cm, err := proxy.buildConfigMap()
+	if err != nil {
+		logrus.Error("failed building proxy configmap")
+		return nil, err
+	}
+
+	return &cm, nil
 }

@@ -13,12 +13,17 @@ import (
 // +k8s:openapi-gen=true
 type DbInstanceSpec struct {
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	Engine          string               `json:"engine"`
-	AdminUserSecret types.NamespacedName `json:"adminSecretRef"`
-	Backup          DbInstanceBackup     `json:"backup"`
-	Monitoring      DbInstanceMonitoring `json:"monitoring"`
-	Google          *GoogleInstance      `json:"google,omitempty"`
-	Generic         *GenericInstance     `json:"generic,omitempty"`
+	Engine           string               `json:"engine"`
+	AdminUserSecret  types.NamespacedName `json:"adminSecretRef"`
+	Backup           DbInstanceBackup     `json:"backup"`
+	Monitoring       DbInstanceMonitoring `json:"monitoring"`
+	DbInstanceSource `json:",inline"`
+}
+
+type DbInstanceSource struct {
+	Google  *GoogleInstance  `json:"google,omitempty" protobuf:"bytes,1,opt,name=google"`
+	Generic *GenericInstance `json:"generic,omitempty" protobuf:"bytes,2,opt,name=generic"`
+	Percona *PerconaCluster  `json:"percona,omitempty" protobuf:"bytes,3,opt,name=percona"`
 }
 
 // DbInstanceStatus defines the observed state of DbInstance
@@ -36,6 +41,13 @@ type DbInstanceStatus struct {
 type GoogleInstance struct {
 	InstanceName  string               `json:"instance"`
 	ConfigmapName types.NamespacedName `json:"configmapRef"`
+}
+
+type PerconaCluster struct {
+	ServerList        []string             `json:"servers"` // hostgroup: host address
+	Port              int32                `json:"port"`
+	MaxConnection     int16                `json:"maxConn"`
+	MonitorUserSecret types.NamespacedName `json:"monitorUserSecretRef"`
 }
 
 // GenericInstance is used when instance type is generic
@@ -101,12 +113,28 @@ func (dbin *DbInstance) ValidateEngine() error {
 // returns error when more than one backend types are defined
 // or when no backend type is defined
 func (dbin *DbInstance) ValidateBackend() error {
-	if (dbin.Spec.Google != nil) && (dbin.Spec.Generic != nil) {
-		return errors.New("more than one instance type defined")
+	source := dbin.Spec.DbInstanceSource
+
+	if (source.Google == nil) && (source.Generic == nil) && (source.Percona == nil) {
+		return errors.New("no instance type defined")
 	}
 
-	if (dbin.Spec.Google == nil) && (dbin.Spec.Generic == nil) {
-		return errors.New("no instance type defined")
+	numVolumes := 0
+
+	if source.Google != nil {
+		numVolumes++
+	}
+
+	if source.Generic != nil {
+		numVolumes++
+	}
+
+	if source.Percona != nil {
+		numVolumes++
+	}
+
+	if numVolumes > 1 {
+		return errors.New("may not specify more than 1 instance type")
 	}
 
 	return nil
@@ -119,12 +147,19 @@ func (dbin *DbInstance) GetBackendType() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if dbin.Spec.Google != nil {
+
+	source := dbin.Spec.DbInstanceSource
+
+	if source.Google != nil {
 		return "google", nil
 	}
 
-	if dbin.Spec.Generic != nil {
+	if source.Generic != nil {
 		return "generic", nil
+	}
+
+	if source.Percona != nil {
+		return "percona", nil
 	}
 
 	return "", errors.New("no backend type defined")
