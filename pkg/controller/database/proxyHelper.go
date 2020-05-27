@@ -31,15 +31,15 @@ func determinProxyType(dbcr *kciv1alpha1.Database) (proxy.Proxy, error) {
 		return nil, err
 	}
 
+	portString := instance.Status.Info["DB_PORT"]
+	port, err := strconv.Atoi(portString)
+	if err != nil {
+		logrus.Errorf("can not convert DB_PORT to int - %s", err)
+		return nil, err
+	}
+
 	switch backend {
 	case "google":
-		portString := instance.Status.Info["DB_PORT"]
-		port, err := strconv.Atoi(portString)
-		if err != nil {
-			logrus.Errorf("can not convert DB_PORT to int - %s", err)
-			return nil, err
-		}
-
 		labels := map[string]string{
 			"app":     "cloudproxy",
 			"db-name": dbcr.Name,
@@ -53,6 +53,22 @@ func determinProxyType(dbcr *kciv1alpha1.Database) (proxy.Proxy, error) {
 			Engine:                 engine,
 			Port:                   int32(port),
 			Labels:                 kci.LabelBuilder(labels),
+		}, nil
+	case "percona":
+		labels := map[string]string{
+			"app":     "proxysql",
+			"db-name": dbcr.Name,
+		}
+
+		return &proxy.ProxySQL{
+			NamePrefix:            "db-" + dbcr.Name,
+			Namespace:             dbcr.Namespace,
+			Servers:               instance.Spec.Percona.ServerList,
+			MaxConn:               instance.Spec.Percona.MaxConnection,
+			MonitorUserSecretName: dbcr.Status.MonitorUserSecretName,
+			Engine:                engine,
+			Port:                  int32(port),
+			Labels:                kci.LabelBuilder(labels),
 		}, nil
 	default:
 		err := errors.New("not supported backend type")

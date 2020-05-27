@@ -142,6 +142,6 @@ func (cp *CloudProxy) container() (v1.Container, error) {
 	}, nil
 }
 
-func (cp *CloudProxy) buildConfigMap() (v1.ConfigMap, error) {
-	return v1.ConfigMap{}, nil
+func (cp *CloudProxy) buildConfigMap() (*v1.ConfigMap, error) {
+	return nil, nil
 }

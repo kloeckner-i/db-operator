@@ -52,6 +52,14 @@ func (r *ReconcileDbInstance) create(dbin *kciv1alpha1.DbInstance) error {
 			User:     cred.Username,
 			Password: cred.Password,
 		}
+	case "percona":
+		instance = &dbinstance.Generic{
+			Host:     dbin.Spec.Percona.ServerList[0],
+			Port:     dbin.Spec.Percona.Port,
+			Engine:   dbin.Spec.Engine,
+			User:     cred.Username,
+			Password: cred.Password,
+		}
 	default:
 		return errors.New("not supported backend type")
 	}

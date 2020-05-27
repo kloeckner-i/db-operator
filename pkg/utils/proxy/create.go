@@ -36,5 +36,5 @@ func BuildConfigmap(proxy Proxy) (*v1.ConfigMap, error) {
 		return nil, err
 	}
 
-	return &cm, nil
+	return cm, nil
 }

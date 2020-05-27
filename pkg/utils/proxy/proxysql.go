@@ -212,7 +212,7 @@ func (ps *ProxySQL) proxyContainer() (v1.Container, error) {
 	}, nil
 }
 
-func (ps *ProxySQL) buildConfigMap() (v1.ConfigMap, error) {
+func (ps *ProxySQL) buildConfigMap() (*v1.ConfigMap, error) {
 	configTmpl := proxysql.PerconaMysqlConfigTemplate
 	t := template.Must(template.New("config").Parse(configTmpl))
 
@@ -241,7 +241,7 @@ func (ps *ProxySQL) buildConfigMap() (v1.ConfigMap, error) {
 		"proxysql.cnf.tmpl": outputBuf.String(),
 	}
 
-	return v1.ConfigMap{
+	return &v1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ConfigMap",
 			APIVersion: "v1",
