@@ -22,10 +22,6 @@ type genericInstanceConfig struct {
 	// TODO
 }
 
-type perconaClusterConfig struct {
-	ProxyConfig proxyConfig `yaml:"proxy"`
-}
-
 type proxyConfig struct {
 	NodeSelector map[string]string `yaml:"nodeSelector"`
 	Image        string            `yaml:"image"`

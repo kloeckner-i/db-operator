@@ -109,19 +109,6 @@ type: Opaque
 data:
   user: {{ $value.percona.monitoruser.name | b64enc }}
   password: {{ $value.percona.monitoruser.password | b64enc }}
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ $name }}-proxysql-config-template
-  namespace: {{ $operatorNs }}
-  labels:
-    chart: {{ $chart }}
-    release: {{ $release.Name }}
-    heritage: {{ $heritage }}
-data:
-  config: |
-{{ $value.percona.proxyConfig.data | indent 4 }}
 {{- end }}
 {{- end }}
 {{- end }}
