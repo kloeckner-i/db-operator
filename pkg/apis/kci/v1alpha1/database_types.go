@@ -25,9 +25,10 @@ type DatabaseSpec struct {
 type DatabaseStatus struct {
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
-	Phase       string      `json:"phase"`
-	Status      bool        `json:"status"`
-	InstanceRef *DbInstance `json:"instanceRef"`
+	Phase                 string      `json:"phase"`
+	Status                bool        `json:"status"`
+	InstanceRef           *DbInstance `json:"instanceRef"`
+	MonitorUserSecretName string      `json:"monitorUserSecret,omitempty"`
 }
 
 // DatabaseBackup defines the desired state of backup and schedule

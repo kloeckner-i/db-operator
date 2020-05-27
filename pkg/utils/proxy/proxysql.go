@@ -6,6 +6,8 @@ import (
 	"log"
 	"strconv"
 
+	proxysql "github.com/kloeckner-i/db-operator/pkg/utils/proxy/proxysql"
+
 	v1apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,6 +25,17 @@ type ProxySQL struct {
 	Labels                map[string]string
 }
 
+const sqlPort = 6033
+const adminPort = 6032
+
+func (ps *ProxySQL) configMapName() string {
+	return ps.NamePrefix + "-proxysql-config-template"
+}
+
+func (ps *ProxySQL) serviceName() string {
+	return ps.NamePrefix + "-proxysql"
+}
+
 func (ps *ProxySQL) buildService() (*v1.Service, error) {
 	return &v1.Service{
 		TypeMeta: metav1.TypeMeta{
@@ -30,7 +43,7 @@ func (ps *ProxySQL) buildService() (*v1.Service, error) {
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      ps.NamePrefix + "-svc",
+			Name:      ps.serviceName(),
 			Namespace: ps.Namespace,
 			Labels:    ps.Labels,
 		},
@@ -39,7 +52,7 @@ func (ps *ProxySQL) buildService() (*v1.Service, error) {
 				v1.ServicePort{
 					Name:     ps.Engine,
 					Protocol: v1.ProtocolTCP,
-					Port:     ps.Port,
+					Port:     sqlPort,
 				},
 			},
 			Selector: ps.Labels,
@@ -70,6 +83,11 @@ func (ps *ProxySQL) buildDeployment() (*v1apps.Deployment, error) {
 func (ps *ProxySQL) deploymentSpec() (v1apps.DeploymentSpec, error) {
 	var replicas int32 = 2
 
+	configGenContainer, err := ps.configGeneratorContainer()
+	if err != nil {
+		return v1apps.DeploymentSpec{}, err
+	}
+
 	proxyContainer, err := ps.proxyContainer()
 	if err != nil {
 		return v1apps.DeploymentSpec{}, err
@@ -77,19 +95,31 @@ func (ps *ProxySQL) deploymentSpec() (v1apps.DeploymentSpec, error) {
 
 	volumes := []v1.Volume{
 		v1.Volume{
-			Name: "name", //TODO change
+			Name: "shared-data",
 			VolumeSource: v1.VolumeSource{
-				Secret: &v1.SecretVolumeSource{
-					SecretName: ps.MonitorUserSecretName,
+				EmptyDir: &v1.EmptyDirVolumeSource{},
+			},
+		},
+		v1.Volume{
+			Name: "proxysql-config-template",
+			VolumeSource: v1.VolumeSource{
+				ConfigMap: &v1.ConfigMapVolumeSource{
+					LocalObjectReference: v1.LocalObjectReference{
+						Name: ps.configMapName(),
+					},
 				},
 			},
 		},
 		v1.Volume{
-			Name: "proxysql-config",
+			Name: "monitoruser-secret",
 			VolumeSource: v1.VolumeSource{
-				ConfigMap: &v1.ConfigMapVolumeSource{
-					LocalObjectReference: v1.LocalObjectReference{
-						Name: ps.NamePrefix + "-proxysql-config",
+				Secret: &v1.SecretVolumeSource{
+					SecretName: ps.MonitorUserSecretName,
+					Items: []v1.KeyToPath{
+						v1.KeyToPath{
+							Key:  "password",
+							Path: "monitoruser-password",
+						},
 					},
 				},
 			},
@@ -106,10 +136,11 @@ func (ps *ProxySQL) deploymentSpec() (v1apps.DeploymentSpec, error) {
 				Labels: ps.Labels,
 			},
 			Spec: v1.PodSpec{
-				Containers:    []v1.Container{proxyContainer},
-				NodeSelector:  conf.Instances.Percona.ProxyConfig.NodeSelector,
-				RestartPolicy: v1.RestartPolicyAlways,
-				Volumes:       volumes,
+				InitContainers: []v1.Container{configGenContainer},
+				Containers:     []v1.Container{proxyContainer},
+				NodeSelector:   conf.Instances.Percona.ProxyConfig.NodeSelector,
+				RestartPolicy:  v1.RestartPolicyAlways,
+				Volumes:        volumes,
 				Affinity: &v1.Affinity{
 					PodAntiAffinity: podAntiAffinity(ps.Labels),
 				},
@@ -118,11 +149,22 @@ func (ps *ProxySQL) deploymentSpec() (v1apps.DeploymentSpec, error) {
 	}, nil
 }
 
-func (ps *ProxySQL) initContainer() (v1.Container, error) {
+func (ps *ProxySQL) configGeneratorContainer() (v1.Container, error) {
 	return v1.Container{
 		Name:            "config-generator",
 		Image:           "alpine",
 		ImagePullPolicy: v1.PullIfNotPresent,
+		Command:         []string{"sh", "-c", "apk add --update gettext && MONITOR_PASSWORD=$(cat /run/secrets/monitoruser-password) envsubst < /tmp/proxysql.cnf.tmpl > /mnt/proxysql.cnf"},
+		Env: []v1.EnvVar{
+			v1.EnvVar{
+				Name: "MONITOR_USERNAME", ValueFrom: &v1.EnvVarSource{
+					SecretKeyRef: &v1.SecretKeySelector{
+						LocalObjectReference: v1.LocalObjectReference{Name: ps.MonitorUserSecretName},
+						Key:                  "user",
+					},
+				},
+			},
+		},
 		VolumeMounts: []v1.VolumeMount{
 			v1.VolumeMount{
 				Name:      "proxysql-config-template",
@@ -130,57 +172,68 @@ func (ps *ProxySQL) initContainer() (v1.Container, error) {
 				SubPath:   "proxysql.cnf.tmpl",
 			},
 			v1.VolumeMount{
-				Name: "shared-data",
+				Name:      "shared-data",
 				MountPath: "/mnt",
-			}
+			},
+			v1.VolumeMount{
+				Name:      "monitoruser-secret",
+				MountPath: "/run/secrets/monitoruser-password",
+				SubPath:   "monitoruser-password",
+				ReadOnly:  true,
+			},
 		},
 	}, nil
 }
 
 func (ps *ProxySQL) proxyContainer() (v1.Container, error) {
-	RunAsUser := int64(2)
-	AllowPrivilegeEscalation := false
-
 	return v1.Container{
-		Name:  "proxysql",
-		Image: conf.Instances.Percona.ProxyConfig.Image,
-		SecurityContext: &v1.SecurityContext{
-			RunAsUser:                &RunAsUser,
-			AllowPrivilegeEscalation: &AllowPrivilegeEscalation,
-		},
+		Name:            "proxysql",
+		Image:           conf.Instances.Percona.ProxyConfig.Image,
 		ImagePullPolicy: v1.PullIfNotPresent,
 		Ports: []v1.ContainerPort{
 			v1.ContainerPort{
-				Name:          "sqlport",
-				ContainerPort: ps.Port,
+				Name:          "sql",
+				ContainerPort: sqlPort,
+				Protocol:      v1.ProtocolTCP,
+			},
+			v1.ContainerPort{
+				Name:          "admin",
+				ContainerPort: adminPort,
 				Protocol:      v1.ProtocolTCP,
 			},
 		},
 		VolumeMounts: []v1.VolumeMount{
 			v1.VolumeMount{
-				Name:      "proxysql-config",
-				MountPath: "/etc/proxysql.cnf", // TODO path
+				Name:      "shared-data",
+				MountPath: "/etc/proxysql.cnf",
+				SubPath:   "proxysql.cnf",
 			},
 		},
 	}, nil
 }
 
 func (ps *ProxySQL) buildConfigMap() (v1.ConfigMap, error) {
-	configTmpl := conf.Instances.Percona.ProxyConfig.ConfigTemplate + "\n"
+	configTmpl := proxysql.PerconaMysqlConfigTemplate
 	t := template.Must(template.New("config").Parse(configTmpl))
 
-	type backendInfo struct {
-		Host, Port, MaxConn string
+	var backends []proxysql.Backend
+	for _, s := range ps.Servers {
+		backend := proxysql.Backend{
+			Host:    s,
+			Port:    strconv.FormatInt(int64(ps.Port), 10),
+			MaxConn: strconv.FormatInt(int64(ps.MaxConn), 10),
+		}
+		backends = append(backends, backend)
 	}
 
-	var infos []backendInfo
-	for _, s := range ps.Servers {
-		info := backendInfo{s, strconv.FormatInt(int64(ps.Port), 10), strconv.FormatInt(int64(ps.MaxConn), 10)}
-		infos = append(infos, info)
+	config := proxysql.Config{
+		AdminPort: strconv.FormatInt(int64(adminPort), 10),
+		SQLPort:   strconv.FormatInt(int64(sqlPort), 10),
+		Backends:  backends,
 	}
 
 	var outputBuf bytes.Buffer
-	if err := t.Execute(&outputBuf, infos); err != nil {
+	if err := t.Execute(&outputBuf, config); err != nil {
 		log.Fatal(err)
 	}
 
@@ -195,10 +248,9 @@ func (ps *ProxySQL) buildConfigMap() (v1.ConfigMap, error) {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: ps.Namespace,
-			Name:      ps.NamePrefix + "-proxysql-config-template",
+			Name:      ps.configMapName(),
 			Labels:    ps.Labels,
 		},
 		Data: data,
 	}, nil
 }
-

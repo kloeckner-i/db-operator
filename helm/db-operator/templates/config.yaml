@@ -20,8 +20,6 @@ data:
       percona:
         proxy:
           image: {{ .Values.config.instance.percona.proxy.image }}
-          configTemplate:
-{{ toYaml .Values.config.instance.percona.proxy.configTemplate | indent 12 }}
     backup:
       nodeSelector:
 {{ toYaml .Values.config.backup.nodeSelector | indent 8 }}

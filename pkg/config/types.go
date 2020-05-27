@@ -10,6 +10,7 @@ type Config struct {
 type instanceConfig struct {
 	Google  googleInstanceConfig  `yaml:"google"`
 	Generic genericInstanceConfig `yaml:"generic"`
+	Percona perconaClusterConfig  `yaml:"percona"`
 }
 
 type googleInstanceConfig struct {
@@ -19,6 +20,10 @@ type googleInstanceConfig struct {
 
 type genericInstanceConfig struct {
 	// TODO
+}
+
+type perconaClusterConfig struct {
+	ProxyConfig proxyConfig `yaml:"proxy"`
 }
 
 type proxyConfig struct {

@@ -343,6 +343,7 @@ func (in *PerconaCluster) DeepCopyInto(out *PerconaCluster) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	out.MonitorUserSecret = in.MonitorUserSecret
 	return
 }
 
