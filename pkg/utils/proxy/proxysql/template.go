@@ -1,14 +1,20 @@
 package proxysql
 
+// Config defines list of configurable items
+// Items will be applied in config by templating
 type Config struct {
 	AdminPort string
 	SQLPort   string
 	Backends  []Backend
 }
+
+// Backend defines list of servers behind of proxysql
 type Backend struct {
 	Host, Port, MaxConn string
 }
 
+// PerconaMysqlConfigTemplate defines proxysql config template for mysql percona cluster
+// Later this could be moved out completely to outside so that it's more configurable.
 const PerconaMysqlConfigTemplate = `
 datadir="/var/lib/proxysql"
 

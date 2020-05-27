@@ -20,6 +20,8 @@ type DbInstanceSpec struct {
 	DbInstanceSource `json:",inline"`
 }
 
+// DbInstanceSource represents the source of a instance.
+// Only one of its members may be specified.
 type DbInstanceSource struct {
 	Google  *GoogleInstance  `json:"google,omitempty" protobuf:"bytes,1,opt,name=google"`
 	Generic *GenericInstance `json:"generic,omitempty" protobuf:"bytes,2,opt,name=generic"`
@@ -43,6 +45,7 @@ type GoogleInstance struct {
 	ConfigmapName types.NamespacedName `json:"configmapRef"`
 }
 
+// PerconaCluster is used when instance type is percona cluster
 type PerconaCluster struct {
 	ServerList        []string             `json:"servers"` // hostgroup: host address
 	Port              int32                `json:"port"`

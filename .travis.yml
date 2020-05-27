@@ -16,9 +16,9 @@ cache:
     - $GOPATH/pkg/mod
 
 jobs:
-  # allow_failures:
-  #   - env:
-  #       - ALLOW_FAIL=true
+  allow_failures:
+    - env:
+        - ALLOW_FAIL=true
   include:
     - stage: test
       name: "Unit Tests"
@@ -37,6 +37,8 @@ jobs:
         - find . -type f -name "*\.go" | grep -v "zz_generated" | while read line; do
             golint -set_exit_status $line || exit 1;
           done
+      env:
+        - ALLOW_FAIL=true
     - stage: test
       name: "Go Vet"
       script:
