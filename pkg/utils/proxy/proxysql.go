@@ -2,14 +2,15 @@ package proxy
 
 import (
 	"bytes"
-	"html/template"
 	"log"
 	"strconv"
+	"text/template"
 
 	proxysql "github.com/kloeckner-i/db-operator/pkg/utils/proxy/proxysql"
 
 	v1apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -18,10 +19,11 @@ type ProxySQL struct {
 	NamePrefix            string
 	Namespace             string
 	Servers               []string
-	MaxConn               int16
+	MaxConn               uint8
+	UserSecretName        string
 	MonitorUserSecretName string
 	Engine                string
-	Port                  int32
+	Port                  uint16
 	Labels                map[string]string
 }
 
@@ -124,6 +126,20 @@ func (ps *ProxySQL) deploymentSpec() (v1apps.DeploymentSpec, error) {
 				},
 			},
 		},
+		v1.Volume{
+			Name: "user-secret",
+			VolumeSource: v1.VolumeSource{
+				Secret: &v1.SecretVolumeSource{
+					SecretName: ps.UserSecretName,
+					Items: []v1.KeyToPath{
+						v1.KeyToPath{
+							Key:  "PASSWORD",
+							Path: "user-password",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	return v1apps.DeploymentSpec{
@@ -154,13 +170,21 @@ func (ps *ProxySQL) configGeneratorContainer() (v1.Container, error) {
 		Name:            "config-generator",
 		Image:           "alpine",
 		ImagePullPolicy: v1.PullIfNotPresent,
-		Command:         []string{"sh", "-c", "apk add --update gettext && MONITOR_PASSWORD=$(cat /run/secrets/monitoruser-password) envsubst < /tmp/proxysql.cnf.tmpl > /mnt/proxysql.cnf"},
+		Command:         []string{"sh", "-c", "apk add --update gettext && MONITOR_PASSWORD=$(cat /run/secrets/monitoruser-password) DB_PASSWORD=$(cat /run/secrets/user-password) envsubst < /tmp/proxysql.cnf.tmpl > /mnt/proxysql.cnf"},
 		Env: []v1.EnvVar{
 			v1.EnvVar{
 				Name: "MONITOR_USERNAME", ValueFrom: &v1.EnvVarSource{
 					SecretKeyRef: &v1.SecretKeySelector{
 						LocalObjectReference: v1.LocalObjectReference{Name: ps.MonitorUserSecretName},
 						Key:                  "user",
+					},
+				},
+			},
+			v1.EnvVar{
+				Name: "DB_USERNAME", ValueFrom: &v1.EnvVarSource{
+					SecretKeyRef: &v1.SecretKeySelector{
+						LocalObjectReference: v1.LocalObjectReference{Name: ps.UserSecretName},
+						Key:                  "USER",
 					},
 				},
 			},
@@ -179,6 +203,12 @@ func (ps *ProxySQL) configGeneratorContainer() (v1.Container, error) {
 				Name:      "monitoruser-secret",
 				MountPath: "/run/secrets/monitoruser-password",
 				SubPath:   "monitoruser-password",
+				ReadOnly:  true,
+			},
+			v1.VolumeMount{
+				Name:      "user-secret",
+				MountPath: "/run/secrets/user-password",
+				SubPath:   "user-password",
 				ReadOnly:  true,
 			},
 		},
@@ -207,6 +237,12 @@ func (ps *ProxySQL) proxyContainer() (v1.Container, error) {
 				Name:      "shared-data",
 				MountPath: "/etc/proxysql.cnf",
 				SubPath:   "proxysql.cnf",
+			},
+		},
+		Resources: v1.ResourceRequirements{
+			Requests: v1.ResourceList{
+				v1.ResourceCPU:    resource.MustParse("50m"),
+				v1.ResourceMemory: resource.MustParse("128Mi"),
 			},
 		},
 	}, nil

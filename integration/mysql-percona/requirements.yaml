@@ -1,0 +1,5 @@
+dependencies:
+- name: percona-xtradb-cluster
+  repository: "@stable"
+  version: 1.0.3
+  alias: percona

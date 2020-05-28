@@ -74,6 +74,11 @@ mysql_servers =
   {{- end }}
 )
 
+mysql_users =
+(
+	{ username = "$DB_USERNAME", password = "$DB_PASSWORD", default_hostgroup = 10, transaction_persistent = 0, active = 1 }
+)
+
 mysql_query_rules =
 (
 	{

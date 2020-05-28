@@ -1,0 +1,11 @@
+instance:
+  name: my-percona-instance
+
+db:
+  name: my-percona-db
+
+percona:
+  mysqlRootPassword: "test1234"
+  mysqlUser: "monitor"
+  mysqlPassword: "test4321"
+  replicas: 2

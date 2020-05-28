@@ -97,6 +97,16 @@ func (r *ReconcileDatabase) createProxy(dbcr *kciv1alpha1.Database) error {
 			return err
 		}
 	}
+
+	engine, _ := dbcr.GetEngineType()
+	dbcr.Status.ProxyStatus.ServiceName = svc.Name
+	for _, svcPort := range svc.Spec.Ports {
+		if svcPort.Name == engine {
+			dbcr.Status.ProxyStatus.SQLPort = svcPort.Port
+		}
+	}
+	dbcr.Status.ProxyStatus.Status = true
+
 	logrus.Infof("DB: namespace=%s, name=%s proxy created", dbcr.Namespace, dbcr.Name)
 	return nil
 }

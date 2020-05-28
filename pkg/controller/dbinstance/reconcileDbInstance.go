@@ -53,6 +53,11 @@ func (r *ReconcileDbInstance) create(dbin *kciv1alpha1.DbInstance) error {
 			Password: cred.Password,
 		}
 	case "percona":
+		if dbin.Spec.Engine != "mysql" {
+			logrus.Errorf("Instance: name=%s - non mysql percona instance not supported", dbin.Name)
+			return errors.New("non mysql percona instance not supported")
+		}
+
 		instance = &dbinstance.Generic{
 			Host:     dbin.Spec.Percona.ServerList[0],
 			Port:     dbin.Spec.Percona.Port,

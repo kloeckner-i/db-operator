@@ -48,8 +48,8 @@ type GoogleInstance struct {
 // PerconaCluster is used when instance type is percona cluster
 type PerconaCluster struct {
 	ServerList        []string             `json:"servers"` // hostgroup: host address
-	Port              int32                `json:"port"`
-	MaxConnection     int16                `json:"maxConn"`
+	Port              uint16               `json:"port"`
+	MaxConnection     uint8                `json:"maxConn"`
 	MonitorUserSecret types.NamespacedName `json:"monitorUserSecretRef"`
 }
 
@@ -58,7 +58,7 @@ type PerconaCluster struct {
 // generic instance can be any backend, it must be reachable by described address and port
 type GenericInstance struct {
 	Host     string `json:"host"`
-	Port     int32  `json:"port"`
+	Port     uint16 `json:"port"`
 	PublicIP string `json:"publicIp,omitempty"`
 	// BackupHost address will be used for dumping database for backup
 	// Usually slave address for master-slave setup or cluster lb address
@@ -122,21 +122,21 @@ func (dbin *DbInstance) ValidateBackend() error {
 		return errors.New("no instance type defined")
 	}
 
-	numVolumes := 0
+	numSources := 0
 
 	if source.Google != nil {
-		numVolumes++
+		numSources++
 	}
 
 	if source.Generic != nil {
-		numVolumes++
+		numSources++
 	}
 
 	if source.Percona != nil {
-		numVolumes++
+		numSources++
 	}
 
-	if numVolumes > 1 {
+	if numSources > 1 {
 		return errors.New("may not specify more than 1 instance type")
 	}
 

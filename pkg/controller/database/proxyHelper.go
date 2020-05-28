@@ -65,9 +65,10 @@ func determinProxyType(dbcr *kciv1alpha1.Database) (proxy.Proxy, error) {
 			Namespace:             dbcr.Namespace,
 			Servers:               instance.Spec.Percona.ServerList,
 			MaxConn:               instance.Spec.Percona.MaxConnection,
+			UserSecretName:        dbcr.Spec.SecretName,
 			MonitorUserSecretName: dbcr.Status.MonitorUserSecretName,
 			Engine:                engine,
-			Port:                  int32(port),
+			Port:                  uint16(port),
 			Labels:                kci.LabelBuilder(labels),
 		}, nil
 	default:

@@ -16,13 +16,13 @@ func GetMysqlHost() string {
 }
 
 // GetMysqlPort set mysql port which used by unit test
-func GetMysqlPort() int32 {
+func GetMysqlPort() uint16 {
 	if value, ok := os.LookupEnv("MYSQL_PORT"); ok {
 		port, err := strconv.Atoi(value)
 		if err != nil {
 			logrus.Fatal(err)
 		}
-		return int32(port)
+		return uint16(port)
 	}
 	return 3306
 }
@@ -44,13 +44,13 @@ func GetPostgresHost() string {
 }
 
 // GetPostgresPort set postgres port which used by unit test
-func GetPostgresPort() int32 {
+func GetPostgresPort() uint16 {
 	if value, ok := os.LookupEnv("POSTGRES_PORT"); ok {
 		port, err := strconv.Atoi(value)
 		if err != nil {
 			logrus.Fatal(err)
 		}
-		return int32(port)
+		return uint16(port)
 	}
 	return 5432
 }
