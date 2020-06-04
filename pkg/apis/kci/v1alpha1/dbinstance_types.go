@@ -47,10 +47,16 @@ type GoogleInstance struct {
 
 // PerconaCluster is used when instance type is percona cluster
 type PerconaCluster struct {
-	ServerList        []string             `json:"servers"` // hostgroup: host address
-	Port              uint16               `json:"port"`
-	MaxConnection     uint8                `json:"maxConn"`
+	ServerList        []BackendServer      `json:"servers"` // hostgroup: host address
 	MonitorUserSecret types.NamespacedName `json:"monitorUserSecretRef"`
+}
+
+// BackendServer defines backend database server
+type BackendServer struct {
+	Host          string `json:"host"`
+	Port          uint16 `json:"port"`
+	MaxConnection uint8  `json:"maxConn"`
+	ReadOnly      bool   `json:"readonly,omitempty"`
 }
 
 // GenericInstance is used when instance type is generic

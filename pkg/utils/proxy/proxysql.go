@@ -18,12 +18,10 @@ import (
 type ProxySQL struct {
 	NamePrefix            string
 	Namespace             string
-	Servers               []string
-	MaxConn               uint8
+	Servers               []proxysql.Backend
 	UserSecretName        string
 	MonitorUserSecretName string
 	Engine                string
-	Port                  uint16
 	Labels                map[string]string
 }
 
@@ -71,7 +69,7 @@ func (ps *ProxySQL) buildDeployment() (*v1apps.Deployment, error) {
 	return &v1apps.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
-			APIVersion: "extensions/apps",
+			APIVersion: "apps/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      ps.NamePrefix + "-proxysql",
@@ -252,20 +250,10 @@ func (ps *ProxySQL) buildConfigMap() (*v1.ConfigMap, error) {
 	configTmpl := proxysql.PerconaMysqlConfigTemplate
 	t := template.Must(template.New("config").Parse(configTmpl))
 
-	var backends []proxysql.Backend
-	for _, s := range ps.Servers {
-		backend := proxysql.Backend{
-			Host:    s,
-			Port:    strconv.FormatInt(int64(ps.Port), 10),
-			MaxConn: strconv.FormatInt(int64(ps.MaxConn), 10),
-		}
-		backends = append(backends, backend)
-	}
-
 	config := proxysql.Config{
 		AdminPort: strconv.FormatInt(int64(adminPort), 10),
 		SQLPort:   strconv.FormatInt(int64(sqlPort), 10),
-		Backends:  backends,
+		Backends:  ps.Servers,
 	}
 
 	var outputBuf bytes.Buffer

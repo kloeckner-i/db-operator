@@ -56,10 +56,13 @@ spec:
   percona:
     servers:
     {{- range $server := $value.percona.servers }}
-    - {{ $server }}
+    - host: {{ $server.host }}
+      port: {{ $server.port }}
+      maxConn: {{ $server.maxConn }}
+      {{- if $server.readonly }}
+      readonly: {{ $server.readonly }}
+      {{- end }}
     {{- end }}
-    port: {{ $value.percona.port }}
-    maxConn: {{ $value.percona.maxConn }}
     monitorUserSecretRef:
       Name: {{ $name }}-monitoruser-secret
       Namespace: {{ $operatorNs }}

@@ -9,10 +9,12 @@ spec:
   engine: mysql
   percona:
     servers:
-    - {{ .Release.Name }}-pxc-0.{{ .Release.Name }}-pxc.{{ .Release.Namespace }}
-    - {{ .Release.Name }}-pxc-1.{{ .Release.Name }}-pxc.{{ .Release.Namespace }}
-    port: 3306
-    maxConn: 100
+    - host: {{ .Release.Name }}-pxc-0.{{ .Release.Name }}-pxc.{{ .Release.Namespace }}
+      port: 3306
+      maxConn: 100
+    - host: {{ .Release.Name }}-pxc-1.{{ .Release.Name }}-pxc.{{ .Release.Namespace }}
+      port: 3306
+      maxConn: 100
     monitorUserSecretRef:
       Namespace: {{ .Release.Namespace }}
       Name: {{ .Values.instance.name }}-monitoruser-secret

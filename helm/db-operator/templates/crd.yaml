@@ -90,6 +90,13 @@ spec:
           required:
           - engine
           - adminSecretRef
+          oneOf:
+          - required:
+            - percona
+          - required:
+            - google
+          - required:
+            - generic
           properties:
             engine:
               type: string
@@ -104,6 +111,9 @@ spec:
               type: object
             generic:
               type: object
+              required:
+              - host
+              - port
               properties:
                 host:
                   type: string
@@ -111,6 +121,8 @@ spec:
                   type: integer
             google:
               type: object
+              required:
+              - instance
               properties:
                 instance:
                   type: string
@@ -125,13 +137,25 @@ spec:
               type: object
               required:
               - servers
-              - port
               - monitorUserSecretRef
               properties:
                 servers:
                   type: array
-                port:
-                  type: integer
+                  items:
+                    required:
+                    - host
+                    - port
+                    - maxConn
+                    properties:
+                      host:
+                        type: string
+                      port:
+                        type: integer
+                      maxConn:
+                        type: integer
+                        minimum: 1
+                      readonly:
+                        type: boolean
                 monitorUserSecretRef:
                   type: object
         status:
