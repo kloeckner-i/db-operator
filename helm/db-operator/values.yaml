@@ -33,6 +33,9 @@ config:
         nodeSelector: {}
         image: gcr.io/cloudsql-docker/gce-proxy:1.16
     generic: {}
+    percona:
+      proxy:
+        image: severalnines/proxysql:2.0
   backup:
     nodeSelector: {}
     postgres:

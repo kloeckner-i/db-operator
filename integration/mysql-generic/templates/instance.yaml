@@ -1,11 +1,11 @@
 apiVersion: kci.rocks/v1alpha1
 kind: DbInstance
 metadata:
-  name: my-local-test
+  name: {{ .Values.instance.name }}
 spec:
   adminSecretRef:
     Namespace: {{ .Release.Namespace }}
-    Name: my-local-db-password
+    Name: {{ .Values.instance.name }}-admin-password
   engine: mysql
   generic:
     host: {{ .Values.mysql.serviceName }}.{{ .Release.Namespace }}
@@ -16,7 +16,7 @@ spec:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: my-local-db-password
+  name: {{ .Values.instance.name }}-admin-password
 type: Opaque
 data:
   password: {{ .Values.mysql.adminPassword | b64enc }}

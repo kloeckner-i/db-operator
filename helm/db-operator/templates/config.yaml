@@ -17,6 +17,9 @@ data:
   {{ toYaml .Values.config.instance.google.proxy.nodeSelector | indent 10 }}
           image: {{ .Values.config.instance.google.proxy.image }}
       generic: {}
+      percona:
+        proxy:
+          image: {{ .Values.config.instance.percona.proxy.image }}
     backup:
       nodeSelector:
 {{ toYaml .Values.config.backup.nodeSelector | indent 8 }}

@@ -53,7 +53,7 @@ func determinDatabaseType(dbcr *kciv1alpha1.Database, dbCred database.Credential
 		db := database.Postgres{
 			Backend:    backend,
 			Host:       host,
-			Port:       int32(port),
+			Port:       uint16(port),
 			Database:   dbCred.Name,
 			User:       dbCred.Username,
 			Password:   dbCred.Password,
@@ -66,7 +66,7 @@ func determinDatabaseType(dbcr *kciv1alpha1.Database, dbCred database.Credential
 		db := database.Mysql{
 			Backend:  backend,
 			Host:     host,
-			Port:     int32(port),
+			Port:     uint16(port),
 			Database: dbCred.Name,
 			User:     dbCred.Username,
 			Password: dbCred.Password,

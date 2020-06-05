@@ -1,0 +1,11 @@
+mysql:
+  serviceName: my-generic-server
+  adminUser: root
+  adminPassword: test1234
+  image: mysql:5.7
+
+instance:
+  name: my-generic-instance
+
+db:
+  name: my-generic-db

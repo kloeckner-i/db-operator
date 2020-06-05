@@ -87,9 +87,9 @@ type ReconcileDatabase struct {
 
 var (
 	phaseCreate               = "Creating"
-	phaseConfigMap            = "InfoConfigMapCreating"
 	phaseInstanceAccessSecret = "InstanceAccessSecretCreating"
 	phaseProxy                = "ProxyCreating"
+	phaseConfigMap            = "InfoConfigMapCreating"
 	phaseMonitoring           = "MonitoringCreating"
 	phaseBackupJob            = "BackupJobCreating"
 	phaseFinish               = "Finishing"
@@ -222,6 +222,12 @@ func (r *ReconcileDatabase) Reconcile(request reconcile.Request) (reconcile.Resu
 			dbcr.Status.Phase = phaseProxy
 		case phaseProxy:
 			err := r.createProxy(dbcr)
+			if err != nil {
+				return r.manageError(dbcr, err, true)
+			}
+			dbcr.Status.Phase = phaseConfigMap
+		case phaseConfigMap:
+			err := r.createInfoConfigMap(dbcr)
 			if err != nil {
 				return r.manageError(dbcr, err, true)
 			}

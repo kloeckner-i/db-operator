@@ -11,6 +11,17 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// CloudProxy for google sql instance
+type CloudProxy struct {
+	NamePrefix             string
+	Namespace              string
+	InstanceConnectionName string
+	AccessSecretName       string
+	Engine                 string
+	Port                   int32
+	Labels                 map[string]string
+}
+
 var conf = config.Config{}
 
 const instanceAccessSecretVolumeName string = "gcloud-secret"
@@ -40,7 +51,7 @@ func (cp *CloudProxy) buildService() (*v1.Service, error) {
 }
 
 func (cp *CloudProxy) buildDeployment() (*v1apps.Deployment, error) {
-	spec, err := deploymentSpec(cp.InstanceConnectionName, cp.Port, cp.Labels, cp.AccessSecretName)
+	spec, err := cp.deploymentSpec()
 	if err != nil {
 		return nil, err
 	}
@@ -57,27 +68,35 @@ func (cp *CloudProxy) buildDeployment() (*v1apps.Deployment, error) {
 		},
 		Spec: spec,
 	}, nil
-
 }
 
-func deploymentSpec(conn string, port int32, labels map[string]string, instanceAccessSecret string) (v1apps.DeploymentSpec, error) {
+func (cp *CloudProxy) deploymentSpec() (v1apps.DeploymentSpec, error) {
 	var replicas int32 = 2
 
-	container, err := container(conn, port)
+	container, err := cp.container()
 	if err != nil {
 		return v1apps.DeploymentSpec{}, err
 	}
 
-	volumes := buildVolumes(instanceAccessSecret)
+	volumes := []v1.Volume{
+		v1.Volume{
+			Name: instanceAccessSecretVolumeName,
+			VolumeSource: v1.VolumeSource{
+				Secret: &v1.SecretVolumeSource{
+					SecretName: cp.AccessSecretName,
+				},
+			},
+		},
+	}
 
 	return v1apps.DeploymentSpec{
 		Replicas: &replicas,
 		Selector: &metav1.LabelSelector{
-			MatchLabels: labels,
+			MatchLabels: cp.Labels,
 		},
 		Template: v1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
-				Labels: labels,
+				Labels: cp.Labels,
 			},
 			Spec: v1.PodSpec{
 				Containers:    []v1.Container{container},
@@ -85,17 +104,17 @@ func deploymentSpec(conn string, port int32, labels map[string]string, instanceA
 				RestartPolicy: v1.RestartPolicyAlways,
 				Volumes:       volumes,
 				Affinity: &v1.Affinity{
-					PodAntiAffinity: podAntiAffinity(labels),
+					PodAntiAffinity: podAntiAffinity(cp.Labels),
 				},
 			},
 		},
 	}, nil
 }
 
-func container(conn string, port int32) (v1.Container, error) {
+func (cp *CloudProxy) container() (v1.Container, error) {
 	RunAsUser := int64(2)
 	AllowPrivilegeEscalation := false
-	instanceArg := fmt.Sprintf("-instances=%s=tcp:0.0.0.0:%s", conn, strconv.FormatInt(int64(port), 10))
+	instanceArg := fmt.Sprintf("-instances=%s=tcp:0.0.0.0:%s", cp.InstanceConnectionName, strconv.FormatInt(int64(cp.Port), 10))
 
 	return v1.Container{
 		Name:    "cloudsql-proxy",
@@ -110,7 +129,7 @@ func container(conn string, port int32) (v1.Container, error) {
 		Ports: []v1.ContainerPort{
 			v1.ContainerPort{
 				Name:          "sqlport",
-				ContainerPort: port,
+				ContainerPort: cp.Port,
 				Protocol:      v1.ProtocolTCP,
 			},
 		},
@@ -123,40 +142,6 @@ func container(conn string, port int32) (v1.Container, error) {
 	}, nil
 }
 
-func buildVolumes(instanceAccessSecretName string) []v1.Volume {
-	return []v1.Volume{
-		v1.Volume{
-			Name: instanceAccessSecretVolumeName,
-			VolumeSource: v1.VolumeSource{
-				Secret: &v1.SecretVolumeSource{
-					SecretName: instanceAccessSecretName,
-				},
-			},
-		},
-	}
-}
-
-func podAntiAffinity(labelSelector map[string]string) *v1.PodAntiAffinity {
-	var weight int32 = 1
-	return &v1.PodAntiAffinity{
-		RequiredDuringSchedulingIgnoredDuringExecution: []v1.PodAffinityTerm{
-			v1.PodAffinityTerm{
-				LabelSelector: &metav1.LabelSelector{
-					MatchLabels: labelSelector,
-				},
-				TopologyKey: "kubernetes.io/hostname",
-			},
-		},
-		PreferredDuringSchedulingIgnoredDuringExecution: []v1.WeightedPodAffinityTerm{
-			v1.WeightedPodAffinityTerm{
-				PodAffinityTerm: v1.PodAffinityTerm{
-					LabelSelector: &metav1.LabelSelector{
-						MatchLabels: labelSelector,
-					},
-					TopologyKey: "failure-domain.beta.kubernetes.io/zone",
-				},
-				Weight: weight,
-			},
-		},
-	}
+func (cp *CloudProxy) buildConfigMap() (*v1.ConfigMap, error) {
+	return nil, nil
 }

@@ -25,9 +25,19 @@ type DatabaseSpec struct {
 type DatabaseStatus struct {
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
-	Phase       string      `json:"phase"`
-	Status      bool        `json:"status"`
-	InstanceRef *DbInstance `json:"instanceRef"`
+	Phase                 string              `json:"phase"`
+	Status                bool                `json:"status"`
+	InstanceRef           *DbInstance         `json:"instanceRef"`
+	MonitorUserSecretName string              `json:"monitorUserSecret,omitempty"`
+	ProxyStatus           DatabaseProxyStatus `json:"proxyStatus,omitempty"`
+}
+
+// DatabaseProxyStatus defines whether proxy for database is enabled or not
+// if so, provide information
+type DatabaseProxyStatus struct {
+	Status      bool   `json:"status"`
+	ServiceName string `json:"serviceName"`
+	SQLPort     int32  `json:"sqlPort"`
 }
 
 // DatabaseBackup defines the desired state of backup and schedule

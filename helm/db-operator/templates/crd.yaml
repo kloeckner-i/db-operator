@@ -68,60 +68,100 @@ spec:
   subresources:
     status: {}
   preserveUnknownFields: true
-  # validation:
-  #   openAPIV3Schema:
-  #     description: DbInstance is the Schema for the dbinstances API
-  #     properties:
-  #       apiVersion:
-  #         description: 'APIVersion defines the versioned schema of this representation
-  #           of an object. Servers should convert recognized schemas to the latest
-  #           internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
-  #         type: string
-  #       kind:
-  #         description: 'Kind is a string value representing the REST resource this
-  #           object represents. Servers may infer this from the endpoint the client
-  #           submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
-  #         type: string
-  #       metadata:
-  #         type: object
-  #       spec:
-  #         description: DbInstanceSpec defines the desired state of DbInstance
-  #         type: object
-  #         properties:
-  #           engine:
-  #             type: string
-  #           adminSecretRef:
-  #             type: map
-  #             properties:
-  #               Namespace:
-  #                 type: string
-  #               Name:
-  #                 type: string
-  #           backup:
-  #             type: object
-  #           generic:
-  #             type: object
-  #             properties:
-  #               host:
-  #                 type: string
-  #               port:
-  #                 type: integer
-  #           google:
-  #             type: object
-  #             properties:
-  #               instance:
-  #                 type: string
-  #               configmapRef:
-  #                 type: map
-  #                 properties:
-  #                   Namespace:
-  #                     type: string
-  #                   Name:
-  #                     type: string
-  #       status:
-  #         description: DbInstanceStatus defines the observed state of DbInstance
-  #         type: object
-  #     type: object
+  validation:
+    openAPIV3Schema:
+      description: DbInstance is the Schema for the dbinstances API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: DbInstanceSpec defines the desired state of DbInstance
+          type: object
+          required:
+          - engine
+          - adminSecretRef
+          oneOf:
+          - required:
+            - percona
+          - required:
+            - google
+          - required:
+            - generic
+          properties:
+            engine:
+              type: string
+            adminSecretRef:
+              type: object
+              properties:
+                Namespace:
+                  type: string
+                Name:
+                  type: string
+            backup:
+              type: object
+            generic:
+              type: object
+              required:
+              - host
+              - port
+              properties:
+                host:
+                  type: string
+                port:
+                  type: integer
+            google:
+              type: object
+              required:
+              - instance
+              properties:
+                instance:
+                  type: string
+                configmapRef:
+                  type: object
+                  properties:
+                    Namespace:
+                      type: string
+                    Name:
+                      type: string
+            percona:
+              type: object
+              required:
+              - servers
+              - monitorUserSecretRef
+              properties:
+                servers:
+                  type: array
+                  items:
+                    required:
+                    - host
+                    - port
+                    - maxConn
+                    properties:
+                      host:
+                        type: string
+                      port:
+                        type: integer
+                      maxConn:
+                        type: integer
+                        minimum: 1
+                      readonly:
+                        type: boolean
+                monitorUserSecretRef:
+                  type: object
+        status:
+          description: DbInstanceStatus defines the observed state of DbInstance
+          type: object
+      type: object
   version: v1alpha1
   versions:
   - name: v1alpha1

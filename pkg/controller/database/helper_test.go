@@ -17,9 +17,11 @@ func newPostgresTestDbInstanceCr() kciv1alpha1.DbInstance {
 	return kciv1alpha1.DbInstance{
 		Spec: kciv1alpha1.DbInstanceSpec{
 			Engine: "postgres",
-			Generic: &kciv1alpha1.GenericInstance{
-				Host: test.GetPostgresHost(),
-				Port: test.GetPostgresPort(),
+			DbInstanceSource: kciv1alpha1.DbInstanceSource{
+				Generic: &kciv1alpha1.GenericInstance{
+					Host: test.GetPostgresHost(),
+					Port: test.GetPostgresPort(),
+				},
 			},
 		},
 		Status: kciv1alpha1.DbInstanceStatus{Info: info},
@@ -55,9 +57,11 @@ func newMysqlTestDbCr() *kciv1alpha1.Database {
 			InstanceRef: &kciv1alpha1.DbInstance{
 				Spec: kciv1alpha1.DbInstanceSpec{
 					Engine: "mysql",
-					Generic: &kciv1alpha1.GenericInstance{
-						Host: test.GetMysqlHost(),
-						Port: test.GetMysqlPort(),
+					DbInstanceSource: kciv1alpha1.DbInstanceSource{
+						Generic: &kciv1alpha1.GenericInstance{
+							Host: test.GetMysqlHost(),
+							Port: test.GetMysqlPort(),
+						},
 					},
 				},
 				Status: kciv1alpha1.DbInstanceStatus{Info: info},

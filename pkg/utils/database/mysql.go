@@ -21,7 +21,7 @@ import (
 type Mysql struct {
 	Backend  string
 	Host     string
-	Port     int32
+	Port     uint16
 	Database string
 	User     string
 	Password string

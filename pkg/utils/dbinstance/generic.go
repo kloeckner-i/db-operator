@@ -12,7 +12,7 @@ import (
 // Generic represents database instance which can be connected by address and port
 type Generic struct {
 	Host     string
-	Port     int32
+	Port     uint16
 	Engine   string
 	User     string
 	Password string

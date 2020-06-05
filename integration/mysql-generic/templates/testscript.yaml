@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: mysql-test-script
+  name: {{ .Values.db.name }}-test-script
 data:
   write.sh: |
 {{ .Files.Get "scripts/test_write.sh" | indent 4}}

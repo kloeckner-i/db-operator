@@ -28,7 +28,13 @@ func determinProxyType(dbin *kciv1alpha1.DbInstance) (proxy.Proxy, error) {
 		return nil, err
 	}
 
-	if dbin.Spec.Google != nil {
+	backend, err := dbin.GetBackendType()
+	if err != nil {
+		return nil, err
+	}
+
+	switch backend {
+	case "google":
 		portString := dbin.Status.Info["DB_PORT"]
 		port, err := strconv.Atoi(portString)
 		if err != nil {
@@ -50,7 +56,7 @@ func determinProxyType(dbin *kciv1alpha1.DbInstance) (proxy.Proxy, error) {
 			Port:                   int32(port),
 			Labels:                 kci.LabelBuilder(labels),
 		}, nil
+	default:
+		return nil, ErrNoProxySupport
 	}
-
-	return nil, ErrNoProxySupport
 }

@@ -49,7 +49,9 @@ check_instance_status() {
 
 create_test_resources() {
     echo "[Test] creating"
-    $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-mysql integration/mysql \
+    $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-mysql-generic integration/mysql-generic \
+    && $HELM_CMD dependency build integration/mysql-percona \
+    && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-mysql-percona integration/mysql-percona \
     && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-pg integration/postgres \
     && echo "[Test] created"
     if [ $? -ne 0 ]; then
@@ -86,13 +88,13 @@ check_databases_status() {
 
 run_test() {
     echo "[Test] testing read write to database"
-    $HELM_CMD test test-mysql && $HELM_CMD test test-pg \
+    $HELM_CMD test test-mysql-generic && $HELM_CMD test test-mysql-percona && $HELM_CMD test test-pg \
     && echo "[Test] OK!"
 }
 
 delete_databases() {
     echo "[Database] deleting"
-    $KUBECTL_CMD delete db my-db-test -n ${TEST_NAMESPACE} && $KUBECTL_CMD delete db pg-db-test -n ${TEST_NAMESPACE} \
+    $KUBECTL_CMD delete db -n ${TEST_NAMESPACE} --all \
     && echo "[Database] deleted!"
 }
 

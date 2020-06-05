@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: mysql-tester-app-{{ randAlphaNum 5 | lower }}
+  name: {{ .Values.db.name }}-tester-app-{{ randAlphaNum 5 | lower }}
   annotations:
     "helm.sh/hook": test-success
   labels:
@@ -21,17 +21,17 @@ spec:
       - name: MYSQL_USERNAME
         valueFrom:
           secretKeyRef:
-            name: my-db-test-credentials
+            name: {{ .Values.db.name }}-credentials
             key: USER
       - name: MYSQL_DB
         valueFrom:
           secretKeyRef:
-            name: my-db-test-credentials
+            name: {{ .Values.db.name }}-credentials
             key: DB
       - name: MYSQL_HOST
         valueFrom:
           configMapKeyRef:
-            name: my-db-test-credentials
+            name: {{ .Values.db.name }}-credentials
             key: DB_CONN
     volumeMounts:
       - name: db-secret
@@ -58,17 +58,17 @@ spec:
       - name: MYSQL_USERNAME
         valueFrom:
           secretKeyRef:
-            name: my-db-test-credentials
+            name: {{ .Values.db.name }}-credentials
             key: USER
       - name: MYSQL_DB
         valueFrom:
           secretKeyRef:
-            name: my-db-test-credentials
+            name: {{ .Values.db.name }}-credentials
             key: DB
       - name: MYSQL_HOST
         valueFrom:
           configMapKeyRef:
-            name: my-db-test-credentials
+            name: {{ .Values.db.name }}-credentials
             key: DB_CONN
     volumeMounts:
       - name: db-secret
@@ -87,9 +87,9 @@ spec:
   volumes:
     - name: db-secret
       secret:
-        secretName: my-db-test-credentials
+        secretName: {{ .Values.db.name }}-credentials
     - name: script
       configMap:
-        name: mysql-test-script
+        name: {{ .Values.db.name }}-test-script
     - name: shared-data
       emptyDir: {}

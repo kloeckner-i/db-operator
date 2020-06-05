@@ -60,6 +60,9 @@ test:
 	@docker stop postgres
 	@docker stop mysql
 
+lint:
+	@golint ./...
+
 vet:
 	@go vet ./...
 

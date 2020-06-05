@@ -1,0 +1,38 @@
+apiVersion: kci.rocks/v1alpha1
+kind: DbInstance
+metadata:
+  name: {{ .Values.instance.name }}
+spec:
+  adminSecretRef:
+    Namespace: {{ .Release.Namespace }}
+    Name: {{ .Values.instance.name }}-admin-password
+  engine: mysql
+  percona:
+    servers:
+    - host: {{ .Release.Name }}-pxc-0.{{ .Release.Name }}-pxc.{{ .Release.Namespace }}
+      port: 3306
+      maxConn: 100
+    - host: {{ .Release.Name }}-pxc-1.{{ .Release.Name }}-pxc.{{ .Release.Namespace }}
+      port: 3306
+      maxConn: 100
+    monitorUserSecretRef:
+      Namespace: {{ .Release.Namespace }}
+      Name: {{ .Values.instance.name }}-monitoruser-secret
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Values.instance.name }}-admin-password
+type: Opaque
+data:
+  password: {{ .Values.percona.mysqlRootPassword | b64enc }}
+  user: {{ print "root" | b64enc }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Values.instance.name }}-monitoruser-secret
+type: Opaque
+data:
+  password: {{ .Values.percona.mysqlPassword | b64enc }}
+  user: {{ .Values.percona.mysqlUser | b64enc }}

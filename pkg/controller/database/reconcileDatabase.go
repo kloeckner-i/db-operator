@@ -114,39 +114,6 @@ func (r *ReconcileDatabase) createDatabase(dbcr *kciv1alpha1.Database) error {
 		return err
 	}
 
-	instance, err := dbcr.GetInstanceRef()
-	if err != nil {
-		return err
-	}
-
-	databaseConfigResource := &corev1.ConfigMap{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ConfigMap",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: dbcr.Namespace,
-			Name:      dbcr.Spec.SecretName,
-			Labels:    kci.BaseLabelBuilder(),
-		},
-		Data: instance.Status.Info,
-	}
-
-	err = r.client.Create(context.TODO(), databaseConfigResource)
-	if err != nil {
-		if k8serrors.IsAlreadyExists(err) {
-			// if configmap resource already exists, update
-			err = r.client.Update(context.TODO(), databaseConfigResource)
-			if err != nil {
-				logrus.Errorf("DB: namespace=%s, name=%s failed updating database info configmap", dbcr.Namespace, dbcr.Name)
-				return err
-			}
-		} else {
-			logrus.Errorf("DB: namespace=%s, name=%s failed creating database info configmap", dbcr.Namespace, dbcr.Name)
-			return err
-		}
-	}
-
 	logrus.Infof("DB: namespace=%s, name=%s successfully created", dbcr.Namespace, dbcr.Name)
 	return nil
 }

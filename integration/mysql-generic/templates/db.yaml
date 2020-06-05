@@ -1,0 +1,11 @@
+apiVersion: "kci.rocks/v1alpha1"
+kind: "Database"
+metadata:
+  name: {{ .Values.db.name }}
+  labels:
+    env: test
+spec:
+  secretName: {{ .Values.db.name }}-credentials # where to save db name user, password for application
+  instance: {{ .Values.instance.name }}
+  backup:
+    enable: false
