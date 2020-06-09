@@ -89,6 +89,8 @@ func (cp *CloudProxy) deploymentSpec() (v1apps.DeploymentSpec, error) {
 		},
 	}
 
+	terminationGracePeriodSeconds := int64(120) // force kill pod after this time
+
 	return v1apps.DeploymentSpec{
 		Replicas: &replicas,
 		Selector: &metav1.LabelSelector{
@@ -106,6 +108,7 @@ func (cp *CloudProxy) deploymentSpec() (v1apps.DeploymentSpec, error) {
 				Affinity: &v1.Affinity{
 					PodAntiAffinity: podAntiAffinity(cp.Labels),
 				},
+				TerminationGracePeriodSeconds: &terminationGracePeriodSeconds,
 			},
 		},
 	}, nil
@@ -115,12 +118,14 @@ func (cp *CloudProxy) container() (v1.Container, error) {
 	RunAsUser := int64(2)
 	AllowPrivilegeEscalation := false
 	instanceArg := fmt.Sprintf("-instances=%s=tcp:0.0.0.0:%s", cp.InstanceConnectionName, strconv.FormatInt(int64(cp.Port), 10))
+	timeoutSecond := 60 // wait given seconds after SIGTERM
+	timeoutArg := fmt.Sprintf("-term_timeout=%ss", strconv.FormatInt(int64(timeoutSecond), 10))
 
 	return v1.Container{
 		Name:    "cloudsql-proxy",
 		Image:   conf.Instances.Google.ProxyConfig.Image,
 		Command: []string{"/cloud_sql_proxy"},
-		Args:    []string{instanceArg, "-credential_file=/srv/gcloud/credentials.json"},
+		Args:    []string{instanceArg, "-credential_file=/srv/gcloud/credentials.json", timeoutArg},
 		SecurityContext: &v1.SecurityContext{
 			RunAsUser:                &RunAsUser,
 			AllowPrivilegeEscalation: &AllowPrivilegeEscalation,

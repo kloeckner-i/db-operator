@@ -55,7 +55,7 @@ type PerconaCluster struct {
 type BackendServer struct {
 	Host          string `json:"host"`
 	Port          uint16 `json:"port"`
-	MaxConnection uint8  `json:"maxConn"`
+	MaxConnection uint16 `json:"maxConn"`
 	ReadOnly      bool   `json:"readonly,omitempty"`
 }
 
