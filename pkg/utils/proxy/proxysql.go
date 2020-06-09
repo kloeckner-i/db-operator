@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"text/template"
 
+	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 	proxysql "github.com/kloeckner-i/db-operator/pkg/utils/proxy/proxysql"
 
 	v1apps "k8s.io/api/apps/v1"
@@ -23,6 +24,7 @@ type ProxySQL struct {
 	MonitorUserSecretName string
 	Engine                string
 	Labels                map[string]string
+	configCheckSum        string
 }
 
 const sqlPort = 6033
@@ -140,6 +142,9 @@ func (ps *ProxySQL) deploymentSpec() (v1apps.DeploymentSpec, error) {
 		},
 	}
 
+	annotations := make(map[string]string)
+	annotations["checksum/config"] = ps.configCheckSum
+
 	return v1apps.DeploymentSpec{
 		Replicas: &replicas,
 		Selector: &metav1.LabelSelector{
@@ -147,7 +152,8 @@ func (ps *ProxySQL) deploymentSpec() (v1apps.DeploymentSpec, error) {
 		},
 		Template: v1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
-				Labels: ps.Labels,
+				Labels:      ps.Labels,
+				Annotations: annotations,
 			},
 			Spec: v1.PodSpec{
 				InitContainers: []v1.Container{configGenContainer},
@@ -264,6 +270,8 @@ func (ps *ProxySQL) buildConfigMap() (*v1.ConfigMap, error) {
 	data := map[string]string{
 		"proxysql.cnf.tmpl": outputBuf.String(),
 	}
+
+	ps.configCheckSum = kci.GenerateChecksum(data)
 
 	return &v1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
