@@ -59,7 +59,7 @@ func (cp *CloudProxy) buildDeployment() (*v1apps.Deployment, error) {
 	return &v1apps.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
-			APIVersion: "extensions/apps",
+			APIVersion: "apps/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cp.NamePrefix + "-cloudproxy",

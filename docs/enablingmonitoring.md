@@ -24,7 +24,7 @@ spec:
 
 Then operator creates an exporter `Deployment` with prometheus scrape annotations
 ```YAML
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: example-db-pgexporter

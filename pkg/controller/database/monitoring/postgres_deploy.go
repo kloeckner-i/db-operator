@@ -8,19 +8,19 @@ import (
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 
 	"github.com/sirupsen/logrus"
+	v1apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
-	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var conf = config.Config{}
 
-func pgDeployment(dbcr *kciv1alpha1.Database) (*extensionsv1beta1.Deployment, error) {
-	return &extensionsv1beta1.Deployment{
+func pgDeployment(dbcr *kciv1alpha1.Database) (*v1apps.Deployment, error) {
+	return &v1apps.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
-			APIVersion: "extensions/v1beta1",
+			APIVersion: "apps/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      dbcr.Name + "-" + "pgexporter",
@@ -31,13 +31,13 @@ func pgDeployment(dbcr *kciv1alpha1.Database) (*extensionsv1beta1.Deployment, er
 	}, nil
 }
 
-func pgDeploymentSpec(dbcr *kciv1alpha1.Database) extensionsv1beta1.DeploymentSpec {
+func pgDeploymentSpec(dbcr *kciv1alpha1.Database) v1apps.DeploymentSpec {
 	Replicas := int32(1)
 
-	return extensionsv1beta1.DeploymentSpec{
+	return v1apps.DeploymentSpec{
 		Replicas: &Replicas,
-		Strategy: extensionsv1beta1.DeploymentStrategy{
-			Type: extensionsv1beta1.RecreateDeploymentStrategyType,
+		Strategy: v1apps.DeploymentStrategy{
+			Type: v1apps.RecreateDeploymentStrategyType,
 		},
 		Selector: &metav1.LabelSelector{
 			MatchLabels: pgPodLabels(),

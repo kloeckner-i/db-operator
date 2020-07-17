@@ -9,7 +9,7 @@
 {{- if eq $value.engine "postgres" }}
 {{- if $value.monitoring.enabled }}
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: dbinstance-{{ $name }}-pgexporter
