@@ -21,11 +21,6 @@ $ helm install --name my-release myhelmrepo/db-operator
 ```
 The command deploys DB Operator on Kubernetes with default configuration. For the configuration options see details [Parameters](#Parameters)
 
-## Adding new charts to an existing repository
-```
-helm repo index --url https://kloeckner-i.github.io/db-operator/helm/ --merge index.yaml .
-```
-
 ## Uninstalling Chart
 To uninstall the `my-release` deployment:
 ```
@@ -58,3 +53,15 @@ The following table lists the configurable parameters of the db-operator chart a
 | `config.monitoring.postgres.queries` | Queries executed by prometheus exporter (only for postgres databases) | see `values.yaml` for defaults |
 | `secrets.gsql.admin`  |  Service account json used by operator to create Cloud SQL instance in GCE(**Cloud SQL Admin**) | `{}` |
 | `secrets.gsql.readonly`   |  Service account json will be used by application to access database Cloud SQL in GCE(**Cloud SQL Client** role) | `{}` |
+
+
+## Releasing new chart version
+
+First, change the version of Chart.yaml in the chart directory.
+And then create package and add to the index. 
+
+```
+helm package ./db-instances
+helm package ./db-operator
+helm repo index --url https://kloeckner-i.github.io/db-operator/helm/ --merge index.yaml .
+```
