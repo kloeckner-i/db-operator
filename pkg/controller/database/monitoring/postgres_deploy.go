@@ -20,7 +20,7 @@ func pgDeployment(dbcr *kciv1alpha1.Database) (*v1apps.Deployment, error) {
 	return &v1apps.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
-			APIVersion: "extensions/apps",
+			APIVersion: "apps/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      dbcr.Name + "-" + "pgexporter",
