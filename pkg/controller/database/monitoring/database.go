@@ -6,12 +6,12 @@ import (
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/pkg/apis/kci/v1alpha1"
 
 	v1 "k8s.io/api/core/v1"
-	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	v1apps "k8s.io/api/apps/v1"
 )
 
 // Deployment builds kubernetes deployment object
 // to run prometheus exporter to expose dbcr metrics
-func Deployment(dbcr *kciv1alpha1.Database) (*extensionsv1beta1.Deployment, error) {
+func Deployment(dbcr *kciv1alpha1.Database) (*v1apps.Deployment, error) {
 	engine, err := dbcr.GetEngineType()
 	if err != nil {
 		return nil, err

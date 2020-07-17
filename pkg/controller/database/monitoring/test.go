@@ -8,21 +8,21 @@ import (
 	"bou.ke/monkey"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
-	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	v1apps "k8s.io/api/apps/v1"
 )
 
 func testPGDeployment(t *testing.T) {
 	dbcr := &kciv1alpha1.Database{}
 
 	// mock PGDeployment
-	pgDeploymentMock := func(*kciv1alpha1.Database) (*extensionsv1beta1.Deployment, error) {
-		return &extensionsv1beta1.Deployment{}, nil
+	pgDeploymentMock := func(*kciv1alpha1.Database) (*v1apps.Deployment, error) {
+		return &v1apps.Deployment{}, nil
 	}
 	patch := monkey.Patch(pgDeployment, pgDeploymentMock)
 	defer patch.Unpatch()
 
 	res, err := pgDeployment(dbcr)
-	assert.Equal(t, &extensionsv1beta1.Deployment{}, res)
+	assert.Equal(t, &v1apps.Deployment{}, res)
 	assert.Equal(t, nil, err)
 }
 
