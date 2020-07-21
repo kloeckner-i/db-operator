@@ -5,8 +5,8 @@ import (
 
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/pkg/apis/kci/v1alpha1"
 
-	v1 "k8s.io/api/core/v1"
 	v1apps "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
 )
 
 // Deployment builds kubernetes deployment object

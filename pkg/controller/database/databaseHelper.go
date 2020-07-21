@@ -133,6 +133,13 @@ func parseDatabaseSecretData(dbcr *kciv1alpha1.Database, data map[string][]byte)
 }
 
 func generateDatabaseSecretData(dbcr *kciv1alpha1.Database) (map[string][]byte, error) {
+	const (
+		// https://dev.mysql.com/doc/refman/5.7/en/identifier-length.html
+		mysqlDBNameLengthLimit = 63
+		// https://dev.mysql.com/doc/refman/5.7/en/replication-features-user-names.html
+		mysqlUserLengthLimit = 32
+	)
+
 	engine, err := dbcr.GetEngineType()
 	if err != nil {
 		return nil, err
@@ -151,8 +158,8 @@ func generateDatabaseSecretData(dbcr *kciv1alpha1.Database) (map[string][]byte, 
 		return data, nil
 	case "mysql":
 		data := map[string][]byte{
-			"DB":       []byte(stringShortner(dbName)),
-			"USER":     []byte(stringShortner(dbUser)),
+			"DB":       []byte(kci.StringSanitize(dbName, mysqlDBNameLengthLimit)),
+			"USER":     []byte(kci.StringSanitize(dbUser, mysqlUserLengthLimit)),
 			"PASSWORD": []byte(dbPassword)}
 		return data, nil
 	default:
