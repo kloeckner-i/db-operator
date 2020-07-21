@@ -7,8 +7,8 @@ import (
 
 	"bou.ke/monkey"
 	"github.com/stretchr/testify/assert"
-	v1 "k8s.io/api/core/v1"
 	v1apps "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
 )
 
 func testPGDeployment(t *testing.T) {

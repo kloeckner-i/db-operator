@@ -82,9 +82,3 @@ func TestIsSpecChanged(t *testing.T) {
 	change := isSpecChanged(db)
 	assert.Equal(t, change, true, "expected true")
 }
-
-func TestStringShortner(t *testing.T) {
-	assert.Equal(t, "e08ba29f56785332", stringShortner("short_string"))
-	assert.Equal(t, "8f54fbbc6fefae00", stringShortner("short_string_longer"))
-	assert.Equal(t, "f32225e6124f2fab", stringShortner("short_string_to_long_to_see_all_chars_in_result"))
-}
