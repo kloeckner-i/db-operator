@@ -30,6 +30,8 @@ type DatabaseStatus struct {
 	InstanceRef           *DbInstance         `json:"instanceRef"`
 	MonitorUserSecretName string              `json:"monitorUserSecret,omitempty"`
 	ProxyStatus           DatabaseProxyStatus `json:"proxyStatus,omitempty"`
+	DatabaseName          string              `json:"database"`
+	UserName              string              `json:"user"`
 }
 
 // DatabaseProxyStatus defines whether proxy for database is enabled or not

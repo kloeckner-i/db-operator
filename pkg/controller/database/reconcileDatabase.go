@@ -114,6 +114,15 @@ func (r *ReconcileDatabase) createDatabase(dbcr *kciv1alpha1.Database) error {
 		return err
 	}
 
+	kci.AddFinalizer(&dbcr.ObjectMeta, "db."+dbcr.Name)
+	err = r.client.Update(context.Background(), dbcr)
+	if err != nil {
+		logrus.Errorf("error resource updating - %s", err)
+		return err
+	}
+
+	dbcr.Status.DatabaseName = databaseCred.Name
+	dbcr.Status.UserName = databaseCred.Username
 	logrus.Infof("DB: namespace=%s, name=%s successfully created", dbcr.Namespace, dbcr.Name)
 	return nil
 }
@@ -124,17 +133,9 @@ func (r *ReconcileDatabase) deleteDatabase(dbcr *kciv1alpha1.Database) error {
 		return nil
 	}
 
-	// Todo: save database in info and use it for deletion, instead of re-calculating dbname for deletion info
-	secretData, err := generateDatabaseSecretData(dbcr)
-	if err != nil {
-		logrus.Errorf("can not generate credentials for database - %s", err)
-		return err
-	}
-
-	databaseCred, err := parseDatabaseSecretData(dbcr, secretData)
-	if err != nil {
-		// failed to parse database credential from secret
-		return err
+	databaseCred := database.Credentials{
+		Name:     dbcr.Status.DatabaseName,
+		Username: dbcr.Status.UserName,
 	}
 
 	db, err := determinDatabaseType(dbcr, databaseCred)
