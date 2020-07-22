@@ -207,12 +207,6 @@ func (r *ReconcileDatabase) Reconcile(request reconcile.Request) (reconcile.Resu
 				// when database creation failed, don't requeue request. to prevent exceeding api limit (ex: against google api)
 				return r.manageError(dbcr, err, false)
 			}
-			kci.AddFinalizer(&dbcr.ObjectMeta, "db."+dbcr.Name)
-			err = r.client.Update(context.Background(), dbcr)
-			if err != nil {
-				logrus.Errorf("error resource updating - %s", err)
-				return r.manageError(dbcr, err, true)
-			}
 			dbcr.Status.Phase = phaseInstanceAccessSecret
 		case phaseInstanceAccessSecret:
 			err := r.createInstanceAccessSecret(dbcr)
