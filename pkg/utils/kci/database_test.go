@@ -9,7 +9,7 @@ func TestStringSanitize(t *testing.T) {
 	// Handles very short limits
 	src := "HelloWorld"
 	actual := StringSanitize(src, 6)
-	assert.Equal(t, "68656c", actual)
+	assert.Equal(t, "936a18", actual)
 
 	// Sanitizes successfully
 	src = "Hello**World$"
