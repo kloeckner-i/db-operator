@@ -23,9 +23,11 @@ func StringSanitize(s string, limit int) string {
 		return s
 	}
 
+	hash := fmt.Sprintf("%x", sha256.Sum256([]byte(s)))
+
 	if limit <= 9 {
-		return fmt.Sprintf("%x", sha256.New().Sum([]byte(s)))[:limit]
+		return hash[:limit]
 	}
 
-	return fmt.Sprintf("%s_%x", s[:limit-9], sha256.New().Sum([]byte(s))[:4])
+	return fmt.Sprintf("%s_%s", s[:limit-9], hash[:8])
 }

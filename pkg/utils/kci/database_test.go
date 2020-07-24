@@ -9,7 +9,7 @@ func TestStringSanitize(t *testing.T) {
 	// Handles very short limits
 	src := "HelloWorld"
 	actual := StringSanitize(src, 6)
-	assert.Equal(t, "68656c", actual)
+	assert.Equal(t, "936a18", actual)
 
 	// Sanitizes successfully
 	src = "Hello**World$"
@@ -19,5 +19,10 @@ func TestStringSanitize(t *testing.T) {
 	// Truncates very long values
 	src = "The quick brown fox jumps over the lazy dog"
 	actual = StringSanitize(src, 32)
-	assert.Equal(t, "the_quick_brown_fox_jum_7468655f", actual)
+	assert.Equal(t, "the_quick_brown_fox_jum_19e1ae50", actual)
+
+	// Truncates very long values, avoid hash collision
+	src = "The quick brown fox jumps over the lazy cat"
+	actual = StringSanitize(src, 32)
+	assert.NotEqual(t, "the_quick_brown_fox_jum_19e1ae50", actual)
 }
