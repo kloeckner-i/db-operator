@@ -6,7 +6,7 @@ require (
 	bou.ke/monkey v1.0.1
 	github.com/GoogleCloudPlatform/cloudsql-proxy v0.0.0-20191204003823-eaca70f0c07c
 	github.com/go-openapi/spec v0.19.2
-	github.com/go-sql-driver/mysql v1.4.1
+	github.com/go-sql-driver/mysql v1.5.0
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/kloeckner-i/can-haz-password v0.1.0
 	github.com/lib/pq v1.2.0
