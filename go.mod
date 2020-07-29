@@ -6,23 +6,21 @@ require (
 	bou.ke/monkey v1.0.1
 	github.com/GoogleCloudPlatform/cloudsql-proxy v0.0.0-20191204003823-eaca70f0c07c
 	github.com/go-openapi/spec v0.19.2
-	github.com/go-sql-driver/mysql v1.4.1
+	github.com/go-sql-driver/mysql v1.5.0
 	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/kloeckner-i/can-haz-password v0.1.0
 	github.com/lib/pq v1.2.0
 	github.com/mitchellh/hashstructure v1.0.0
 	github.com/operator-framework/operator-sdk v0.13.0
 	github.com/prometheus/client_golang v1.1.0
-	github.com/prometheus/common v0.6.0
-	github.com/sethvargo/go-password v0.1.3
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.6.1
-	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
+	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
+	golang.org/x/net v0.0.0-20200226121028-0de0cce0169b // indirect
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
-	golang.org/x/tools v0.0.0-20200526224456-8b020aee10d2 // indirect
+	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 // indirect
 	google.golang.org/api v0.9.0
-	google.golang.org/genproto v0.0.0-20190819201941-24fa4b261c55
 	gopkg.in/yaml.v2 v2.2.4
 	k8s.io/api v0.0.0
 	k8s.io/apimachinery v0.0.0
