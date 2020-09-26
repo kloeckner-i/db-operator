@@ -35,7 +35,7 @@ kind: "Database"
 metadata:
   name: "example-db"
 spec:
-  secretName: example-db-credentials # DB Operator will create secret with this name. it contains db namem user, password
+  secretName: example-db-credentials # DB Operator will create secret with this name. it contains db name, user, password
   instance: example-gsql # This has to be match with DbInstance name
   deletionProtected: false # Protection to not delete database when custom resource is deleted
   backup:
