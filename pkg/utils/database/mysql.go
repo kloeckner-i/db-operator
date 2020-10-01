@@ -61,7 +61,8 @@ func (m Mysql) CheckStatus() error {
 		return fmt.Errorf("db conn test failed - could not establish a connection: %v", err)
 	}
 
-	if _, err := db.Exec("SELECT version()"); err != nil {
+	check := fmt.Sprintf("USE %s", m.Database)
+	if _, err := db.Exec(check); err != nil {
 		return err
 	}
 
