@@ -17,7 +17,7 @@ func TestMysqlGenericInstanceUpdateNoError(t *testing.T) {
 func TestMysqlGenericInstanceUpdateNonExist(t *testing.T) {
 	mysqlInstance := testGenericMysqlInstance()
 	mysqlInstance.Host = "wronghost"
-	_, err = Update(mysqlInstance)
+	_, err := Update(mysqlInstance)
 	assert.Error(t, err, "expected error %v", err)
 }
 

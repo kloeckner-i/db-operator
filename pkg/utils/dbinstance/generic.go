@@ -40,6 +40,7 @@ func makeInterface(in *Generic) (kcidb.Database, error) {
 			Port:         in.Port,
 			User:         in.User,
 			Password:     in.Password,
+			Database:     "mysql",
 			SSLEnabled:   in.SSLEnabled,
 			SkipCAVerify: in.SkipCAVerify,
 		}
