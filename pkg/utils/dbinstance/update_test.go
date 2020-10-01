@@ -6,12 +6,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestMysqlGenericInstanceUpdate if upgrading mysql generic instance works as expected
-func TestMysqlGenericInstanceUpdate(t *testing.T) {
+// TestMysqlGenericInstanceUpdateNoError if upgrading mysql generic instance works as expected
+func TestMysqlGenericInstanceUpdateNoError(t *testing.T) {
 	mysqlInstance := testGenericMysqlInstance()
 	_, err := Update(mysqlInstance)
 	assert.NoError(t, err, "expected no error %v", err)
+}
 
+// TestMysqlGenericInstanceUpdateNonExist checks upgrading non existing mysql generic instance throws error
+func TestMysqlGenericInstanceUpdateNonExist(t *testing.T) {
+	mysqlInstance := testGenericMysqlInstance()
 	mysqlInstance.Host = "wronghost"
 	_, err = Update(mysqlInstance)
 	assert.Error(t, err, "expected error %v", err)
