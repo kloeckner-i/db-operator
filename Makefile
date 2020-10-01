@@ -69,7 +69,7 @@ vet:
 microsetup: microup microhelm microbuild microinstall
 
 microup:
-	@sudo snap install microk8s --classic
+	@sudo snap install microk8s --classic --channel=1.18/stable
 	@sudo microk8s.status --wait-ready
 	@sudo microk8s.enable dns registry helm rbac
 	@sudo microk8s.status --wait-ready
