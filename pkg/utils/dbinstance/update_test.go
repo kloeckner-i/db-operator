@@ -14,7 +14,7 @@ func TestMysqlGenericInstanceUpdate(t *testing.T) {
 
 	mysqlInstance.Host = "wronghost"
 	_, err = Update(mysqlInstance)
-	assert.Error(t, err, "expected no error %v", err)
+	assert.Error(t, err, "expected error %v", err)
 }
 
 // TestPostgresGenericInstanceUpdate if upgrading postgres generic instance works as expected
@@ -25,5 +25,5 @@ func TestPostgresGenericInstanceUpdate(t *testing.T) {
 
 	postgresInstance.Host = "wronghost"
 	_, err = Update(postgresInstance)
-	assert.Error(t, err, "expected no error %v", err)
+	assert.Error(t, err, "expected error %v", err)
 }

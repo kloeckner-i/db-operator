@@ -178,7 +178,7 @@ metadata:
 spec:
   sslConnection:
     enabled: true
-    skip-verify: false
+    skip-verify: true
 ...
 ```
 
@@ -195,7 +195,7 @@ metadata:
 spec:
   sslConnection:
     enabled: true
-    skip-verify: true
+    skip-verify: false
 ...
 ```
 
