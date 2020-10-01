@@ -144,8 +144,9 @@ Possible phases and meanings
 
 ### UsingSSLconnection
 
-By default, db-operator use non ssl connection to database instance.
-To use ssl connection from db-operator to remote instance, set `sslConnection.enabled` to `true` in `DbInstance` spec.
+By default, db-operator use non ssl connection to database instances.
+In case you are using public connection, you can enable ssl connection.
+To use ssl connection, set `sslConnection.enabled` to `true` in `DbInstance` spec.
 
 #### No SSL
 
