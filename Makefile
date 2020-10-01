@@ -1,4 +1,4 @@
-.PHONY: all deploy build
+.PHONY: all deploy build helm
 
 all: help
 
@@ -31,7 +31,7 @@ build:
 	@eval $$(minikube docker-env) ;\
 	operator-sdk build my-db-operator:local
 
-helm: helm-init
+helm:
 	@helm upgrade --install --namespace operator my-dboperator helm/db-operator -f helm/db-operator/values.yaml -f helm/db-operator/values-local.yaml
 
 helm-init:

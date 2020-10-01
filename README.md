@@ -36,7 +36,7 @@ To see more options of helm values [here](helm/README.md)
 * [operator-sdk v0.13.0](https://github.com/operator-framework/operator-sdk/releases/tag/v0.13.0)
 * make
 * kubectl v1.14+
-* helm 2.11+ (not helm3 yet)
+* helm 2.11+
 * [minikube](https://kubernetes.io/docs/tasks/tools/install-minikube/) or [microk8s](https://microk8s.io/)
 
 To have kubernetes environment locally, you can set [minikube](https://kubernetes.io/docs/tasks/tools/install-minikube/) or [microk8s](https://microk8s.io/) up.

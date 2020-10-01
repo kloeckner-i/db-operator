@@ -10,7 +10,7 @@ import (
 )
 
 func testMysql() *Mysql {
-	return &Mysql{"local", test.GetMysqlHost(), test.GetMysqlPort(), "testdb", "testuser", "testpwd"}
+	return &Mysql{"local", test.GetMysqlHost(), test.GetMysqlPort(), "testdb", "testuser", "testpwd", false, false}
 }
 
 func getMysqlAdmin() AdminCredentials {

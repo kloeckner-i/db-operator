@@ -19,12 +19,32 @@ import (
 // represents a database on mysql instance
 // can be used to execute query to mysql database
 type Mysql struct {
-	Backend  string
-	Host     string
-	Port     uint16
-	Database string
-	User     string
-	Password string
+	Backend      string
+	Host         string
+	Port         uint16
+	Database     string
+	User         string
+	Password     string
+	SSLEnabled   bool
+	SkipCAVerify bool
+}
+
+const mysqlDefaultSSLMode = "preferred"
+
+func (m Mysql) sslMode() string {
+	if !m.SSLEnabled {
+		return "false"
+	}
+
+	if m.SSLEnabled && !m.SkipCAVerify {
+		return "true"
+	}
+
+	if m.SSLEnabled && m.SkipCAVerify {
+		return "skip-verify"
+	}
+
+	return mysqlDefaultSSLMode
 }
 
 // CheckStatus checks status of mysql database
@@ -41,8 +61,7 @@ func (m Mysql) CheckStatus() error {
 		return fmt.Errorf("db conn test failed - could not establish a connection: %v", err)
 	}
 
-	check := fmt.Sprintf("USE %s", m.Database)
-	if _, err := db.Exec(check); err != nil {
+	if _, err := db.Exec("SELECT version()"); err != nil {
 		return err
 	}
 
@@ -61,7 +80,7 @@ func (m Mysql) getDbConn(user, password string) (*sql.DB, error) {
 			return db, err
 		}
 	default:
-		dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%d)/", user, password, m.Host, m.Port)
+		dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%d)/?tls=%s", user, password, m.Host, m.Port, m.sslMode())
 		db, err = sql.Open("mysql", dataSourceName)
 		if err != nil {
 			logrus.Debugf("failed to validate db connection: %s", err)

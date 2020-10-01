@@ -11,32 +11,37 @@ import (
 
 // Generic represents database instance which can be connected by address and port
 type Generic struct {
-	Host     string
-	Port     uint16
-	Engine   string
-	User     string
-	Password string
-	PublicIP string
+	Host         string
+	Port         uint16
+	Engine       string
+	User         string
+	Password     string
+	PublicIP     string
+	SSLEnabled   bool
+	SkipCAVerify bool
 }
 
 func makeInterface(in *Generic) (kcidb.Database, error) {
 	switch in.Engine {
 	case "postgres":
 		db := kcidb.Postgres{
-			Host:     in.Host,
-			Port:     in.Port,
-			User:     in.User,
-			Password: in.Password,
-			Database: "postgres",
+			Host:         in.Host,
+			Port:         in.Port,
+			User:         in.User,
+			Password:     in.Password,
+			Database:     "postgres",
+			SSLEnabled:   in.SSLEnabled,
+			SkipCAVerify: in.SkipCAVerify,
 		}
 		return db, nil
 	case "mysql":
 		db := kcidb.Mysql{
-			Host:     in.Host,
-			Port:     in.Port,
-			User:     in.User,
-			Password: in.Password,
-			Database: "mysql",
+			Host:         in.Host,
+			Port:         in.Port,
+			User:         in.User,
+			Password:     in.Password,
+			SSLEnabled:   in.SSLEnabled,
+			SkipCAVerify: in.SkipCAVerify,
 		}
 		return db, nil
 	default:
@@ -52,7 +57,7 @@ func (ins *Generic) exist() error {
 	}
 	err = db.CheckStatus()
 	if err != nil {
-		logrus.Debug(err)
+		logrus.Error(err)
 		return err
 	}
 	return nil // instance exist
