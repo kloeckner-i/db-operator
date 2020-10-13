@@ -45,12 +45,14 @@ func (r *ReconcileDbInstance) create(dbin *kciv1alpha1.DbInstance) error {
 		}
 	case "generic":
 		instance = &dbinstance.Generic{
-			Host:     dbin.Spec.Generic.Host,
-			Port:     dbin.Spec.Generic.Port,
-			PublicIP: dbin.Spec.Generic.PublicIP,
-			Engine:   dbin.Spec.Engine,
-			User:     cred.Username,
-			Password: cred.Password,
+			Host:         dbin.Spec.Generic.Host,
+			Port:         dbin.Spec.Generic.Port,
+			PublicIP:     dbin.Spec.Generic.PublicIP,
+			Engine:       dbin.Spec.Engine,
+			User:         cred.Username,
+			Password:     cred.Password,
+			SSLEnabled:   dbin.Spec.SSLConnection.Enabled,
+			SkipCAVerify: dbin.Spec.SSLConnection.SkipVerify,
 		}
 	case "percona":
 		if dbin.Spec.Engine != "mysql" {
@@ -59,11 +61,13 @@ func (r *ReconcileDbInstance) create(dbin *kciv1alpha1.DbInstance) error {
 		}
 
 		instance = &dbinstance.Generic{
-			Host:     dbin.Spec.Percona.ServerList[0].Host,
-			Port:     dbin.Spec.Percona.ServerList[0].Port,
-			Engine:   dbin.Spec.Engine,
-			User:     cred.Username,
-			Password: cred.Password,
+			Host:         dbin.Spec.Percona.ServerList[0].Host,
+			Port:         dbin.Spec.Percona.ServerList[0].Port,
+			Engine:       dbin.Spec.Engine,
+			User:         cred.Username,
+			Password:     cred.Password,
+			SSLEnabled:   dbin.Spec.SSLConnection.Enabled,
+			SkipCAVerify: dbin.Spec.SSLConnection.SkipVerify,
 		}
 	default:
 		return errors.New("not supported backend type")

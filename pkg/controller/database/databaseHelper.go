@@ -51,25 +51,29 @@ func determinDatabaseType(dbcr *kciv1alpha1.Database, dbCred database.Credential
 		}
 
 		db := database.Postgres{
-			Backend:    backend,
-			Host:       host,
-			Port:       uint16(port),
-			Database:   dbCred.Name,
-			User:       dbCred.Username,
-			Password:   dbCred.Password,
-			Extensions: extList,
+			Backend:      backend,
+			Host:         host,
+			Port:         uint16(port),
+			Database:     dbCred.Name,
+			User:         dbCred.Username,
+			Password:     dbCred.Password,
+			Extensions:   extList,
+			SSLEnabled:   instance.Spec.SSLConnection.Enabled,
+			SkipCAVerify: instance.Spec.SSLConnection.SkipVerify,
 		}
 
 		return db, nil
 
 	case "mysql":
 		db := database.Mysql{
-			Backend:  backend,
-			Host:     host,
-			Port:     uint16(port),
-			Database: dbCred.Name,
-			User:     dbCred.Username,
-			Password: dbCred.Password,
+			Backend:      backend,
+			Host:         host,
+			Port:         uint16(port),
+			Database:     dbCred.Name,
+			User:         dbCred.Username,
+			Password:     dbCred.Password,
+			SSLEnabled:   instance.Spec.SSLConnection.Enabled,
+			SkipCAVerify: instance.Spec.SSLConnection.SkipVerify,
 		}
 
 		return db, nil

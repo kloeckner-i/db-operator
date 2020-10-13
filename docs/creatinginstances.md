@@ -12,6 +12,7 @@ You can use an existing database server or create/use Google Cloud SQL instance 
 * [Using existing database server](#GenericDbInstance)
 * [Creating or updating Google Cloud SQL Instance](#GoogleCloudSQLDbInstance)
 * [Checking DbInstance status](#CheckingStatus)
+* [Using SSL connection](#UsingSSLconnection)
 
 ### GenericDbInstance
 Using existing database server
@@ -139,3 +140,64 @@ Possible phases and meanings
 | `Broadcasting`        | Trigger `Database` phase cycle if there was an update on `DbInstance` |
 | `ProxyCreating`       | Creating Google Cloud Proxy `Deployment` and `Service` to be used as endpoint for connecting to the database (only google type) |
 | `Running`             | Backend database server connection checked and ready for database creation |
+
+
+### UsingSSLconnection
+
+By default, db-operator use non ssl connection to database instances.
+In case you are using public connection, you can enable ssl connection.
+To use ssl connection, set `sslConnection.enabled` to `true` in `DbInstance` spec.
+
+#### No SSL
+
+* postgres: disable
+* mysql: disabled
+
+```YAML
+apiVersion: kci.rocks/v1alpha1
+kind: DbInstance
+metadata:
+  name: example-generic
+spec:
+  sslConnection:
+    enabled: false
+    skip-verify: false
+...
+```
+
+#### Always SSL (skip verification)
+
+* postgres: require
+* mysql: required
+
+```YAML
+apiVersion: kci.rocks/v1alpha1
+kind: DbInstance
+metadata:
+  name: example-generic
+spec:
+  sslConnection:
+    enabled: true
+    skip-verify: true
+...
+```
+
+#### Always SSL (verify that the certificate presented by the server was signed by a trusted CA)
+
+* postgres: verify-ca
+* mysql: verify_ca
+
+```YAML
+apiVersion: kci.rocks/v1alpha1
+kind: DbInstance
+metadata:
+  name: example-generic
+spec:
+  sslConnection:
+    enabled: true
+    skip-verify: false
+...
+```
+
+> * Do not enable SSL connection with google type instance. It connect via google cloud proxy instead of using public ip.
+> * Self-signed certificates with verify option is currently not supported.

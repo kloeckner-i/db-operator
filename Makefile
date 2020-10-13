@@ -1,4 +1,4 @@
-.PHONY: all deploy build
+.PHONY: all deploy build helm
 
 all: help
 
@@ -31,7 +31,7 @@ build:
 	@eval $$(minikube docker-env) ;\
 	operator-sdk build my-db-operator:local
 
-helm: helm-init
+helm:
 	@helm upgrade --install --namespace operator my-dboperator helm/db-operator -f helm/db-operator/values.yaml -f helm/db-operator/values-local.yaml
 
 helm-init:
@@ -69,7 +69,7 @@ vet:
 microsetup: microup microhelm microbuild microinstall
 
 microup:
-	@sudo snap install microk8s --classic
+	@sudo snap install microk8s --classic --channel=1.18/stable
 	@sudo microk8s.status --wait-ready
 	@sudo microk8s.enable dns registry helm rbac
 	@sudo microk8s.status --wait-ready

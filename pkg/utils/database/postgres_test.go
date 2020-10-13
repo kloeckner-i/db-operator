@@ -9,7 +9,7 @@ import (
 )
 
 func testPostgres() *Postgres {
-	return &Postgres{"local", test.GetPostgresHost(), test.GetPostgresPort(), "testdb", "testuser", "testpassword", []string{}}
+	return &Postgres{"local", test.GetPostgresHost(), test.GetPostgresPort(), "testdb", "testuser", "testpassword", []string{}, false, false}
 }
 
 func getPostgresAdmin() AdminCredentials {

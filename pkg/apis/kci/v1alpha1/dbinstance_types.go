@@ -13,10 +13,11 @@ import (
 // +k8s:openapi-gen=true
 type DbInstanceSpec struct {
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	Engine           string               `json:"engine"`
-	AdminUserSecret  types.NamespacedName `json:"adminSecretRef"`
-	Backup           DbInstanceBackup     `json:"backup"`
-	Monitoring       DbInstanceMonitoring `json:"monitoring"`
+	Engine           string                  `json:"engine"`
+	AdminUserSecret  types.NamespacedName    `json:"adminSecretRef"`
+	Backup           DbInstanceBackup        `json:"backup"`
+	Monitoring       DbInstanceMonitoring    `json:"monitoring"`
+	SSLConnection    DbInstanceSSLConnection `json:"sslConnection"`
 	DbInstanceSource `json:",inline"`
 }
 
@@ -80,6 +81,13 @@ type DbInstanceBackup struct {
 // DbInstanceMonitoring defines if exporter
 type DbInstanceMonitoring struct {
 	Enabled bool `json:"enabled"`
+}
+
+// DbInstanceSSLConnection defines weather connection from db-operator to instance has to be ssl or not
+type DbInstanceSSLConnection struct {
+	Enabled bool `json:"enabled"`
+	// SkipVerity use SSL connection, but don't check against a CA
+	SkipVerify bool `json:"skip-verify"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
