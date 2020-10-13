@@ -21,13 +21,33 @@ import (
 // represents a database on postgres instance
 // can be used to execute query to postgres database
 type Postgres struct {
-	Backend    string
-	Host       string
-	Port       uint16
-	Database   string
-	User       string
-	Password   string
-	Extensions []string
+	Backend      string
+	Host         string
+	Port         uint16
+	Database     string
+	User         string
+	Password     string
+	Extensions   []string
+	SSLEnabled   bool
+	SkipCAVerify bool
+}
+
+const postgresDefaultSSLMode = "disable"
+
+func (p Postgres) sslMode() string {
+	if !p.SSLEnabled {
+		return "disable"
+	}
+
+	if p.SSLEnabled && !p.SkipCAVerify {
+		return "verify-ca"
+	}
+
+	if p.SSLEnabled && p.SkipCAVerify {
+		return "require"
+	}
+
+	return postgresDefaultSSLMode
 }
 
 func (p Postgres) getDbConn(dbname, user, password string) (*sql.DB, error) {
@@ -41,7 +61,7 @@ func (p Postgres) getDbConn(dbname, user, password string) (*sql.DB, error) {
 		sqldriver = "postgres"
 	}
 
-	dataSourceName := fmt.Sprintf("host=%s port=%d dbname=%s user=%s password=%s sslmode=disable", p.Host, p.Port, dbname, user, password)
+	dataSourceName := fmt.Sprintf("host=%s port=%d dbname=%s user=%s password=%s sslmode=%s", p.Host, p.Port, dbname, user, password, p.sslMode())
 	db, err := sql.Open(sqldriver, dataSourceName)
 
 	return db, err

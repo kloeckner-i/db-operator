@@ -21,7 +21,6 @@ spec:
     - db
   subresources:
     status: {}
-  preserveUnknownFields: true
   additionalPrinterColumns:
   - JSONPath: .status.phase
     description: current db status
@@ -67,7 +66,6 @@ spec:
     - dbin
   subresources:
     status: {}
-  preserveUnknownFields: true
   validation:
     openAPIV3Schema:
       description: DbInstance is the Schema for the dbinstances API
