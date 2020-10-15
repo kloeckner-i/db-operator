@@ -27,6 +27,7 @@ type DbInstanceSource struct {
 	Google  *GoogleInstance  `json:"google,omitempty" protobuf:"bytes,1,opt,name=google"`
 	Generic *GenericInstance `json:"generic,omitempty" protobuf:"bytes,2,opt,name=generic"`
 	Percona *PerconaCluster  `json:"percona,omitempty" protobuf:"bytes,3,opt,name=percona"`
+	Amazon  *AmazonInstance  `json:"amazon,omitempty" protobuf:"bytes,4,opt,name=amazon"`
 }
 
 // DbInstanceStatus defines the observed state of DbInstance
@@ -71,6 +72,19 @@ type GenericInstance struct {
 	// Usually slave address for master-slave setup or cluster lb address
 	// If it's not defined, above Host will be used as backup host address.
 	BackupHost string `json:"backupHost"`
+}
+// AmazonInstance is used when instance type is amazon
+// and describes necessary informations to use instance
+// amazon instance can be any backend, it must be reachable by described address and port
+type AmazonInstance struct {
+	Host     string `json:"host"`
+	Port     uint16 `json:"port"`
+	PublicIP string `json:"publicIp,omitempty"`
+	// BackupHost address will be used for dumping database for backup
+	// Usually slave address for master-slave setup or cluster lb address
+	// If it's not defined, above Host will be used as backup host address.
+	BackupHost         string `json:"backupHost"`
+	ServiceAccountName string `json:"serviceAccountName"`
 }
 
 // DbInstanceBackup defines name of google bucket to use for storing database dumps for backup when backup is enabled
