@@ -146,11 +146,15 @@ func (dbin *DbInstance) ValidateEngine() error {
 func (dbin *DbInstance) ValidateBackend() error {
 	source := dbin.Spec.DbInstanceSource
 
-	if (source.Google == nil) && (source.Generic == nil) && (source.Percona == nil) {
+	if (source.Google == nil) && (source.Amazon == nil) && (source.Percona == nil) && (source.Generic == nil) {
 		return errors.New("no instance type defined")
 	}
 
 	numSources := 0
+
+	if source.Amazon != nil {
+		numSources++
+	}
 
 	if source.Google != nil {
 		numSources++
@@ -180,6 +184,10 @@ func (dbin *DbInstance) GetBackendType() (string, error) {
 	}
 
 	source := dbin.Spec.DbInstanceSource
+
+	if source.Amazon != nil {
+		return "amazon", nil
+	}
 
 	if source.Google != nil {
 		return "google", nil
