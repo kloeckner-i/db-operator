@@ -1,4 +1,6 @@
 instance:
+  amazon:
+    serviceAccountName: "backup"
   google:
     clientSecretName: "cloudsql-readonly-serviceaccount"
     proxy:

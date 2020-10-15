@@ -1,3 +1,6 @@
+instance:
+  amazon:
+    serviceAccountName: "backup"
 backup:
   nodeSelector: {}
   postgres:
