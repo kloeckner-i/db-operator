@@ -280,6 +280,11 @@ func getBackupHost(dbcr *kciv1alpha1.Database) (string, error) {
 			return instance.Spec.Generic.BackupHost, nil
 		}
 		return instance.Spec.Generic.Host, nil
+	case "amazon":
+		if instance.Spec.Amazon.BackupHost != "" {
+			return instance.Spec.Amazon.BackupHost, nil
+		}
+		return instance.Spec.Amazon.Host, nil
 	default:
 		return host, errors.New("unknown backend type")
 	}
