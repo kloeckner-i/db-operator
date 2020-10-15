@@ -43,6 +43,16 @@ func (r *ReconcileDbInstance) create(dbin *kciv1alpha1.DbInstance) error {
 			User:     cred.Username,
 			Password: cred.Password,
 		}
+	case "amazon":
+		instance = &dbinstance.Amazon{
+			Host:               dbin.Spec.Amazon.Host,
+			Port:               dbin.Spec.Amazon.Port,
+			PublicIP:           dbin.Spec.Amazon.PublicIP,
+			Engine:             dbin.Spec.Engine,
+			User:               cred.Username,
+			Password:           cred.Password,
+			ServiceAccountName: dbin.Spec.Amazon.ServiceAccountName,
+		}
 	case "generic":
 		instance = &dbinstance.Generic{
 			Host:         dbin.Spec.Generic.Host,
