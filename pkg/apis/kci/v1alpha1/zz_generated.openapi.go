@@ -137,6 +137,11 @@ func schema_pkg_apis_kci_v1alpha1_DbInstanceSpec(ref common.ReferenceCallback) c
 				Description: "DbInstanceSpec defines the desired state of DbInstance",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"amazon": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/kloeckner-i/db-operator/pkg/apis/kci/v1alpha1.AmazonInstance"),
+						},
+					},
 					"engine": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Important: Run \"operator-sdk generate k8s\" to regenerate code after modifying this file",
@@ -176,6 +181,7 @@ func schema_pkg_apis_kci_v1alpha1_DbInstanceSpec(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
+			"github.com/kloeckner-i/db-operator/pkg/apis/kci/v1alpha1.AmazonInstance",
 			"github.com/kloeckner-i/db-operator/pkg/apis/kci/v1alpha1.DbInstanceBackup", "github.com/kloeckner-i/db-operator/pkg/apis/kci/v1alpha1.GenericInstance", "github.com/kloeckner-i/db-operator/pkg/apis/kci/v1alpha1.GoogleInstance"},
 	}
 }
