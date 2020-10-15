@@ -31,3 +31,25 @@ func TestPostgresGenericInstanceUpdate(t *testing.T) {
 	_, err = Update(postgresInstance)
 	assert.Error(t, err, "expected error %v", err)
 }
+
+// TestMysqlAmazonInstanceUpdate if upgrading mysql amazon instance works as expected
+func TestMysqlAmazonInstanceUpdate(t *testing.T) {
+	mysqlInstance := testAmazonMysqlInstance()
+	_, err := Update(mysqlInstance)
+	assert.NoError(t, err, "expected no error %v", err)
+
+	mysqlInstance.Host = "wronghost"
+	_, err = Update(mysqlInstance)
+	assert.Error(t, err, "expected no error %v", err)
+}
+
+// TestPostgresAmazonInstanceUpdate if upgrading postgres amazon instance works as expected
+func TestPostgresAmazonInstanceUpdate(t *testing.T) {
+	postgresInstance := testAmazonPostgresInstance()
+	_, err := Update(postgresInstance)
+	assert.NoError(t, err, "expected no error %v", err)
+
+	postgresInstance.Host = "wronghost"
+	_, err = Update(postgresInstance)
+	assert.Error(t, err, "expected no error %v", err)
+}
