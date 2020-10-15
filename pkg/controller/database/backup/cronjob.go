@@ -61,6 +61,12 @@ func buildJobTemplate(dbcr *kciv1alpha1.Database) (batchv1beta1.JobTemplateSpec,
 		return batchv1beta1.JobTemplateSpec{}, err
 	}
 
+	account, err := getServiceAccountName(dbcr)
+	if err != nil {
+		logrus.Errorf("can not build job template - %s", err)
+		return batchv1beta1.JobTemplateSpec{}, err
+	}
+
 	var backupContainer v1.Container
 
 	engine := instance.Spec.Engine
@@ -91,10 +97,11 @@ func buildJobTemplate(dbcr *kciv1alpha1.Database) (batchv1beta1.JobTemplateSpec,
 					Labels: kci.BaseLabelBuilder(),
 				},
 				Spec: v1.PodSpec{
-					Containers:    []v1.Container{backupContainer},
-					NodeSelector:  conf.Backup.NodeSelector,
-					RestartPolicy: v1.RestartPolicyNever,
-					Volumes:       volumes(dbcr),
+					Containers:         []v1.Container{backupContainer},
+					NodeSelector:       conf.Backup.NodeSelector,
+					ServiceAccountName: account,
+					RestartPolicy:      v1.RestartPolicyNever,
+					Volumes:            volumes(dbcr),
 				},
 			},
 		},
@@ -275,5 +282,36 @@ func getBackupHost(dbcr *kciv1alpha1.Database) (string, error) {
 		return instance.Spec.Generic.Host, nil
 	default:
 		return host, errors.New("unknown backend type")
+	}
+}
+
+func getServiceAccountName(dbcr *kciv1alpha1.Database) (string, error) {
+	var account = ""
+
+	instance, err := dbcr.GetInstanceRef()
+	if err != nil {
+		return account, err
+	}
+
+	backend, err := dbcr.GetBackendType()
+	if err != nil {
+		return account, err
+	}
+
+	switch backend {
+	case "generic":
+		return account, nil
+	case "google":
+		return account, nil
+	case "amazon":
+		if instance.Spec.Amazon.ServiceAccountName != "" {
+			return instance.Spec.Amazon.ServiceAccountName, nil
+		}
+		if conf.Instances.Amazon.ServiceAccountName != "" {
+			return conf.Instances.Amazon.ServiceAccountName, nil
+		}
+		return account, nil
+	default:
+		return account, errors.New("unknown backend type")
 	}
 }
