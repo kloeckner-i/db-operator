@@ -9,3 +9,5 @@ spec:
   instance: {{ .Values.instance.name }}
   backup:
     enable: false
+    cron: ""
+  deletionProtected: false
