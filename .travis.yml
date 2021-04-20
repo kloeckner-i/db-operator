@@ -1,4 +1,5 @@
 language: go
+dist: bionic
 
 go:
   - 1.13.x
@@ -46,7 +47,6 @@ jobs:
     - stage: integration
       name: "Integration test"
       services:
-        - snapd
         - snap
         - docker
         - jq
