@@ -46,6 +46,7 @@ jobs:
     - stage: integration
       name: "Integration test"
       services:
+        - snapd
         - snap
         - docker
         - jq
