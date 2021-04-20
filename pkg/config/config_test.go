@@ -15,6 +15,7 @@ func TestLoadConfig(t *testing.T) {
 
 	confStatic.Instances.Google.ClientSecretName = "cloudsql-readonly-serviceaccount"
 	assert.Equal(t, confStatic.Instances.Google.ClientSecretName, confLoad.Instances.Google.ClientSecretName, "Values should be match")
+	assert.EqualValues(t, confLoad.Backup.ActiveDeadlineSeconds, int64(600))
 }
 
 func TestLoadConfigFailCases(t *testing.T) {

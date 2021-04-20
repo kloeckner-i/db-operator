@@ -37,6 +37,7 @@ config:
       proxy:
         image: severalnines/proxysql:2.0
   backup:
+    activeDeadlineSeconds: 600 # 10m
     nodeSelector: {}
     postgres:
       image: "kloeckneri/pgdump-gcs:latest"

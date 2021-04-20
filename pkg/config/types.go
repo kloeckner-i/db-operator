@@ -34,9 +34,10 @@ type proxyConfig struct {
 // backupConfig defines docker image for creating database dump by backup cronjob
 // backup cronjob will be created by db-operator when backup is enabled
 type backupConfig struct {
-	Postgres     postgresBackupConfig `yaml:"postgres"`
-	Mysql        mysqlBackupConfig    `yaml:"mysql"`
-	NodeSelector map[string]string    `yaml:"nodeSelector"`
+	Postgres              postgresBackupConfig `yaml:"postgres"`
+	Mysql                 mysqlBackupConfig    `yaml:"mysql"`
+	NodeSelector          map[string]string    `yaml:"nodeSelector"`
+	ActiveDeadlineSeconds int64                `yaml:"activeDeadlineSeconds"`
 }
 
 type postgresBackupConfig struct {
