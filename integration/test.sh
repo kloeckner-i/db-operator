@@ -50,10 +50,10 @@ check_instance_status() {
 create_test_resources() {
     echo "[Test] creating"
     $KUBECTL_CMD create ns ${TEST_NAMESPACE} --dry-run=client -o yaml | $KUBECTL_CMD apply -f - \
-    && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-mysql-generic integration/mysql-generic \
+    && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-mysql-generic integration/mysql-generic --wait\
     && $HELM_CMD dependency build --namespace ${TEST_NAMESPACE} integration/mysql-percona \
-    && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-mysql-percona integration/mysql-percona \
-    && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-pg integration/postgres \
+    && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-mysql-percona integration/mysql-percona --wait \
+    && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-pg integration/postgres --wait \
     && echo "[Test] created"
     if [ $? -ne 0 ]; then
         exit 1;
