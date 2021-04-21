@@ -33,6 +33,11 @@ spec:
           configMapKeyRef:
             name: {{ .Values.db.name }}-credentials
             key: DB_CONN
+      - name: MYSQL_PORT
+        valueFrom:
+          configMapKeyRef:
+            name: {{ .Values.db.name }}-credentials
+            key: DB_PORT
     volumeMounts:
       - name: db-secret
         mountPath: /run/secrets/mysql/
@@ -70,6 +75,11 @@ spec:
           configMapKeyRef:
             name: {{ .Values.db.name }}-credentials
             key: DB_HOST
+      - name: MYSQL_PORT
+        valueFrom:
+          configMapKeyRef:
+            name: {{ .Values.db.name }}-credentials
+            key: DB_PORT
     volumeMounts:
       - name: db-secret
         mountPath: /run/secrets/mysql/

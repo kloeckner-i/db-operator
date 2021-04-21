@@ -18,6 +18,7 @@ do
     echo "reading data from mysql..."
     FOUNDDATA=$(mysql \
             -h ${MYSQL_HOST} \
+            -P ${MYSQL_PORT} \
             -u ${MYSQL_USERNAME} \
             -p${MYSQL_PASSWORD} ${MYSQL_DB} \
             -e "SELECT data FROM test WHERE data = '${TESTDATA}';")

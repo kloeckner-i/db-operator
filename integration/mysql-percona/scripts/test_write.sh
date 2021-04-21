@@ -17,7 +17,7 @@ do
     fi
 
     echo "writing data into mysql database..."
-    mysql -h ${MYSQL_HOST} -u ${MYSQL_USERNAME} -p${MYSQL_PASSWORD} ${MYSQL_DB} \
+    mysql -h ${MYSQL_HOST} -P ${MYSQL_PORT} -u ${MYSQL_USERNAME} -p${MYSQL_PASSWORD} ${MYSQL_DB} \
     -e "CREATE TABLE IF NOT EXISTS test (no INT NOT NULL AUTO_INCREMENT PRIMARY KEY, data VARCHAR(100)); INSERT INTO test (data) VALUES('${TESTDATA}');"\
     && break
 done
