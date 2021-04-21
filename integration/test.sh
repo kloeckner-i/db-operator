@@ -1,4 +1,5 @@
 #!/bin/sh -e
+# requirements: jq
 
 OPERATOR_NAMESPACE="operator"
 TEST_NAMESPACE="test"
@@ -15,6 +16,14 @@ case $TEST_K8S in
         export HELM_CMD="helm"
         export KUBECTL_CMD="kubectl"
 esac
+
+check_requirements() {
+    jq --version > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "jq not installed"
+        exit 1;
+    fi
+}
 
 check_dboperator_log() {
     $KUBECTL_CMD logs -l app=db-operator -n ${OPERATOR_NAMESPACE}
@@ -49,15 +58,16 @@ check_instance_status() {
 
 create_test_resources() {
     echo "[Test] creating"
-    $KUBECTL_CMD create ns ${TEST_NAMESPACE} --dry-run=client -o yaml && $KUBECTL_CMD apply -f - \
-    && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-mysql-generic integration/mysql-generic \
+    $KUBECTL_CMD create ns ${TEST_NAMESPACE} --dry-run=client -o yaml | $KUBECTL_CMD apply -f - \
+    && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-mysql-generic integration/mysql-generic --wait \
     && $HELM_CMD dependency build --namespace ${TEST_NAMESPACE} integration/mysql-percona \
-    && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-mysql-percona integration/mysql-percona \
-    && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-pg integration/postgres \
-    && echo "[Test] created"
+    && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-mysql-percona integration/mysql-percona --wait \
+    && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-pg integration/postgres --wait
     if [ $? -ne 0 ]; then
+        echo "[Test] failed to create"
         exit 1;
     fi
+    echo "[Test] created"
 }
 
 check_databases_status() {
@@ -89,8 +99,14 @@ check_databases_status() {
 
 run_test() {
     echo "[Test] testing read write to database"
-    $HELM_CMD test test-mysql-generic -n ${TEST_NAMESPACE} && $HELM_CMD test test-mysql-percona -n ${TEST_NAMESPACE} && $HELM_CMD test test-pg -n ${TEST_NAMESPACE} \
-    && echo "[Test] OK!"
+    $HELM_CMD test test-mysql-generic -n ${TEST_NAMESPACE} \
+    && $HELM_CMD test test-mysql-percona -n ${TEST_NAMESPACE} \
+    && $HELM_CMD test test-pg -n ${TEST_NAMESPACE}
+    if [ $? -ne 0 ]; then
+        echo "[Test] failed"
+        exit 1;
+    fi
+    echo "[Test] OK!"
 }
 
 delete_databases() {
@@ -117,6 +133,7 @@ check_databases_deleted() {
     exit 1 # return false
 }
 
+check_requirements
 create_test_resources
 check_instance_status
 check_databases_status
