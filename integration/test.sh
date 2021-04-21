@@ -8,7 +8,7 @@ interval=10
 
 case $TEST_K8S in
     "microk8s")
-        export HELM_CMD="sudo microk8s.helm"
+        export HELM_CMD="sudo microk8s.helm3"
         export KUBECTL_CMD="sudo microk8s.kubectl"
         ;;
     *)
@@ -49,8 +49,9 @@ check_instance_status() {
 
 create_test_resources() {
     echo "[Test] creating"
-    $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-mysql-generic integration/mysql-generic \
-    && $HELM_CMD dependency build integration/mysql-percona \
+    $KUBECTL_CMD create ns ${TEST_NAMESPACE} --dry-run=client -o yaml && $KUBECTL_CMD apply -f - \
+    && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-mysql-generic integration/mysql-generic \
+    && $HELM_CMD dependency build --namespace ${TEST_NAMESPACE} integration/mysql-percona \
     && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-mysql-percona integration/mysql-percona \
     && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-pg integration/postgres \
     && echo "[Test] created"
@@ -88,7 +89,7 @@ check_databases_status() {
 
 run_test() {
     echo "[Test] testing read write to database"
-    $HELM_CMD test test-mysql-generic && $HELM_CMD test test-mysql-percona && $HELM_CMD test test-pg \
+    $HELM_CMD test test-mysql-generic -n ${TEST_NAMESPACE} && $HELM_CMD test test-mysql-percona -n ${TEST_NAMESPACE} && $HELM_CMD test test-pg -n ${TEST_NAMESPACE} \
     && echo "[Test] OK!"
 }
 

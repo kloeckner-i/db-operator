@@ -1,5 +1,4 @@
 .PHONY: all deploy build helm
-
 all: help
 
 help:
@@ -13,7 +12,7 @@ help:
 	@echo "make update: build db-operator image again and delete running pod"
 	@echo "make addexamples: kubectl create -f examples/"
 	@echo "make test: spin up mysql, postgres containers and run go unit test"
-	@echo "make microsetup: install microk8s locally and deploy db-operator (only for linux)"
+	@echo "make microsetup: install microk8s locally and deploy db-operator (only for linux and mac)"
 
 miniup:
 	@minikube start --cpus 2 --memory 4096
@@ -32,10 +31,7 @@ build:
 	operator-sdk build my-db-operator:local
 
 helm:
-	@helm upgrade --install --namespace operator my-dboperator helm/db-operator -f helm/db-operator/values.yaml -f helm/db-operator/values-local.yaml
-
-helm-init:
-	@helm init --upgrade --wait
+	@helm upgrade --install --create-namespace --namespace operator my-dboperator helm/db-operator -f helm/db-operator/values.yaml -f helm/db-operator/values-local.yaml
 
 helm-lint:
 	@helm lint -f helm/db-operator/values.yaml -f helm/db-operator/ci/ci-1.yaml --strict ./helm/db-operator
@@ -66,22 +62,22 @@ lint:
 vet:
 	@go vet ./...
 
-microsetup: microup microhelm microbuild microinstall
+microsetup: microup microbuild microinstall
 
 microup:
 	@sudo snap install microk8s --classic --channel=1.18/stable
 	@sudo microk8s.status --wait-ready
-	@sudo microk8s.enable dns registry helm rbac
+	@sudo microk8s.enable dns registry helm3
 	@sudo microk8s.status --wait-ready
-
-microhelm:
-	@sudo microk8s.kubectl create -f integration/helm-rbac.yaml
-	@sudo microk8s.helm init --service-account tiller
 
 microbuild:
 	@docker build -t my-db-operator:local .
 	@docker save my-db-operator > my-image.tar
-	@sudo microk8s.ctr image import my-image.tar
+	@sudo microk8s ctr image import $(PROJECT_DIR)/my-image.tar
+
+microhelm:
+	@sudo microk8s kubectl create ns operator --dry-run=client -o yaml | sudo microk8s kubectl apply -f -
+	@sudo microk8s helm3 upgrade --install --namespace operator db-operator $(PROJECT_DIR)/helm/db-operator -f $(PROJECT_DIR)/helm/db-operator/values.yaml -f $(PROJECT_DIR)/helm/db-operator/values-local.yaml
 
 microinstall:
-	@sudo microk8s.helm upgrade --install --namespace operator db-operator helm/db-operator -f helm/db-operator/values.yaml -f helm/db-operator/values-local.yaml
+	@sudo microk8s.helm3 upgrade --install --namespace operator db-operator helm/db-operator -f helm/db-operator/values.yaml -f helm/db-operator/values-local.yaml
