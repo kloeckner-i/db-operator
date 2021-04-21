@@ -62,7 +62,7 @@ lint:
 vet:
 	@go vet ./...
 
-microsetup: microup microbuild microinstall
+microsetup: microup microbuild microhelm
 
 microup:
 	@sudo snap install microk8s --classic --channel=1.18/stable
@@ -73,11 +73,8 @@ microup:
 microbuild:
 	@docker build -t my-db-operator:local .
 	@docker save my-db-operator > my-image.tar
-	@sudo microk8s ctr image import $(PROJECT_DIR)/my-image.tar
+	@sudo microk8s ctr image import my-image.tar
 
 microhelm:
 	@sudo microk8s kubectl create ns operator --dry-run=client -o yaml | sudo microk8s kubectl apply -f -
-	@sudo microk8s helm3 upgrade --install --namespace operator db-operator $(PROJECT_DIR)/helm/db-operator -f $(PROJECT_DIR)/helm/db-operator/values.yaml -f $(PROJECT_DIR)/helm/db-operator/values-local.yaml
-
-microinstall:
-	@sudo microk8s.helm3 upgrade --install --namespace operator db-operator helm/db-operator -f helm/db-operator/values.yaml -f helm/db-operator/values-local.yaml
+	@sudo microk8s helm3 upgrade --install --namespace operator db-operator helm/db-operator -f helm/db-operator/values.yaml -f helm/db-operator/values-local.yaml
