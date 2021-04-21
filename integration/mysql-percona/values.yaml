@@ -6,6 +6,6 @@ db:
 
 percona:
   mysqlRootPassword: "test1234"
-  mysqlUser: "monitor"
-  mysqlPassword: "test4321"
+  mysqlUser: "root"
+  mysqlPassword: "test1234"
   replicas: 2

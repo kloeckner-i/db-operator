@@ -172,9 +172,9 @@ func (ps *ProxySQL) deploymentSpec() (v1apps.DeploymentSpec, error) {
 func (ps *ProxySQL) configGeneratorContainer() (v1.Container, error) {
 	return v1.Container{
 		Name:            "config-generator",
-		Image:           "alpine",
+		Image:           "dibi/envsubst",
 		ImagePullPolicy: v1.PullIfNotPresent,
-		Command:         []string{"sh", "-c", "apk add --update gettext && MONITOR_PASSWORD=$(cat /run/secrets/monitoruser-password) DB_PASSWORD=$(cat /run/secrets/user-password) envsubst < /tmp/proxysql.cnf.tmpl > /mnt/proxysql.cnf"},
+		Command:         []string{"sh", "-c", "MONITOR_PASSWORD=$(cat /run/secrets/monitoruser-password) DB_PASSWORD=$(cat /run/secrets/user-password) envsubst < /tmp/proxysql.cnf.tmpl > /mnt/proxysql.cnf"},
 		Env: []v1.EnvVar{
 			v1.EnvVar{
 				Name: "MONITOR_USERNAME", ValueFrom: &v1.EnvVarSource{
