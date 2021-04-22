@@ -2,8 +2,8 @@
 DB Operator is Kubernetes operator 
 
 ## Prerequisites
-* Kubernetes 1.13+
-* Helm 2.11+
+* Kubernetes v1.14+
+* Helm v3.0.2+
 
 ## Configuring helm client
 ```
@@ -47,6 +47,7 @@ The following table lists the configurable parameters of the db-operator chart a
 | `config.instance.google.proxy.image` | Container image of google cloud proxy | `gcr.io/cloudsql-docker/gce-proxy:1.11` |
 | `config.instance.google.proxy.nodeSelector` | Node labels for google cloud proxy pod assignment | `{}` |
 | `config.backup.nodeSelector` | Node labels for backup pod assignment | `{}` |
+| `config.backup.activeDeadlineSeconds` | activeDeadlineSeconds of backup cronjob | `600` |
 | `config.backup.postgres.image` | Container image of backup cronjob (only for postgres databases) | `kloeckneri/pgdump-gcs:latest` |
 | `config.monitoring.nodeSelector` | Node labels for monitoring pod assignment | `{}` |
 | `config.monitoring.postgres.image` | Container image of prometheus exporter (only for postgres databases) | `wrouesnel/postgres_exporter:latest` |

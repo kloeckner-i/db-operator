@@ -21,6 +21,7 @@ data:
         proxy:
           image: {{ .Values.config.instance.percona.proxy.image }}
     backup:
+      activeDeadlineSeconds: {{ .Values.config.backup.activeDeadlineSeconds }}
       nodeSelector:
 {{ toYaml .Values.config.backup.nodeSelector | indent 8 }}
       postgres:

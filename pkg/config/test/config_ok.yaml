@@ -10,6 +10,7 @@ instance:
       image: severalnines/proxysql:2.0
 backup:
   nodeSelector: {}
+  activeDeadlineSeconds: 600
   postgres:
     image: postgresbackupimage:latest
   mysql:

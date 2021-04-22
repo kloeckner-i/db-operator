@@ -53,7 +53,7 @@ func buildCronJobSpec(dbcr *kciv1alpha1.Database) (batchv1beta1.CronJobSpec, err
 }
 
 func buildJobTemplate(dbcr *kciv1alpha1.Database) (batchv1beta1.JobTemplateSpec, error) {
-	ActiveDeadlineSeconds := int64(60 * 10) // 10m
+	ActiveDeadlineSeconds := int64(conf.Backup.ActiveDeadlineSeconds)
 	BackoffLimit := int32(3)
 	instance, err := dbcr.GetInstanceRef()
 	if err != nil {
