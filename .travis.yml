@@ -1,4 +1,5 @@
 language: go
+dist: bionic
 
 go:
   - 1.13.x
@@ -32,7 +33,7 @@ jobs:
         - MYSQL_HOST="127.0.0.1"
     - stage: test
       name: "Go Lint"
-      script: 
+      script:
         - go get -u golang.org/x/lint/golint
         - find . -type f -name "*\.go" | grep -v "zz_generated" | while read line; do
             golint -set_exit_status $line || exit 1;
@@ -51,6 +52,6 @@ jobs:
         - jq
       env:
         - TEST_K8S=microk8s
-      script: 
+      script:
         - make microsetup
         - sh integration/test.sh
