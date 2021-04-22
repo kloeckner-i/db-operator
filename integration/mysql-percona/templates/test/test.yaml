@@ -32,7 +32,7 @@ spec:
         valueFrom:
           configMapKeyRef:
             name: {{ .Values.db.name }}-credentials
-            key: DB_CONN
+            key: DB_HOST
       - name: MYSQL_PORT
         valueFrom:
           configMapKeyRef:
