@@ -2,7 +2,7 @@ nameOverride: ""
 
 image:
   repository: kloeckneri/db-operator
-  tag: latest
+  tag: "0.10.0"
   pullPolicy: Always
 
 # imagePullSecrets:
