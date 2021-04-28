@@ -1,104 +1,113 @@
 apiVersion: v1
 entries:
   db-instances:
-    - apiVersion: v1
-      appVersion: "1.0"
-      created: "2021-04-27T17:30:27.9+02:00"
-      description: Database Instances for db operator
-      digest: 0ee265dd2040c9b8651a18a7834fb58799ba0250e8c4c1bb8183418d8bf0b5c6
-      name: db-instances
-      urls:
-        - https://kloeckner-i.github.io/db-operator/helm/db-instances-0.5.0.tgz
-      version: 0.5.0
-    - apiVersion: v1
-      appVersion: "1.0"
-      created: "2021-04-27T17:30:27.897467+02:00"
-      description: Database Instances for db operator
-      digest: b039af38554da0fc8037b16397d49757d2c0b1a9e652867309df81b45950f375
-      name: db-instances
-      urls:
-        - https://kloeckner-i.github.io/db-operator/helm/db-instances-0.4.0.tgz
-      version: 0.4.0
-    - apiVersion: v1
-      appVersion: "1.0"
-      created: "2021-04-27T17:30:27.896074+02:00"
-      description: Database Instances for db operator
-      digest: 3593c0f28606ed4ee028d779ce70b23e257f85d8c96f93449ed4deb25bcea208
-      name: db-instances
-      urls:
-        - https://kloeckner-i.github.io/db-operator/helm/db-instances-0.3.1.tgz
-      version: 0.3.1
-    - apiVersion: v1
-      appVersion: "1.0"
-      created: "2021-04-27T17:30:27.895266+02:00"
-      description: Database Instances for db operator
-      digest: 6abeb95a030681041d41bb416624846819a7fb284a1f9b8cd8ef00d4517343e4
-      name: db-instances
-      urls:
-        - https://kloeckner-i.github.io/db-operator/helm/db-instances-0.3.0.tgz
-      version: 0.3.0
-    - apiVersion: v1
-      appVersion: "1.0"
-      created: "2021-04-27T17:30:27.893123+02:00"
-      description: Database Instances for db operator
-      digest: ba545b09123c5cf0276da24cf16fcaeae1d51a92e253731768b35478fb0294f4
-      name: db-instances
-      urls:
-        - https://kloeckner-i.github.io/db-operator/helm/db-instances-0.2.0.tgz
-      version: 0.2.0
-    - apiVersion: v1
-      appVersion: "1.0"
-      created: "2021-04-27T17:30:27.892067+02:00"
-      description: Database Instances for db operator
-      digest: 0a9f5c620c9ee8d8e33ea96f797be989efab296fbeeca24e26c84fdb2136d704
-      name: db-instances
-      urls:
-        - https://kloeckner-i.github.io/db-operator/helm/db-instances-0.1.0.tgz
-      version: 0.1.0
+  - apiVersion: v1
+    appVersion: "1.0"
+    created: "2021-04-28T16:22:38.120389994+02:00"
+    description: Database Instances for db operator
+    digest: 77e5674516f5f7257901da7c128cd75ff03f1f03a0291e8ffcbf0ec28bef24f6
+    name: db-instances
+    urls:
+    - https://kloeckner-i.github.io/db-operator/helm/db-instances-0.5.0.tgz
+    version: 0.5.0
+  - apiVersion: v1
+    appVersion: "1.0"
+    created: "2021-04-28T16:22:38.119979778+02:00"
+    description: Database Instances for db operator
+    digest: b039af38554da0fc8037b16397d49757d2c0b1a9e652867309df81b45950f375
+    name: db-instances
+    urls:
+    - https://kloeckner-i.github.io/db-operator/helm/db-instances-0.4.0.tgz
+    version: 0.4.0
+  - apiVersion: v1
+    appVersion: "1.0"
+    created: "2021-04-28T16:22:38.119570925+02:00"
+    description: Database Instances for db operator
+    digest: 3593c0f28606ed4ee028d779ce70b23e257f85d8c96f93449ed4deb25bcea208
+    name: db-instances
+    urls:
+    - https://kloeckner-i.github.io/db-operator/helm/db-instances-0.3.1.tgz
+    version: 0.3.1
+  - apiVersion: v1
+    appVersion: "1.0"
+    created: "2021-04-28T16:22:38.119164103+02:00"
+    description: Database Instances for db operator
+    digest: 6abeb95a030681041d41bb416624846819a7fb284a1f9b8cd8ef00d4517343e4
+    name: db-instances
+    urls:
+    - https://kloeckner-i.github.io/db-operator/helm/db-instances-0.3.0.tgz
+    version: 0.3.0
+  - apiVersion: v1
+    appVersion: "1.0"
+    created: "2021-04-28T16:22:38.118770625+02:00"
+    description: Database Instances for db operator
+    digest: ba545b09123c5cf0276da24cf16fcaeae1d51a92e253731768b35478fb0294f4
+    name: db-instances
+    urls:
+    - https://kloeckner-i.github.io/db-operator/helm/db-instances-0.2.0.tgz
+    version: 0.2.0
+  - apiVersion: v1
+    appVersion: "1.0"
+    created: "2021-04-28T16:22:38.118344424+02:00"
+    description: Database Instances for db operator
+    digest: 0a9f5c620c9ee8d8e33ea96f797be989efab296fbeeca24e26c84fdb2136d704
+    name: db-instances
+    urls:
+    - https://kloeckner-i.github.io/db-operator/helm/db-instances-0.1.0.tgz
+    version: 0.1.0
   db-operator:
-    - apiVersion: v1
-      appVersion: v0.10.0
-      created: "2021-04-27T17:30:27.905525+02:00"
-      description: A Database Operator
-      digest: 87d60156202002a3224ca04c8d90f201b2c29648f39c23f6507107bf23dcedc3
-      name: db-operator
-      urls:
-        - https://kloeckner-i.github.io/db-operator/helm/db-operator-0.4.0.tgz
-      version: 0.4.0
-    - apiVersion: v1
-      appVersion: "1.0"
-      created: "2021-04-27T17:30:27.904729+02:00"
-      description: A Database Operator
-      digest: 2a018ac35e235e895ca5fdbd2b32a0c291e971e11b3c29ef47bfaebef814af93
-      name: db-operator
-      urls:
-        - https://kloeckner-i.github.io/db-operator/helm/db-operator-0.3.0.tgz
-      version: 0.3.0
-    - apiVersion: v1
-      appVersion: "1.0"
-      created: "2021-04-27T17:30:27.903518+02:00"
-      description: A Database Operator
-      digest: a00294defa1914f326b363c1cb0d36b22297fefd71e72a83510c70a1a8020d31
-      name: db-operator
-      urls:
-        - https://kloeckner-i.github.io/db-operator/helm/db-operator-0.2.0.tgz
-      version: 0.2.0
-    - apiVersion: v1
-      appVersion: "1.0"
-      created: "2021-04-27T17:30:27.90249+02:00"
-      description: A Database Operator
-      digest: d2d2a7f6b7913585283d72cea95770067e6c9625479e349c2e18b7dc3fbd3a52
-      name: db-operator
-      urls:
-        - https://kloeckner-i.github.io/db-operator/helm/db-operator-0.1.1.tgz
-      version: 0.1.1
-    - apiVersion: v1
-      appVersion: "1.0"
-      created: "2021-04-27T17:30:27.901442+02:00"
-      description: A Database Operator
-      digest: 6f41f18fe10b74edaec021defdcca99e2c65b5ed60b3c53b3d7ee7b124ccfeb0
-      name: db-operator
-      urls:
-        - https://kloeckner-i.github.io/db-operator/helm/db-operator-0.1.0.tgz
-      version: 0.1.0
-generated: "2021-04-27T17:30:27.890967+02:00"
+  - apiVersion: v1
+    appVersion: v0.10.0
+    created: "2021-04-28T16:22:38.123806153+02:00"
+    description: A Database Operator
+    digest: ea285400e9559404de1a057275fe02dc2d0c727a395869c489cf5ed8f3a62700
+    name: db-operator
+    urls:
+    - https://kloeckner-i.github.io/db-operator/helm/db-operator-0.4.1.tgz
+    version: 0.4.1
+  - apiVersion: v1
+    appVersion: v0.10.0
+    created: "2021-04-28T16:22:38.123201223+02:00"
+    description: A Database Operator
+    digest: 87d60156202002a3224ca04c8d90f201b2c29648f39c23f6507107bf23dcedc3
+    name: db-operator
+    urls:
+    - https://kloeckner-i.github.io/db-operator/helm/db-operator-0.4.0.tgz
+    version: 0.4.0
+  - apiVersion: v1
+    appVersion: "1.0"
+    created: "2021-04-28T16:22:38.122618002+02:00"
+    description: A Database Operator
+    digest: 2a018ac35e235e895ca5fdbd2b32a0c291e971e11b3c29ef47bfaebef814af93
+    name: db-operator
+    urls:
+    - https://kloeckner-i.github.io/db-operator/helm/db-operator-0.3.0.tgz
+    version: 0.3.0
+  - apiVersion: v1
+    appVersion: "1.0"
+    created: "2021-04-28T16:22:38.12206028+02:00"
+    description: A Database Operator
+    digest: a00294defa1914f326b363c1cb0d36b22297fefd71e72a83510c70a1a8020d31
+    name: db-operator
+    urls:
+    - https://kloeckner-i.github.io/db-operator/helm/db-operator-0.2.0.tgz
+    version: 0.2.0
+  - apiVersion: v1
+    appVersion: "1.0"
+    created: "2021-04-28T16:22:38.121486602+02:00"
+    description: A Database Operator
+    digest: d2d2a7f6b7913585283d72cea95770067e6c9625479e349c2e18b7dc3fbd3a52
+    name: db-operator
+    urls:
+    - https://kloeckner-i.github.io/db-operator/helm/db-operator-0.1.1.tgz
+    version: 0.1.1
+  - apiVersion: v1
+    appVersion: "1.0"
+    created: "2021-04-28T16:22:38.120925545+02:00"
+    description: A Database Operator
+    digest: 6f41f18fe10b74edaec021defdcca99e2c65b5ed60b3c53b3d7ee7b124ccfeb0
+    name: db-operator
+    urls:
+    - https://kloeckner-i.github.io/db-operator/helm/db-operator-0.1.0.tgz
+    version: 0.1.0
+generated: "2021-04-28T16:22:38.117166753+02:00"
