@@ -9,3 +9,5 @@ spec:
   instance: pg-local-test
   backup:
     enable: false
+    cron: ""
+  deletionProtected: false
