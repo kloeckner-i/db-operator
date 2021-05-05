@@ -15,7 +15,7 @@ help:
 	@echo "make microsetup: install microk8s locally and deploy db-operator (only for linux and mac)"
 
 miniup:
-	@minikube start --kubernetes-version=v1.15.12 --cpus 2 --memory 4096
+	@minikube start --kubernetes-version=v1.17.17 --cpus 2 --memory 4096
 
 minidown:
 	@minikube stop

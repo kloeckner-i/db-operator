@@ -31,9 +31,9 @@ spec:
   {{- if $value.backup }}
   backup:
 {{ toYaml $value.backup | indent 4 }}
+  {{- end }}
   monitoring:
     enabled: {{ $value.monitoring.enabled }}
-  {{- end }}
   {{- if $value.sslConnection }}
   sslConnection:
     enabled: {{ $value.sslConnection.enabled }}
