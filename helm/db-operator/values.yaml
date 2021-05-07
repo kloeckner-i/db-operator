@@ -44,6 +44,7 @@ config:
     mysql:
       image: "kloeckneri/mydump-gcs:latest"
   monitoring:
+    promPushGateWay: ""
     nodeSelector: {}
     postgres:
       image: wrouesnel/postgres_exporter:latest

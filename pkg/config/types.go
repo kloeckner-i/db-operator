@@ -51,9 +51,10 @@ type mysqlBackupConfig struct {
 // monitoringConfig defines prometheus exporter configurations
 // which will be created by db-operator when monitoring is enabled
 type monitoringConfig struct {
-	Postgres     postgresMonitoringConfig `yaml:"postgres"`
-	Mysql        mysqlMonitoringConfig    `yaml:"mysql,omitempty"`
-	NodeSelector map[string]string        `yaml:"nodeSelector"`
+	Postgres        postgresMonitoringConfig `yaml:"postgres"`
+	Mysql           mysqlMonitoringConfig    `yaml:"mysql,omitempty"`
+	NodeSelector    map[string]string        `yaml:"nodeSelector"`
+	PromPushGateway string                   `yaml:"promPushGateWay,omitempty"`
 }
 
 type postgresMonitoringConfig struct {

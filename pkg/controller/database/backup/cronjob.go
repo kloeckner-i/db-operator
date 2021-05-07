@@ -178,8 +178,7 @@ func postgresEnvVars(dbcr *kciv1alpha1.Database) ([]v1.EnvVar, error) {
 	}
 
 	port := instance.Status.Info["DB_PORT"]
-
-	return []v1.EnvVar{
+	envList := []v1.EnvVar{
 		v1.EnvVar{
 			Name: "DB_HOST", Value: host,
 		},
@@ -203,7 +202,14 @@ func postgresEnvVars(dbcr *kciv1alpha1.Database) ([]v1.EnvVar, error) {
 		v1.EnvVar{
 			Name: "GCS_BUCKET", Value: instance.Spec.Backup.Bucket,
 		},
-	}, nil
+	}
+
+	if ok, _ := dbcr.IsMonitoringEnabled(); ok {
+		envList = append(envList, v1.EnvVar{
+			Name: "PROMETHEUS_PUSH_GATEWAY", Value: conf.Monitoring.PromPushGateway,
+		})
+	}
+	return envList, nil
 }
 
 func mysqlEnvVars(dbcr *kciv1alpha1.Database) ([]v1.EnvVar, error) {
