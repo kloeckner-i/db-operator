@@ -27,7 +27,7 @@ minidashboard:
 	@minikube dashboard
 
 build:
-	@eval $$(shell minikube docker-env) ;\
+	@eval $$(minikube docker-env) ;\
 	operator-sdk build my-db-operator:local
 
 helm:
