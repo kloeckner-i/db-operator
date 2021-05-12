@@ -50,8 +50,6 @@ jobs:
         - snap
         - docker
         - jq
-      env:
-        - TEST_K8S=microk8s
       script:
         - sudo snap install kubectl --classic
         - sudo snap install helm --classic
