@@ -78,3 +78,14 @@ microbuild:
 microhelm:
 	@sudo microk8s kubectl create ns operator --dry-run=client -o yaml | sudo microk8s kubectl apply -f -
 	@sudo microk8s helm3 upgrade --install --namespace operator db-operator helm/db-operator -f helm/db-operator/values.yaml -f helm/db-operator/values-local.yaml
+
+k3d_setup: k3d_install k3d_build
+
+k3d_install:
+	@wget -q -O - https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
+	@k3d cluster create myk3s -i rancher/k3s:v1.17.17-k3s1
+	@kubectl get pod
+
+k3d_build:
+	@docker build -t my-db-operator:local .
+	@k3d image import my-db-operator:local -c myk3s

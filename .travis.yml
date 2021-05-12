@@ -53,5 +53,8 @@ jobs:
       env:
         - TEST_K8S=microk8s
       script:
-        - make microsetup
+        - sudo snap install kubectl --classic
+        - sudo snap install helm --classic
+        - make k3d_setup
+        - make helm
         - sh integration/test.sh
