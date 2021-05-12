@@ -1,6 +1,8 @@
 package kci
 
 import (
+	"context"
+
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -22,7 +24,7 @@ func GetConfigResource(key types.NamespacedName) (*corev1.ConfigMap, error) {
 		panic(err.Error())
 	}
 
-	cm, err := clientset.CoreV1().ConfigMaps(key.Namespace).Get(key.Name, metav1.GetOptions{})
+	cm, err := clientset.CoreV1().ConfigMaps(key.Namespace).Get(context.TODO(), key.Name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +44,7 @@ func GetSecretResource(key types.NamespacedName) (*corev1.Secret, error) {
 		panic(err.Error())
 	}
 
-	secret, err := clientset.CoreV1().Secrets(key.Namespace).Get(key.Name, metav1.GetOptions{})
+	secret, err := clientset.CoreV1().Secrets(key.Namespace).Get(context.TODO(), key.Name, metav1.GetOptions{})
 	if k8serrors.IsNotFound(err) {
 		logrus.Errorf("secret %s not found", key.Name)
 		return nil, err

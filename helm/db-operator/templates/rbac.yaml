@@ -14,7 +14,9 @@ rules:
   resources:
   - "*"
   verbs:
-  - "*"
+  - update
+  - get
+  - list
 - apiGroups:
   - ""
   resources:
@@ -25,27 +27,34 @@ rules:
   - services
   - events
   verbs:
-  - "*"
+  - create
+  - update
+  - get
+  - list
+  - patch
+  - watch
 - apiGroups:
   - batch
   resources:
   - cronjobs
   - jobs
   verbs:
-  - "*"
+  - create
+  - update
 - apiGroups:
   - extensions
   resources:
   - deployments
   verbs:
-  - "*"
+  - create
+  - update
 - apiGroups:
   - apps
   resources:
   - deployments
-  - replicasets
   verbs:
-  - "*"
+  - create
+  - update
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1beta1
