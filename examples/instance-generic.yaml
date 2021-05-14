@@ -3,7 +3,7 @@ kind: DbInstance
 metadata:
   name: "example-generic"
 spec:
-  adminSecretRef: 
+  adminSecretRef:
     Name: example-instance-admin-secret
     Namespace: << namespace of admin secret >>
   engine: postgres

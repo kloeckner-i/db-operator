@@ -8,6 +8,7 @@ metadata:
 spec:
   secretName: example-db-credentials # where to save db name user, password for application
   instance: example-instance
+  deletionProtected: false
   backup:
     enable: false
     cron: "0 0 * * *"

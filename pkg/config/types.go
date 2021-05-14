@@ -54,7 +54,7 @@ type monitoringConfig struct {
 	Postgres        postgresMonitoringConfig `yaml:"postgres"`
 	Mysql           mysqlMonitoringConfig    `yaml:"mysql,omitempty"`
 	NodeSelector    map[string]string        `yaml:"nodeSelector"`
-	PromPushGateway string                   `yaml:"promPushGateWay,omitempty"`
+	PromPushGateway string                   `yaml:"promPushGateway,omitempty"`
 }
 
 type postgresMonitoringConfig struct {

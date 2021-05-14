@@ -204,7 +204,7 @@ func postgresEnvVars(dbcr *kciv1alpha1.Database) ([]v1.EnvVar, error) {
 		},
 	}
 
-	if ok, _ := dbcr.IsMonitoringEnabled(); ok {
+	if instance.IsMonitoringEnabled() {
 		envList = append(envList, v1.EnvVar{
 			Name: "PROMETHEUS_PUSH_GATEWAY", Value: conf.Monitoring.PromPushGateway,
 		})

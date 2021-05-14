@@ -89,4 +89,4 @@ The Cronjob needs permission to push the dump file to the GCS bucket. It will us
 
 ## Monitoring
 
-For monitoring a backup job, you can define in the db-operator config a general prometheus pushgateway endpoint (`monitoring.promPushGateway`). If monitoring is enabled, this variable is added to the related backup cronjob enviorment variables as `PROMETHEUS_PUSH_GATEWAY`.
+For monitoring a backup job, you can define in the db-operator config a general prometheus pushgateway endpoint (`monitoring.promPushGateway`). If monitoring is enabled, this variable is added to the related backup cronjob environment variables as `PROMETHEUS_PUSH_GATEWAY`.

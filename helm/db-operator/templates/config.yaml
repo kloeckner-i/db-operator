@@ -29,8 +29,8 @@ data:
       mysql:
         image: {{ .Values.config.backup.mysql.image }}
     monitoring:
-    {{- if .Values.config.monitoring.promPushGateWay }}
-      promPushGateWay: {{ .Values.config.monitoring.promPushGateWay }}
+    {{- if .Values.config.monitoring.promPushGateway }}
+      promPushGateway: {{ .Values.config.monitoring.promPushGateway }}
     {{ end }}
       nodeSelector:
 {{ toYaml .Values.config.monitoring.nodeSelector | indent 8 }}
