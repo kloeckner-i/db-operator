@@ -15,7 +15,7 @@ help:
 	@echo "make microsetup: install microk8s locally and deploy db-operator (only for linux and mac)"
 
 miniup:
-	@minikube start --kubernetes-version=v1.15.12 --cpus 2 --memory 4096
+	@minikube start --kubernetes-version=v1.17.17 --cpus 2 --memory 4096
 
 minidown:
 	@minikube stop
@@ -43,8 +43,8 @@ addexamples:
 setup: build helm
 
 deploy:
-	@kubectl delete pod -l app=db-operator &
-	watch -n0.2 -c 'kubectl logs -l app=db-operator --all-containers=true'
+	@kubectl delete pod -l app=db-operator -n operator &
+	watch -n0.2 -c 'kubectl logs -l app=db-operator --all-containers=true -n operator'
 
 update: build deploy
 
@@ -78,3 +78,15 @@ microbuild:
 microhelm:
 	@sudo microk8s kubectl create ns operator --dry-run=client -o yaml | sudo microk8s kubectl apply -f -
 	@sudo microk8s helm3 upgrade --install --namespace operator db-operator helm/db-operator -f helm/db-operator/values.yaml -f helm/db-operator/values-local.yaml
+
+k3d_setup: k3d_install k3d_build helm
+
+k3d_install:
+	@wget -q -O - https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
+	@k3d cluster create myk3s -i rancher/k3s:v1.17.17-k3s1
+	@kubectl get pod
+
+k3d_build:
+	@docker build -t my-db-operator:local .
+	@docker save my-db-operator > my-image.tar
+	@k3d image import my-image.tar -c myk3s

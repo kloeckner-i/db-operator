@@ -68,7 +68,7 @@ type GenericInstance struct {
 	Port     uint16 `json:"port"`
 	PublicIP string `json:"publicIp,omitempty"`
 	// BackupHost address will be used for dumping database for backup
-	// Usually slave address for master-slave setup or cluster lb address
+	// Usually secondary address for primary-secondary setup or cluster lb address
 	// If it's not defined, above Host will be used as backup host address.
 	BackupHost string `json:"backupHost"`
 }

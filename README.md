@@ -17,13 +17,12 @@ DB Operator provides following features:
 * [Enabling regular Backup](docs/enablingbackup.md) - and schedule cronjob
 
 ## Quickstart
-TODO: update when public helm repo set up done to not use local helm chart
 
 ### To install DB Operator with helm:
 
 ```
-$ helm repo add myhelmrepo https://kloeckner-i.github.io/db-operator/helm/
-$ helm install --name my-release myhelmrepo/db-operator
+$ helm repo add db-operator https://kloeckner-i.github.io/db-operator/helm/
+$ helm install --name my-release db-operator/db-operator
 ```
 
 To see more options of helm values [here](helm/README.md)
@@ -35,9 +34,9 @@ To see more options of helm values [here](helm/README.md)
 * docker
 * [operator-sdk v0.13.0](https://github.com/operator-framework/operator-sdk/releases/tag/v0.13.0)
 * make
-* kubectl v1.14+(< v1.19)
+* kubectl v1.14+ (< v1.21)
 * helm v3.0.2+
-* [minikube](https://kubernetes.io/docs/tasks/tools/install-minikube/) or [microk8s](https://microk8s.io/)
+* [minikube](https://kubernetes.io/docs/tasks/tools/install-minikube/) or [k3d](https://github.com/rancher/k3d)
 
 To have kubernetes environment locally, you need to install [minikube](https://kubernetes.io/docs/tasks/tools/install-minikube/) or [microk8s](https://microk8s.io/).
 
@@ -56,6 +55,7 @@ make update: build db-operator image again and delete running pod
 make addexamples: kubectl create -f examples/
 make test: spin up mysql, postgres containers and run go unit test
 make microsetup: install microk8s locally and deploy db-operator (only for linux)
+make k3d_setup: install k3d locally and deploy db-operator
 ```
 
 ### Developing with Minikube
@@ -90,6 +90,28 @@ $ make update
 $ make helm
 ```
 helm upgrade --install -f {LOCAL CHART DIR}/values-local.yaml {LOCAL CHART DIR}
+
+### Developing with k3d
+#### How to run db-operator
+```
+$ make k3d_setup
+```
+#### After code changes
+
+rebuild local docker image
+```
+$ make k3d_build
+```
+
+delete running db-operator and apply new image
+```
+$ make deploy
+```
+#### After helm template changes
+
+```
+$ make helm
+```
 
 ### Developing with microk8s
 

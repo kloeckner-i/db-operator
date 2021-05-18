@@ -64,6 +64,7 @@ spec:
             - instance
             - secretName
           type: object
+          additionalProperties: true
         status:
           description: DatabaseStatus defines the observed state of Database
           properties:
@@ -82,123 +83,12 @@ spec:
                   type: object
                 spec:
                   description: DbInstanceSpec defines the desired state of DbInstance
-                  properties:
-                    adminSecretRef:
-                      type: object
-                    backup:
-                      description: DbInstanceBackup defines name of google bucket to use for storing database dumps for backup when backup is enabled
-                      properties:
-                        bucket:
-                          type: string
-                      required:
-                        - bucket
-                      type: object
-                    engine:
-                      description: 'Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file'
-                      type: string
-                    generic:
-                      description: GenericInstance is used when instance type is generic and describes necessary informations to use instance generic instance can be any backend, it must be reachable by described address and port
-                      properties:
-                        backupHost:
-                          description: BackupHost address will be used for dumping database for backup Usually slave address for master-slave setup or cluster lb address If it's not defined, above Host will be used as backup host address.
-                          type: string
-                        host:
-                          type: string
-                        port:
-                          type: integer
-                        publicIp:
-                          type: string
-                      required:
-                        - backupHost
-                        - host
-                        - port
-                      type: object
-                    google:
-                      description: GoogleInstance is used when instance type is Google Cloud SQL and describes necessary informations to use google API to create sql instances
-                      properties:
-                        configmapRef:
-                          type: object
-                        instance:
-                          type: string
-                      required:
-                        - configmapRef
-                        - instance
-                      type: object
-                    monitoring:
-                      description: DbInstanceMonitoring defines if exporter
-                      properties:
-                        enabled:
-                          type: boolean
-                      required:
-                        - enabled
-                      type: object
-                    percona:
-                      description: PerconaCluster is used when instance type is percona cluster
-                      properties:
-                        monitorUserSecretRef:
-                          type: object
-                        servers:
-                          items:
-                            description: BackendServer defines backend database server
-                            properties:
-                              host:
-                                type: string
-                              maxConn:
-                                type: integer
-                              port:
-                                type: integer
-                              readonly:
-                                type: boolean
-                            required:
-                              - host
-                              - maxConn
-                              - port
-                            type: object
-                          type: array
-                      required:
-                        - monitorUserSecretRef
-                        - servers
-                      type: object
-                    sslConnection:
-                      description: DbInstanceSSLConnection defines weather connection from db-operator to instance has to be ssl or not
-                      properties:
-                        enabled:
-                          type: boolean
-                        skip-verify:
-                          description: SkipVerity use SSL connection, but don't check against a CA
-                          type: boolean
-                      required:
-                        - enabled
-                        - skip-verify
-                      type: object
-                  required:
-                    - adminSecretRef
-                    - backup
-                    - engine
-                    - monitoring
-                    - sslConnection
                   type: object
                 status:
                   description: DbInstanceStatus defines the observed state of DbInstance
-                  properties:
-                    checksums:
-                      additionalProperties:
-                        type: string
-                      type: object
-                    info:
-                      additionalProperties:
-                        type: string
-                      type: object
-                    phase:
-                      description: 'Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file'
-                      type: string
-                    status:
-                      type: boolean
-                  required:
-                    - phase
-                    - status
                   type: object
               type: object
+              additionalProperties: true
             monitorUserSecret:
               type: string
             phase:
@@ -296,15 +186,15 @@ spec:
           description: DbInstanceSpec defines the desired state of DbInstance
           type: object
           required:
-          - engine
-          - adminSecretRef
+            - adminSecretRef
+            - engine
           oneOf:
-          - required:
-            - percona
-          - required:
-            - google
-          - required:
-            - generic
+            - required:
+              - percona
+            - required:
+              - google
+            - required:
+              - generic
           properties:
             engine:
               type: string
@@ -317,63 +207,88 @@ spec:
                   type: string
             backup:
               type: object
-            generic:
-              type: object
-              required:
-              - host
-              - port
               properties:
+                bucket:
+                  type: string
+              required:
+                - bucket
+            generic:
+              properties:
+                backupHost:
+                  description: BackupHost address will be used for dumping database for backup Usually secondary address for primary-secondary setup or cluster lb address If it's not defined, above Host will be used as backup host address.
+                  type: string
                 host:
                   type: string
                 port:
                   type: integer
-            google:
-              type: object
-              required:
-              - instance
-              properties:
-                instance:
+                publicIp:
                   type: string
+              required:
+                - host
+                - port
+              type: object
+            google:
+              description: GoogleInstance is used when instance type is Google Cloud SQL and describes necessary informations to use google API to create sql instances
+              properties:
                 configmapRef:
                   type: object
-                  properties:
-                    Namespace:
-                      type: string
-                    Name:
-                      type: string
-            percona:
-              type: object
+                instance:
+                  type: string
               required:
-              - servers
-              - monitorUserSecretRef
+                - configmapRef
+                - instance
+              type: object
+            percona:
+              description: PerconaCluster is used when instance type is percona cluster
               properties:
                 servers:
                   type: array
                   items:
+                    description: BackendServer defines backend database server
                     required:
-                    - host
-                    - port
-                    - maxConn
+                      - host
+                      - maxConn
+                      - port
                     properties:
                       host:
                         type: string
+                      maxConn:
+                        minimum: 1
+                        type: integer
                       port:
                         type: integer
-                      maxConn:
-                        type: integer
-                        minimum: 1
                       readonly:
                         type: boolean
+                    type: object
                 monitorUserSecretRef:
                   type: object
+              required:
+                - monitorUserSecretRef
+                - servers
+              type: object
+            monitoring:
+              type: object
+              properties:
+                enabled:
+                  type: boolean
+              required:
+                - enabled
+            sslConnection:
+              description: DbInstanceSSLConnection defines weather connection from db-operator to instance has to be ssl or not
+              properties:
+                enabled:
+                  type: boolean
+                skip-verify:
+                  description: SkipVerity use SSL connection, but don't check against a CA
+                  type: boolean
+              required:
+                - enabled
+                - skip-verify
+              type: object
         status:
           description: DbInstanceStatus defines the observed state of DbInstance
           type: object
       type: object
-  versions:
-  - name: v1alpha1
-    served: true
-    storage: true
   additionalPrinterColumns:
   - JSONPath: .status.phase
     description: current phase
