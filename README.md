@@ -92,8 +92,25 @@ $ make helm
 helm upgrade --install -f {LOCAL CHART DIR}/values-local.yaml {LOCAL CHART DIR}
 
 ### Developing with k3d
+#### How to run db-operator
 ```
 $ make k3d_setup
+```
+#### After code changes
+
+rebuild local docker image
+```
+$ make k3d_build
+```
+
+delete running db-operator and apply new image
+```
+$ make deploy
+```
+#### After helm template changes
+
+```
+$ make helm
 ```
 
 ### Developing with microk8s
