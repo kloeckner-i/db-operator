@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -tags build -o /usr/local/bin/db-operator ./cmd/manager
 
-FROM alpine:3.11
+FROM alpine:3.13
 LABEL maintainer="dev@kloeckner-i.com"
 
 ENV USER_UID=1001
