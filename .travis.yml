@@ -51,8 +51,5 @@ jobs:
         - docker
         - jq
       script:
-        - sudo snap install kubectl --classic
-        - sudo snap install helm --classic
-        - make k3d_setup
-        - make helm
-        - sh integration/test.sh
+        - sudo snap install kubectl --classic && sudo snap install helm --classic
+        - make k3d_setup && make helm && sh integration/test.sh
