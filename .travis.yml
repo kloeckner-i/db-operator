@@ -21,29 +21,29 @@ jobs:
     - env:
         - ALLOW_FAIL=true
   include:
-    - stage: test
-      name: "Unit Tests"
-      script: go test -tags tests ./... -v -cover
-      services:
-        - postgresql
-        - mysql
-      env:
-        - POSTGRES_PASSWORD=""
-        - MYSQL_PASSWORD=""
-        - MYSQL_HOST="127.0.0.1"
-    - stage: test
-      name: "Go Lint"
-      script:
-        - go get -u golang.org/x/lint/golint
-        - find . -type f -name "*\.go" | grep -v "zz_generated" | while read line; do
-            golint -set_exit_status $line || exit 1;
-          done
-      env:
-        - ALLOW_FAIL=true
-    - stage: test
-      name: "Go Vet"
-      script:
-        - go vet ./...
+    # - stage: test
+    #   name: "Unit Tests"
+    #   script: go test -tags tests ./... -v -cover
+    #   services:
+    #     - postgresql
+    #     - mysql
+    #   env:
+    #     - POSTGRES_PASSWORD=""
+    #     - MYSQL_PASSWORD=""
+    #     - MYSQL_HOST="127.0.0.1"
+    # - stage: test
+    #   name: "Go Lint"
+    #   script:
+    #     - go get -u golang.org/x/lint/golint
+    #     - find . -type f -name "*\.go" | grep -v "zz_generated" | while read line; do
+    #         golint -set_exit_status $line || exit 1;
+    #       done
+    #   env:
+    #     - ALLOW_FAIL=true
+    # - stage: test
+    #   name: "Go Vet"
+    #   script:
+    #     - go vet ./...
     - stage: integration
       name: "Integration test"
       services:
@@ -51,5 +51,6 @@ jobs:
         - docker
         - jq
       script:
+        - docker ps
         - sudo snap install kubectl --classic && sudo snap install helm --classic
         - make k3d_setup && make helm && sh integration/test.sh

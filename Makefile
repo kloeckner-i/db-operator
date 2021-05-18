@@ -89,4 +89,4 @@ k3d_install:
 k3d_build:
 	@docker build -t my-db-operator:local .
 	@docker save my-db-operator > my-image.tar
-	@k3d image import my-db-operator:local -c myk3s
+	@k3d image import my-image.tar -c myk3s
