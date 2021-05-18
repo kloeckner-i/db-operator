@@ -215,7 +215,7 @@ spec:
             generic:
               properties:
                 backupHost:
-                  description: BackupHost address will be used for dumping database for backup Usually slave address for master-slave setup or cluster lb address If it's not defined, above Host will be used as backup host address.
+                  description: BackupHost address will be used for dumping database for backup Usually secondary address for primary-secondary setup or cluster lb address If it's not defined, above Host will be used as backup host address.
                   type: string
                 host:
                   type: string

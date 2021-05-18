@@ -34,7 +34,7 @@ To see more options of helm values [here](helm/README.md)
 * docker
 * [operator-sdk v0.13.0](https://github.com/operator-framework/operator-sdk/releases/tag/v0.13.0)
 * make
-* kubectl v1.14+
+* kubectl v1.14+ (< v1.21)
 * helm v3.0.2+
 * [minikube](https://kubernetes.io/docs/tasks/tools/install-minikube/) or [k3d](https://github.com/rancher/k3d)
 
