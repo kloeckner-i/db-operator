@@ -24,7 +24,6 @@ rules:
   - pods
   - configmaps
   - secrets
-  - databases
   - services
   - events
   verbs:
@@ -32,8 +31,13 @@ rules:
   - update
   - get
   - list
-  - patch
   - watch
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - patch
 - apiGroups:
   - batch
   resources:
