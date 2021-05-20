@@ -71,12 +71,13 @@ func updateGsqlUser(instance, user, password string) error {
 
 	host := "%"
 	rb := &sqladmin.User{
+		Name:     user,
 		Password: password,
 	}
 
 	serviceaccount := gcloud.GetServiceAccount()
 	project := serviceaccount.ProjectID
-	resp, err := sqladminService.Users.Update(project, instance, user, rb).Host(host).Context(ctx).Do()
+	resp, err := sqladminService.Users.Update(project, instance, rb).Host(host).Context(ctx).Do()
 	if err != nil {
 		return err
 	}
