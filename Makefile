@@ -49,12 +49,10 @@ deploy:
 update: build deploy
 
 test:
-	@docker run --rm --name postgres -e POSTGRES_PASSWORD=test1234 -p 5432:5432 -d postgres:11-alpine
-	@docker run --rm --name mysql -e MYSQL_ROOT_PASSWORD=test1234 -p 3306:3306 -d mysql:5.7
+	@docker-compose up -d
 	@sleep 2
 	@go test -tags tests ./... -v -cover
-	@docker stop postgres
-	@docker stop mysql
+	@docker-compose down
 
 lint:
 	@golint ./...

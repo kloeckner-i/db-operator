@@ -6,13 +6,7 @@ import (
 
 // Update instance if instance exists
 func Update(ins DbInstance) (map[string]string, error) {
-	err := ins.exist()
-	if err != nil {
-		return nil, ErrNotExists
-	}
-
-	logrus.Debug("instance exists, update instance")
-	err = ins.update()
+	err := ins.update()
 	if err != nil {
 		logrus.Debug("update failed")
 		return nil, err
