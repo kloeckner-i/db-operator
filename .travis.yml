@@ -23,14 +23,7 @@ jobs:
   include:
     - stage: test
       name: "Unit Tests"
-      script: go test -tags tests ./... -v -cover
-      services:
-        - postgresql
-        - mysql
-      env:
-        - POSTGRES_PASSWORD=""
-        - MYSQL_PASSWORD=""
-        - MYSQL_HOST="127.0.0.1"
+      script: make test
     - stage: test
       name: "Go Lint"
       script:

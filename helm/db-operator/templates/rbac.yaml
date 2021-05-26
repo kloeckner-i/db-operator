@@ -36,6 +36,7 @@ rules:
   - ""
   resources:
   - services
+  - events
   verbs:
   - patch
 - apiGroups:

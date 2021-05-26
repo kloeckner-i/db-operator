@@ -37,12 +37,12 @@ func (r *ReconcileDbInstance) create(dbin *kciv1alpha1.DbInstance) error {
 			return err
 		}
 
-		instance = &dbinstance.Gsql{
-			Name:     dbin.Spec.Google.InstanceName,
-			Config:   configmap.Data["config"],
-			User:     cred.Username,
-			Password: cred.Password,
-		}
+		name := dbin.Spec.Google.InstanceName
+		config := configmap.Data["config"]
+		user := cred.Username
+		password := cred.Password
+
+		instance = dbinstance.GsqlNew(name, config, user, password)
 	case "generic":
 		instance = &dbinstance.Generic{
 			Host:         dbin.Spec.Generic.Host,
@@ -76,6 +76,7 @@ func (r *ReconcileDbInstance) create(dbin *kciv1alpha1.DbInstance) error {
 	info, err := dbinstance.Create(instance)
 	if err != nil {
 		if err == dbinstance.ErrAlreadyExists {
+			logrus.Debug("Instance: name=%s instance already exists in backend, updating instance")
 			info, err = dbinstance.Update(instance)
 			if err != nil {
 				logrus.Errorf("Instance: name=%s failed updating instance - %s", dbin.Name, err)

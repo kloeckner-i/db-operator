@@ -12,26 +12,32 @@ import (
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 
 	"github.com/sirupsen/logrus"
-	"golang.org/x/oauth2/google"
 	sqladmin "google.golang.org/api/sqladmin/v1beta4"
 )
 
 // Gsql represents a google sql instance
 type Gsql struct {
-	Name     string
-	Config   string
-	User     string
-	Password string
+	Name      string
+	Config    string
+	User      string
+	Password  string
+	ProjectID string
+}
+
+// GsqlNew create a new Gsql object and return
+func GsqlNew(name, config, user, password string) *Gsql {
+	projectID := gcloud.GetServiceAccount().ProjectID
+
+	return &Gsql{
+		Name:      name,
+		Config:    config,
+		Password:  password,
+		ProjectID: projectID,
+	}
 }
 
 func getSqladminService(ctx context.Context) (*sqladmin.Service, error) {
-	oauthClient, err := google.DefaultClient(ctx, sqladmin.CloudPlatformScope)
-	if err != nil {
-		logrus.Errorf("failed to get google auth client %s", err)
-		return nil, err
-	}
-
-	sqladminService, err := sqladmin.New(oauthClient)
+	sqladminService, err := sqladmin.NewService(ctx)
 	if err != nil {
 		logrus.Debugf("error occurs during getting sqladminService %s", err)
 		return nil, err
@@ -40,7 +46,7 @@ func getSqladminService(ctx context.Context) (*sqladmin.Service, error) {
 	return sqladminService, nil
 }
 
-func getGsqlInstance(name string) (*sqladmin.DatabaseInstance, error) {
+func (ins *Gsql) getInstance() (*sqladmin.DatabaseInstance, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -49,9 +55,7 @@ func getGsqlInstance(name string) (*sqladmin.DatabaseInstance, error) {
 		return nil, err
 	}
 
-	serviceaccount := gcloud.GetServiceAccount()
-
-	rs, err := sqladminService.Instances.Get(serviceaccount.ProjectID, name).Context(ctx).Do()
+	rs, err := sqladminService.Instances.Get(ins.ProjectID, ins.Name).Context(ctx).Do()
 	if err != nil {
 		return nil, err
 	}
@@ -59,8 +63,69 @@ func getGsqlInstance(name string) (*sqladmin.DatabaseInstance, error) {
 	return rs, nil
 }
 
-func updateGsqlUser(instance, user, password string) error {
-	logrus.Debugf("gsql user update - instance: %s, user: %s", instance, user)
+func (ins *Gsql) createInstance() error {
+	logrus.Debugf("gsql instance create %s", ins.Name)
+	request, err := ins.verifyConfig()
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	sqladminService, err := getSqladminService(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Project ID of the project to which the newly created Cloud SQL instances should belong.
+	resp, err := sqladminService.Instances.Insert(ins.ProjectID, request).Context(ctx).Do()
+	if err != nil {
+		logrus.Errorf("gsql instance insert error - %s", err)
+		return err
+	}
+	logrus.Debugf("instance insert api response: %#v", resp)
+	err = ins.waitUntilRunnable()
+	if err != nil {
+		return fmt.Errorf("gsql instance created but still not runnable - %s", err)
+	}
+
+	return err
+}
+
+func (ins *Gsql) updateInstance() error {
+	logrus.Debugf("gsql instance create %s", ins.Name)
+	request, err := ins.verifyConfig()
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	sqladminService, err := getSqladminService(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Project ID of the project to which the newly created Cloud SQL instances should belong.
+	resp, err := sqladminService.Instances.Patch(ins.ProjectID, ins.Name, request).Context(ctx).Do()
+	if err != nil {
+		logrus.Errorf("gsql instance patch error - %s", err)
+		return err
+	}
+	logrus.Debugf("instance patch api response: %#v", resp)
+
+	err = ins.waitUntilRunnable()
+	if err != nil {
+		return fmt.Errorf("gsql instance created but still not runnable - %s", err)
+	}
+
+	return err
+}
+
+func (ins *Gsql) updateUser() error {
+	logrus.Debugf("gsql user update - instance: %s, user: %s", ins.Name, ins.User)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -71,17 +136,21 @@ func updateGsqlUser(instance, user, password string) error {
 
 	host := "%"
 	rb := &sqladmin.User{
-		Name:     user,
-		Password: password,
+		Host:     host,
+		Name:     ins.User,
+		Password: ins.Password,
 	}
 
-	serviceaccount := gcloud.GetServiceAccount()
-	project := serviceaccount.ProjectID
-	resp, err := sqladminService.Users.Update(project, instance, rb).Host(host).Context(ctx).Do()
+	resp, err := sqladminService.Users.Update(ins.ProjectID, ins.Name, rb).Host(host).Name(rb.Name).Context(ctx).Do()
 	if err != nil {
 		return err
 	}
 	logrus.Debugf("user update api response: %#v", resp)
+
+	err = ins.waitUntilRunnable()
+	if err != nil {
+		return fmt.Errorf("gsql user updated but still not runnable - %s", err)
+	}
 
 	return nil
 }
@@ -104,7 +173,7 @@ func (ins *Gsql) waitUntilRunnable() error {
 	time.Sleep(delay * time.Second)
 
 	err := kci.Retry(10, 60*time.Second, func() error {
-		instance, err := getGsqlInstance(ins.Name)
+		instance, err := ins.getInstance()
 		if err != nil {
 			return err
 		}
@@ -117,7 +186,7 @@ func (ins *Gsql) waitUntilRunnable() error {
 		return nil
 	})
 	if err != nil {
-		instance, err := getGsqlInstance(ins.Name)
+		instance, err := ins.getInstance()
 		if err != nil {
 			return err
 		}
@@ -129,37 +198,13 @@ func (ins *Gsql) waitUntilRunnable() error {
 }
 
 func (ins *Gsql) create() error {
-	logrus.Debugf("gsql instance create %s", ins.Name)
-	request, err := ins.verifyConfig()
+	err := ins.createInstance()
 	if err != nil {
+		logrus.Errorf("gsql instance creation error - %s", err)
 		return err
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	sqladminService, err := getSqladminService(ctx)
-	if err != nil {
-		return err
-	}
-
-	// Project ID of the project to which the newly created Cloud SQL instances should belong.
-	serviceaccount := gcloud.GetServiceAccount()
-	project := serviceaccount.ProjectID
-
-	resp, err := sqladminService.Instances.Insert(project, request).Context(ctx).Do()
-	if err != nil {
-		logrus.Errorf("gsql instance insert error - %s", err)
-		return err
-	}
-	logrus.Debugf("instance insert api response: %#v", resp)
-
-	err = ins.waitUntilRunnable()
-	if err != nil {
-		return fmt.Errorf("gsql instance created but still not runnable - %s", err)
-	}
-
-	err = updateGsqlUser(ins.Name, ins.User, ins.Password)
+	err = ins.updateUser()
 	if err != nil {
 		logrus.Errorf("gsql user update error - %s", err)
 		return err
@@ -169,37 +214,13 @@ func (ins *Gsql) create() error {
 }
 
 func (ins *Gsql) update() error {
-	logrus.Debugf("gsql instance update %s", ins.Name)
-	request, err := ins.verifyConfig()
+	err := ins.updateInstance()
 	if err != nil {
+		logrus.Errorf("gsql instance update error - %s", err)
 		return err
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	sqladminService, err := getSqladminService(ctx)
-	if err != nil {
-		return err
-	}
-
-	// Project ID of the project to which the newly created Cloud SQL instances should belong.
-	serviceaccount := gcloud.GetServiceAccount()
-	project := serviceaccount.ProjectID
-
-	resp, err := sqladminService.Instances.Patch(project, ins.Name, request).Context(ctx).Do()
-	if err != nil {
-		logrus.Errorf("gsql instance patch error - %s", err)
-		return err
-	}
-	logrus.Debugf("instance patch api response: %#v", resp)
-
-	err = ins.waitUntilRunnable()
-	if err != nil {
-		return fmt.Errorf("gsql instance updated but still not runnable - %s", err)
-	}
-
-	err = updateGsqlUser(ins.Name, ins.User, ins.Password)
+	err = ins.updateUser()
 	if err != nil {
 		logrus.Errorf("gsql user update error - %s", err)
 		return err
@@ -209,7 +230,7 @@ func (ins *Gsql) update() error {
 }
 
 func (ins *Gsql) exist() error {
-	_, err := getGsqlInstance(ins.Name)
+	_, err := ins.getInstance()
 	if err != nil {
 		logrus.Debugf("gsql instance get failed %s", err)
 		return err
@@ -218,7 +239,7 @@ func (ins *Gsql) exist() error {
 }
 
 func (ins *Gsql) getInfoMap() (map[string]string, error) {
-	instance, err := getGsqlInstance(ins.Name)
+	instance, err := ins.getInstance()
 	if err != nil {
 		return nil, err
 	}
