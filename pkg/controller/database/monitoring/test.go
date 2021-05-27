@@ -1,6 +1,7 @@
 package monitoring
 
 import (
+	"github.com/kloeckner-i/db-operator/pkg/config"
 	"testing"
 
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/pkg/apis/kci/v1alpha1"
@@ -21,7 +22,9 @@ func testPGDeployment(t *testing.T) {
 	patch := monkey.Patch(pgDeployment, pgDeploymentMock)
 	defer patch.Unpatch()
 
-	res, err := pgDeployment(dbcr)
+	conf := config.LoadConfig()
+
+	res, err := pgDeployment(&conf, dbcr)
 	assert.Equal(t, &v1apps.Deployment{}, res)
 	assert.Equal(t, nil, err)
 }
@@ -36,7 +39,9 @@ func testPGExporterQueryCM(t *testing.T) {
 	patch := monkey.Patch(pgExporterQueryCM, pgExporterQueryCMMock)
 	defer patch.Unpatch()
 
-	res, err := pgExporterQueryCM(dbcr)
+	conf := config.LoadConfig()
+
+	res, err := pgExporterQueryCM(&conf, dbcr)
 	assert.Equal(t, &v1.ConfigMap{}, res)
 	assert.Equal(t, nil, err)
 }

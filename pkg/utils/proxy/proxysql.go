@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"bytes"
+	"github.com/kloeckner-i/db-operator/pkg/config"
 	"log"
 	"strconv"
 	"text/template"
@@ -24,6 +25,7 @@ type ProxySQL struct {
 	MonitorUserSecretName string
 	Engine                string
 	Labels                map[string]string
+	Conf                  *config.Config
 	configCheckSum        string
 }
 
@@ -158,7 +160,7 @@ func (ps *ProxySQL) deploymentSpec() (v1apps.DeploymentSpec, error) {
 			Spec: v1.PodSpec{
 				InitContainers: []v1.Container{configGenContainer},
 				Containers:     []v1.Container{proxyContainer},
-				NodeSelector:   conf.Instances.Percona.ProxyConfig.NodeSelector,
+				NodeSelector:   ps.Conf.Instances.Percona.ProxyConfig.NodeSelector,
 				RestartPolicy:  v1.RestartPolicyAlways,
 				Volumes:        volumes,
 				Affinity: &v1.Affinity{
@@ -222,7 +224,7 @@ func (ps *ProxySQL) configGeneratorContainer() (v1.Container, error) {
 func (ps *ProxySQL) proxyContainer() (v1.Container, error) {
 	return v1.Container{
 		Name:            "proxysql",
-		Image:           conf.Instances.Percona.ProxyConfig.Image,
+		Image:           ps.Conf.Instances.Percona.ProxyConfig.Image,
 		ImagePullPolicy: v1.PullIfNotPresent,
 		Ports: []v1.ContainerPort{
 			v1.ContainerPort{

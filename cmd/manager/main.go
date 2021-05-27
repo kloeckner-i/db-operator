@@ -16,6 +16,7 @@ import (
 	"github.com/kloeckner-i/db-operator/pkg/controller"
 	"github.com/kloeckner-i/db-operator/version"
 
+	kciconfig "github.com/kloeckner-i/db-operator/pkg/config"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
@@ -104,6 +105,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	log.Info("Loading configuration.")
+
+	conf := kciconfig.LoadConfig()
+
 	log.Info("Registering Components.")
 
 	// Setup Scheme for all resources
@@ -113,7 +118,7 @@ func main() {
 	}
 
 	// Setup all Controllers
-	if err := controller.AddToManager(mgr); err != nil {
+	if err := controller.AddToManager(&conf, mgr); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}

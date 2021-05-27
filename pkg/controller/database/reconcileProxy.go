@@ -27,7 +27,7 @@ func (r *ReconcileDatabase) createProxy(dbcr *kciv1alpha1.Database) error {
 		}
 	}
 
-	proxyInterface, err := determinProxyType(dbcr)
+	proxyInterface, err := determinProxyType(r.conf, dbcr)
 	if err != nil {
 		return err
 	}

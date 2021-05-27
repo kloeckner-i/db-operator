@@ -3,6 +3,7 @@ package dbinstance
 import (
 	"context"
 	"errors"
+	"github.com/kloeckner-i/db-operator/pkg/config"
 	"os"
 	"strconv"
 	"time"
@@ -24,19 +25,19 @@ import (
 
 // Add creates a new DbInstance Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager) error {
-	return add(mgr, newReconciler(mgr))
+func Add(conf *config.Config, mgr manager.Manager) error {
+	return add(mgr, newReconciler(conf, mgr))
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
+func newReconciler(conf *config.Config, mgr manager.Manager) reconcile.Reconciler {
 	interval := os.Getenv("RECONCILE_INTERVAL")
 	i, err := strconv.ParseInt(interval, 10, 64)
 	if err != nil {
 		i = 60
 		logrus.Infof("Set default reconcile period to %d s for dbinstance-controller", i)
 	}
-	return &ReconcileDbInstance{client: mgr.GetClient(), scheme: mgr.GetScheme(), interval: time.Duration(i)}
+	return &ReconcileDbInstance{client: mgr.GetClient(), scheme: mgr.GetScheme(), interval: time.Duration(i), conf: conf}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -66,6 +67,7 @@ type ReconcileDbInstance struct {
 	client   client.Client
 	scheme   *runtime.Scheme
 	interval time.Duration
+	conf     *config.Config
 }
 
 var (
