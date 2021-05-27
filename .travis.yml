@@ -23,7 +23,9 @@ jobs:
   include:
     - stage: test
       name: "Unit Tests"
-      script: make test
+      script:
+      - docker-compose up -d
+      - go test -tags tests ./... -v -cover
     - stage: test
       name: "Go Lint"
       script:
