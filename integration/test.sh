@@ -62,7 +62,7 @@ create_test_resources() {
     && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-mysql-generic integration/mysql-generic --wait \
     && $HELM_CMD dependency build --namespace ${TEST_NAMESPACE} integration/mysql-percona \
     && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-mysql-percona integration/mysql-percona --wait \
-    && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-pg integration/postgres --wait
+    && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-pg integration/postgres-generic --wait
     if [ $? -ne 0 ]; then
         echo "[Test] failed to create"
         exit 1;
