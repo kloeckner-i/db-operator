@@ -3,9 +3,9 @@ package backup
 import (
 	"errors"
 	"fmt"
+	"github.com/kloeckner-i/db-operator/pkg/config"
 
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/pkg/apis/kci/v1alpha1"
-	"github.com/kloeckner-i/db-operator/pkg/config"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 
 	"github.com/sirupsen/logrus"
@@ -15,13 +15,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var conf = config.Config{}
-
 // GCSBackupCron builds kubernetes cronjob object
 // to create database backup regularly with defined schedule from dbcr
 // this job will database dump and upload to google bucket storage for backup
-func GCSBackupCron(dbcr *kciv1alpha1.Database) (*batchv1beta1.CronJob, error) {
-	cronJobSpec, err := buildCronJobSpec(dbcr)
+func GCSBackupCron(conf *config.Config, dbcr *kciv1alpha1.Database) (*batchv1beta1.CronJob, error) {
+	cronJobSpec, err := buildCronJobSpec(conf, dbcr)
 	if err != nil {
 		return nil, err
 	}
@@ -40,8 +38,8 @@ func GCSBackupCron(dbcr *kciv1alpha1.Database) (*batchv1beta1.CronJob, error) {
 	}, nil
 }
 
-func buildCronJobSpec(dbcr *kciv1alpha1.Database) (batchv1beta1.CronJobSpec, error) {
-	jobTemplate, err := buildJobTemplate(dbcr)
+func buildCronJobSpec(conf *config.Config, dbcr *kciv1alpha1.Database) (batchv1beta1.CronJobSpec, error) {
+	jobTemplate, err := buildJobTemplate(conf, dbcr)
 	if err != nil {
 		return batchv1beta1.CronJobSpec{}, err
 	}
@@ -52,7 +50,7 @@ func buildCronJobSpec(dbcr *kciv1alpha1.Database) (batchv1beta1.CronJobSpec, err
 	}, nil
 }
 
-func buildJobTemplate(dbcr *kciv1alpha1.Database) (batchv1beta1.JobTemplateSpec, error) {
+func buildJobTemplate(conf *config.Config, dbcr *kciv1alpha1.Database) (batchv1beta1.JobTemplateSpec, error) {
 	ActiveDeadlineSeconds := int64(conf.Backup.ActiveDeadlineSeconds)
 	BackoffLimit := int32(3)
 	instance, err := dbcr.GetInstanceRef()
@@ -66,12 +64,12 @@ func buildJobTemplate(dbcr *kciv1alpha1.Database) (batchv1beta1.JobTemplateSpec,
 	engine := instance.Spec.Engine
 	switch engine {
 	case "postgres":
-		backupContainer, err = postgresBackupContainer(dbcr)
+		backupContainer, err = postgresBackupContainer(conf, dbcr)
 		if err != nil {
 			return batchv1beta1.JobTemplateSpec{}, err
 		}
 	case "mysql":
-		backupContainer, err = mysqlBackupContainer(dbcr)
+		backupContainer, err = mysqlBackupContainer(conf, dbcr)
 		if err != nil {
 			return batchv1beta1.JobTemplateSpec{}, err
 		}
@@ -101,7 +99,7 @@ func buildJobTemplate(dbcr *kciv1alpha1.Database) (batchv1beta1.JobTemplateSpec,
 	}, nil
 }
 
-func postgresBackupContainer(dbcr *kciv1alpha1.Database) (v1.Container, error) {
+func postgresBackupContainer(conf *config.Config, dbcr *kciv1alpha1.Database) (v1.Container, error) {
 	env, err := postgresEnvVars(dbcr)
 	if err != nil {
 		return v1.Container{}, err
@@ -116,7 +114,7 @@ func postgresBackupContainer(dbcr *kciv1alpha1.Database) (v1.Container, error) {
 	}, nil
 }
 
-func mysqlBackupContainer(dbcr *kciv1alpha1.Database) (v1.Container, error) {
+func mysqlBackupContainer(conf *config.Config, dbcr *kciv1alpha1.Database) (v1.Container, error) {
 	env, err := mysqlEnvVars(dbcr)
 	if err != nil {
 		return v1.Container{}, err

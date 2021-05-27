@@ -3,12 +3,12 @@ package database
 import (
 	"context"
 	"errors"
+	"github.com/kloeckner-i/db-operator/pkg/config"
 	"os"
 	"strconv"
 	"time"
 
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/pkg/apis/kci/v1alpha1"
-	config "github.com/kloeckner-i/db-operator/pkg/config"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 
 	"github.com/sirupsen/logrus"
@@ -25,24 +25,21 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-// var log = logf.Log.WithName("controller_database")
-var conf = config.Config{}
-
 // Add creates a new Database Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
-func Add(mgr manager.Manager) error {
-	return add(mgr, newReconciler(mgr))
+func Add(conf *config.Config, mgr manager.Manager) error {
+	return add(mgr, newReconciler(conf, mgr))
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
+func newReconciler(conf *config.Config, mgr manager.Manager) reconcile.Reconciler {
 	interval := os.Getenv("RECONCILE_INTERVAL")
 	i, err := strconv.ParseInt(interval, 10, 64)
 	if err != nil {
 		i = 60
 		logrus.Infof("Set default reconcile period to %d s for database-controller", i)
 	}
-	return &ReconcileDatabase{client: mgr.GetClient(), scheme: mgr.GetScheme(), recorder: mgr.GetEventRecorderFor("database-controller"), interval: time.Duration(i)}
+	return &ReconcileDatabase{client: mgr.GetClient(), scheme: mgr.GetScheme(), recorder: mgr.GetEventRecorderFor("database-controller"), interval: time.Duration(i), conf: conf}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -83,6 +80,7 @@ type ReconcileDatabase struct {
 	scheme   *runtime.Scheme
 	recorder record.EventRecorder
 	interval time.Duration
+	conf     *config.Config
 }
 
 var (

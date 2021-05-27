@@ -23,10 +23,10 @@ func TestGCSBackupCronGsql(t *testing.T) {
 	dbcr.Spec.Backup.Cron = "* * * * *"
 
 	os.Setenv("CONFIG_PATH", "./test/backup_config.yaml")
-	conf = config.LoadConfig()
+	conf := config.LoadConfig()
 
 	instance.Spec.Engine = "postgres"
-	funcCronObject, err := GCSBackupCron(dbcr)
+	funcCronObject, err := GCSBackupCron(&conf, dbcr)
 	if err != nil {
 		fmt.Print(err)
 	}
@@ -34,7 +34,7 @@ func TestGCSBackupCronGsql(t *testing.T) {
 	assert.Equal(t, "postgresbackupimage:latest", funcCronObject.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
 
 	instance.Spec.Engine = "mysql"
-	funcCronObject, err = GCSBackupCron(dbcr)
+	funcCronObject, err = GCSBackupCron(&conf, dbcr)
 	if err != nil {
 		fmt.Print(err)
 	}
@@ -58,10 +58,10 @@ func TestGCSBackupCronGeneric(t *testing.T) {
 	dbcr.Spec.Backup.Cron = "* * * * *"
 
 	os.Setenv("CONFIG_PATH", "./test/backup_config.yaml")
-	conf = config.LoadConfig()
+	conf := config.LoadConfig()
 
 	instance.Spec.Engine = "postgres"
-	funcCronObject, err := GCSBackupCron(dbcr)
+	funcCronObject, err := GCSBackupCron(&conf, dbcr)
 	if err != nil {
 		fmt.Print(err)
 	}
@@ -69,7 +69,7 @@ func TestGCSBackupCronGeneric(t *testing.T) {
 	assert.Equal(t, "postgresbackupimage:latest", funcCronObject.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Image)
 
 	instance.Spec.Engine = "mysql"
-	funcCronObject, err = GCSBackupCron(dbcr)
+	funcCronObject, err = GCSBackupCron(&conf, dbcr)
 	if err != nil {
 		fmt.Print(err)
 	}

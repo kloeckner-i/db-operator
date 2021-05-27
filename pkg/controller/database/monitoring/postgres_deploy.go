@@ -2,9 +2,9 @@ package monitoring
 
 import (
 	"fmt"
+	"github.com/kloeckner-i/db-operator/pkg/config"
 
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/pkg/apis/kci/v1alpha1"
-	"github.com/kloeckner-i/db-operator/pkg/config"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 
 	"github.com/sirupsen/logrus"
@@ -14,9 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var conf = config.Config{}
-
-func pgDeployment(dbcr *kciv1alpha1.Database) (*v1apps.Deployment, error) {
+func pgDeployment(conf *config.Config, dbcr *kciv1alpha1.Database) (*v1apps.Deployment, error) {
 	return &v1apps.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -27,11 +25,11 @@ func pgDeployment(dbcr *kciv1alpha1.Database) (*v1apps.Deployment, error) {
 			Namespace: dbcr.Namespace,
 			Labels:    kci.BaseLabelBuilder(),
 		},
-		Spec: pgDeploymentSpec(dbcr),
+		Spec: pgDeploymentSpec(conf, dbcr),
 	}, nil
 }
 
-func pgDeploymentSpec(dbcr *kciv1alpha1.Database) v1apps.DeploymentSpec {
+func pgDeploymentSpec(conf *config.Config, dbcr *kciv1alpha1.Database) v1apps.DeploymentSpec {
 	Replicas := int32(1)
 
 	return v1apps.DeploymentSpec{
@@ -50,16 +48,16 @@ func pgDeploymentSpec(dbcr *kciv1alpha1.Database) v1apps.DeploymentSpec {
 					"prometheus.io/scrape": "true",
 				},
 			},
-			Spec: pgPodSpec(dbcr),
+			Spec: pgPodSpec(conf, dbcr),
 		},
 	}
 }
 
-func pgPodSpec(dbcr *kciv1alpha1.Database) v1.PodSpec {
+func pgPodSpec(conf *config.Config, dbcr *kciv1alpha1.Database) v1.PodSpec {
 	return v1.PodSpec{
 		Volumes: pgVolumes(dbcr),
 		Containers: []v1.Container{
-			pgContainerExporter(dbcr),
+			pgContainerExporter(conf, dbcr),
 		},
 		NodeSelector:  conf.Monitoring.NodeSelector,
 		RestartPolicy: v1.RestartPolicyAlways,
@@ -87,7 +85,7 @@ func pgContainerExporterResources() v1.ResourceRequirements {
 	}
 }
 
-func pgContainerExporter(dbcr *kciv1alpha1.Database) v1.Container {
+func pgContainerExporter(conf *config.Config, dbcr *kciv1alpha1.Database) v1.Container {
 	RunAsUser := int64(2)
 	AllowPrivilegeEscalation := false
 

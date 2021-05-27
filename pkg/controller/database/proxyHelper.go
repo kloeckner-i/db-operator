@@ -2,6 +2,7 @@ package database
 
 import (
 	"errors"
+	"github.com/kloeckner-i/db-operator/pkg/config"
 	"strconv"
 
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/pkg/apis/kci/v1alpha1"
@@ -12,7 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func determinProxyType(dbcr *kciv1alpha1.Database) (proxy.Proxy, error) {
+func determinProxyType(conf *config.Config, dbcr *kciv1alpha1.Database) (proxy.Proxy, error) {
 	logrus.Debugf("DB: namespace=%s, name=%s - determinProxyType", dbcr.Namespace, dbcr.Name)
 	backend, err := dbcr.GetBackendType()
 	if err != nil {
@@ -54,6 +55,7 @@ func determinProxyType(dbcr *kciv1alpha1.Database) (proxy.Proxy, error) {
 			Engine:                 engine,
 			Port:                   int32(port),
 			Labels:                 kci.LabelBuilder(labels),
+			Conf:                   conf,
 		}, nil
 	case "percona":
 		labels := map[string]string{
@@ -80,6 +82,7 @@ func determinProxyType(dbcr *kciv1alpha1.Database) (proxy.Proxy, error) {
 			MonitorUserSecretName: dbcr.Status.MonitorUserSecretName,
 			Engine:                engine,
 			Labels:                kci.LabelBuilder(labels),
+			Conf:                  conf,
 		}, nil
 	default:
 		err := errors.New("not supported backend type")

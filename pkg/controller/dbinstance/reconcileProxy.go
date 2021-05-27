@@ -11,7 +11,7 @@ import (
 )
 
 func (r *ReconcileDbInstance) createProxy(dbin *kciv1alpha1.DbInstance) error {
-	proxyInterface, err := determinProxyType(dbin)
+	proxyInterface, err := determinProxyType(r.conf, dbin)
 	if err != nil {
 		if err == ErrNoProxySupport {
 			return nil

@@ -2,6 +2,7 @@ package monitoring
 
 import (
 	"fmt"
+	"github.com/kloeckner-i/db-operator/pkg/config"
 
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/pkg/apis/kci/v1alpha1"
 
@@ -11,7 +12,7 @@ import (
 
 // Deployment builds kubernetes deployment object
 // to run prometheus exporter to expose dbcr metrics
-func Deployment(dbcr *kciv1alpha1.Database) (*v1apps.Deployment, error) {
+func Deployment(conf *config.Config, dbcr *kciv1alpha1.Database) (*v1apps.Deployment, error) {
 	engine, err := dbcr.GetEngineType()
 	if err != nil {
 		return nil, err
@@ -19,7 +20,7 @@ func Deployment(dbcr *kciv1alpha1.Database) (*v1apps.Deployment, error) {
 
 	switch engine {
 	case "postgres":
-		return pgDeployment(dbcr)
+		return pgDeployment(conf, dbcr)
 	default:
 		return nil, fmt.Errorf("Monitoring: db engine monitoring for %s not implemented", engine)
 	}
@@ -27,7 +28,7 @@ func Deployment(dbcr *kciv1alpha1.Database) (*v1apps.Deployment, error) {
 
 // ConfigMap builds kubernetes configmap object
 // which contains query to execute by prometheus exporter
-func ConfigMap(dbcr *kciv1alpha1.Database) (*v1.ConfigMap, error) {
+func ConfigMap(conf *config.Config, dbcr *kciv1alpha1.Database) (*v1.ConfigMap, error) {
 	engine, err := dbcr.GetEngineType()
 	if err != nil {
 		return nil, err
@@ -35,7 +36,7 @@ func ConfigMap(dbcr *kciv1alpha1.Database) (*v1.ConfigMap, error) {
 
 	switch engine {
 	case "postgres":
-		return pgExporterQueryCM(dbcr)
+		return pgExporterQueryCM(conf, dbcr)
 	default:
 		return nil, fmt.Errorf("monitoring: exporter query creation for db engine %s not implemented", engine)
 	}

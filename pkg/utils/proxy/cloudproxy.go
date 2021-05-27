@@ -2,9 +2,8 @@ package proxy
 
 import (
 	"fmt"
-	"strconv"
-
 	"github.com/kloeckner-i/db-operator/pkg/config"
+	"strconv"
 
 	v1apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -20,9 +19,8 @@ type CloudProxy struct {
 	Engine                 string
 	Port                   int32
 	Labels                 map[string]string
+	Conf                   *config.Config
 }
-
-var conf = config.Config{}
 
 const instanceAccessSecretVolumeName string = "gcloud-secret"
 
@@ -102,7 +100,7 @@ func (cp *CloudProxy) deploymentSpec() (v1apps.DeploymentSpec, error) {
 			},
 			Spec: v1.PodSpec{
 				Containers:    []v1.Container{container},
-				NodeSelector:  conf.Instances.Google.ProxyConfig.NodeSelector,
+				NodeSelector:  cp.Conf.Instances.Google.ProxyConfig.NodeSelector,
 				RestartPolicy: v1.RestartPolicyAlways,
 				Volumes:       volumes,
 				Affinity: &v1.Affinity{
@@ -123,7 +121,7 @@ func (cp *CloudProxy) container() (v1.Container, error) {
 
 	return v1.Container{
 		Name:    "cloudsql-proxy",
-		Image:   conf.Instances.Google.ProxyConfig.Image,
+		Image:   cp.Conf.Instances.Google.ProxyConfig.Image,
 		Command: []string{"/cloud_sql_proxy"},
 		Args:    []string{instanceArg, "-credential_file=/srv/gcloud/credentials.json", timeoutArg},
 		SecurityContext: &v1.SecurityContext{

@@ -2,10 +2,10 @@ package dbinstance
 
 import (
 	"errors"
+	"github.com/kloeckner-i/db-operator/pkg/config"
 	"strconv"
 
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/pkg/apis/kci/v1alpha1"
-	"github.com/kloeckner-i/db-operator/pkg/config"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 	proxy "github.com/kloeckner-i/db-operator/pkg/utils/proxy"
 
@@ -15,12 +15,11 @@ import (
 )
 
 var (
-	conf = config.Config{}
 	// ErrNoProxySupport is thrown when proxy creation is not supported
 	ErrNoProxySupport = errors.New("no proxy supported backend type")
 )
 
-func determinProxyType(dbin *kciv1alpha1.DbInstance) (proxy.Proxy, error) {
+func determinProxyType(conf *config.Config, dbin *kciv1alpha1.DbInstance) (proxy.Proxy, error) {
 	logrus.Debugf("Instance: name=%s - determinProxyType", dbin.Name)
 	operatorNamespace, err := k8sutil.GetOperatorNamespace()
 	if err != nil {

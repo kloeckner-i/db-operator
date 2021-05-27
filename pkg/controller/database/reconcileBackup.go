@@ -17,7 +17,7 @@ func (r *ReconcileDatabase) createBackupJob(dbcr *kciv1alpha1.Database) error {
 		return nil
 	}
 
-	cronjob, err := backup.GCSBackupCron(dbcr)
+	cronjob, err := backup.GCSBackupCron(r.conf, dbcr)
 	if err != nil {
 		return err
 	}
