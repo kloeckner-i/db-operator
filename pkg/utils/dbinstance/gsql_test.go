@@ -84,7 +84,7 @@ func mockGsqlConfig() string {
 }`
 }
 
-func TestGsqlGetInstance(t *testing.T) {
+func TestGsqlGetInstanceNonExist(t *testing.T) {
 	patch := monkey.Patch(getSqladminService, mockGetSqladminService)
 	defer patch.Unpatch()
 
@@ -95,7 +95,7 @@ func TestGsqlGetInstance(t *testing.T) {
 
 	rs, err := myGsql.getInstance()
 	logrus.Infof("%#v\n, %s", rs, err)
-	assert.NoError(t, err)
+	assert.Error(t, err)
 }
 
 func TestGsqlCreateInvalidInstance(t *testing.T) {
@@ -128,16 +128,17 @@ func TestGsqlCreateInstance(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestGsqlWaitUntilRunnable(t *testing.T) {
+func TestGsqlGetInstanceExist(t *testing.T) {
+	patch := monkey.Patch(getSqladminService, mockGetSqladminService)
+	defer patch.Unpatch()
+
 	myGsql := &Gsql{
 		Name:      "test-instance",
 		ProjectID: "test-project",
 	}
 
-	patchWait := monkey.Patch((*Gsql).waitUntilRunnable, (*Gsql).mockWaitUntilRunnable)
-	defer patchWait.Unpatch()
-
-	err := myGsql.waitUntilRunnable()
+	rs, err := myGsql.getInstance()
+	logrus.Infof("%#v\n, %s", rs, err)
 	assert.NoError(t, err)
 }
 

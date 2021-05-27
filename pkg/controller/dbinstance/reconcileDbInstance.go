@@ -76,7 +76,7 @@ func (r *ReconcileDbInstance) create(dbin *kciv1alpha1.DbInstance) error {
 	info, err := dbinstance.Create(instance)
 	if err != nil {
 		if err == dbinstance.ErrAlreadyExists {
-			logrus.Debug("Instance: name=%s instance already exists in backend, updating instance")
+			logrus.Debugf("Instance: name=%s instance already exists in backend, updating instance", dbin.Name)
 			info, err = dbinstance.Update(instance)
 			if err != nil {
 				logrus.Errorf("Instance: name=%s failed updating instance - %s", dbin.Name, err)
