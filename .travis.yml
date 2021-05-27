@@ -25,6 +25,7 @@ jobs:
       name: "Unit Tests"
       script:
       - docker-compose up -d
+      - docker-compose ps
       - go test -tags tests ./... -v -cover
     - stage: test
       name: "Go Lint"
