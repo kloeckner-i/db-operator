@@ -10,6 +10,7 @@ import (
 
 	"github.com/kloeckner-i/db-operator/pkg/utils/gcloud"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
+	"golang.org/x/oauth2"
 
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/option"
@@ -41,9 +42,13 @@ func GsqlNew(name, config, user, password, apiEndpoint string) *Gsql {
 
 func (ins *Gsql) getSqladminService(ctx context.Context) (*sqladmin.Service, error) {
 	opts := []option.ClientOption{}
+
+	//if APIEndpoint is defined, it considered as test mode and disable oauth
 	if ins.APIEndpoint != "" {
 		opts = append(opts, option.WithEndpoint(ins.APIEndpoint))
+		opts = append(opts, option.WithHTTPClient(oauth2.NewClient(ctx, &disabledTokenSource{})))
 	}
+
 	sqladminService, err := sqladmin.NewService(ctx, opts...)
 	if err != nil {
 		logrus.Debugf("error occurs during getting sqladminService %s", err)
@@ -283,4 +288,17 @@ func determineGsqlPort(instance *sqladmin.DatabaseInstance) string {
 	}
 
 	return "-"
+}
+
+// disabledTokenSource is a mocked oauth token source for local testing.
+type disabledTokenSource struct{}
+
+// Token issues a mocked bearer token for local testing.
+func (ts *disabledTokenSource) Token() (*oauth2.Token, error) {
+	return &oauth2.Token{
+		AccessToken:  "let-me-in-pls",
+		TokenType:    "Bearer",
+		RefreshToken: "gimme-the-new-key-thx",
+		Expiry:       time.Now().Add(time.Hour),
+	}, nil
 }

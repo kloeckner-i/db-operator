@@ -44,6 +44,7 @@ type DbInstanceStatus struct {
 type GoogleInstance struct {
 	InstanceName  string               `json:"instance"`
 	ConfigmapName types.NamespacedName `json:"configmapRef"`
+	APIEndpoint   string               `json:"apiEndpoint,omitempty"`
 }
 
 // PerconaCluster is used when instance type is percona cluster

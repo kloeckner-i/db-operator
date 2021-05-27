@@ -41,8 +41,9 @@ func (r *ReconcileDbInstance) create(dbin *kciv1alpha1.DbInstance) error {
 		config := configmap.Data["config"]
 		user := cred.Username
 		password := cred.Password
+		apiEndpoint := dbin.Spec.Google.APIEndpoint
 
-		instance = dbinstance.GsqlNew(name, config, user, password)
+		instance = dbinstance.GsqlNew(name, config, user, password, apiEndpoint)
 	case "generic":
 		instance = &dbinstance.Generic{
 			Host:         dbin.Spec.Generic.Host,

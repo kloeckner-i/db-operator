@@ -50,8 +50,9 @@ update: build deploy
 
 test:
 	@docker-compose up -d
+	@docker-compose restart sqladmin
 	@sleep 2
-	@go test -tags tests ./... -v -cover
+	@go test -count=1 -tags tests ./... -v -cover
 	@docker-compose down
 
 lint:
