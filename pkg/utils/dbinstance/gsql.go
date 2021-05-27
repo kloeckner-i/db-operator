@@ -12,32 +12,39 @@ import (
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 
 	"github.com/sirupsen/logrus"
+	"google.golang.org/api/option"
 	sqladmin "google.golang.org/api/sqladmin/v1beta4"
 )
 
 // Gsql represents a google sql instance
 type Gsql struct {
-	Name      string
-	Config    string
-	User      string
-	Password  string
-	ProjectID string
+	Name        string
+	Config      string
+	User        string
+	Password    string
+	ProjectID   string
+	APIEndpoint string
 }
 
 // GsqlNew create a new Gsql object and return
-func GsqlNew(name, config, user, password string) *Gsql {
+func GsqlNew(name, config, user, password, apiEndpoint string) *Gsql {
 	projectID := gcloud.GetServiceAccount().ProjectID
 
 	return &Gsql{
-		Name:      name,
-		Config:    config,
-		Password:  password,
-		ProjectID: projectID,
+		Name:        name,
+		Config:      config,
+		Password:    password,
+		ProjectID:   projectID,
+		APIEndpoint: apiEndpoint,
 	}
 }
 
-func getSqladminService(ctx context.Context) (*sqladmin.Service, error) {
-	sqladminService, err := sqladmin.NewService(ctx)
+func (ins *Gsql) getSqladminService(ctx context.Context) (*sqladmin.Service, error) {
+	opts := []option.ClientOption{}
+	if ins.APIEndpoint != "" {
+		opts = append(opts, option.WithEndpoint(ins.APIEndpoint))
+	}
+	sqladminService, err := sqladmin.NewService(ctx, opts...)
 	if err != nil {
 		logrus.Debugf("error occurs during getting sqladminService %s", err)
 		return nil, err
@@ -50,7 +57,7 @@ func (ins *Gsql) getInstance() (*sqladmin.DatabaseInstance, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	sqladminService, err := getSqladminService(ctx)
+	sqladminService, err := ins.getSqladminService(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +80,7 @@ func (ins *Gsql) createInstance() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	sqladminService, err := getSqladminService(ctx)
+	sqladminService, err := ins.getSqladminService(ctx)
 	if err != nil {
 		return err
 	}
@@ -103,7 +110,7 @@ func (ins *Gsql) updateInstance() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	sqladminService, err := getSqladminService(ctx)
+	sqladminService, err := ins.getSqladminService(ctx)
 	if err != nil {
 		return err
 	}
@@ -129,7 +136,7 @@ func (ins *Gsql) updateUser() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	sqladminService, err := getSqladminService(ctx)
+	sqladminService, err := ins.getSqladminService(ctx)
 	if err != nil {
 		return err
 	}
