@@ -30,9 +30,8 @@ To see more options of helm values [here](helm/README.md)
 ## Development
 
 #### Prerequisites
-* go 1.12+
+* go 1.15+
 * docker
-* [operator-sdk v0.13.0](https://github.com/operator-framework/operator-sdk/releases/tag/v0.13.0)
 * make
 * kubectl v1.14+ (< v1.21)
 * helm v3.0.2+
@@ -48,7 +47,7 @@ make miniup: start minikube
 make minidown: stop minikube
 make minidelete: delete minikube
 make minidashboard: open minikube dashboard
-make build: build db-operator docker image using operator-sdk
+make build: build db-operator docker image
 make helm: install helm if not exist and install local chart using helm upgrade --install command
 make setup: build db-operator image, install helm
 make update: build db-operator image again and delete running pod
@@ -56,6 +55,8 @@ make addexamples: kubectl create -f examples/
 make test: spin up mysql, postgres containers and run go unit test
 make microsetup: install microk8s locally and deploy db-operator (only for linux)
 make k3d_setup: install k3d locally and deploy db-operator
+make manifests: generate custom resource definitions
+make generate: generate supporting code for custom resource types
 ```
 
 ### Developing with Minikube

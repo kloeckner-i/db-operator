@@ -1,4 +1,4 @@
-FROM golang:1.13-alpine as builder
+FROM golang:1.15.12-alpine3.13 as builder
 
 WORKDIR /go/src/kci/mock
 
