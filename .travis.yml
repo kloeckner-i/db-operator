@@ -31,7 +31,7 @@ jobs:
       name: "Go Lint"
       script:
         - go get -u golang.org/x/lint/golint
-        - find . -type f -name "*\.go" | grep -v "zz_generated" | grep -v "proxy.ProxySQL" | while read line; do
+        - find . -type f -name "*\.go" | grep -v "zz_generated" | grep -v "proxy/proxysql.go" | while read line; do
             golint -set_exit_status $line || exit 1;
           done
     - stage: test
