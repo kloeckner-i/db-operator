@@ -5,3 +5,32 @@ image:
 
 
 reconcileInterval: "10"
+
+secrets:
+    gsql:
+        admin: |
+            {
+              "type": "service_account",
+              "project_id": "integration-project",
+              "private_key_id": "",
+              "private_key": "",
+              "client_email": "",
+              "client_id": "admin",
+              "auth_uri": "",
+              "token_uri": "",
+              "auth_provider_x509_cert_url": "",
+              "client_x509_cert_url": ""
+            }
+        readonly: |
+            {
+              "type": "service_account",
+              "project_id": "integration-project",
+              "private_key_id": "",
+              "private_key": "",
+              "client_email": "",
+              "client_id": "readonly",
+              "auth_uri": "",
+              "token_uri": "",
+              "auth_provider_x509_cert_url": "",
+              "client_x509_cert_url": ""
+            }

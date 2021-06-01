@@ -10,20 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// func mockGetSqladminService(ctx context.Context) (*sqladmin.Service, error) {
-// 	opts := []option.ClientOption{
-// 		option.WithEndpoint("http://127.0.0.1:8080"),
-// 	}
-
-// 	sqladminService, err := sqladmin.NewService(ctx, opts...)
-// 	if err != nil {
-// 		logrus.Debugf("error occurs during getting sqladminService %s", err)
-// 		return nil, err
-// 	}
-
-// 	return sqladminService, nil
-// }
-
 func (ins *Gsql) mockWaitUntilRunnable() error {
 	logrus.Debugf("waiting gsql instance %s", ins.Name)
 
@@ -62,19 +48,23 @@ func mockGsqlConfig() string {
 		  "storageAutoResize": true
 		},
 		"backendType": "SECOND_GEN",
-		"region": "europe-west1"
+		"region": "somewhere"
 }`
 }
 
-func TestGsqlGetInstanceNonExist(t *testing.T) {
-	// patch := monkey.Patch(getSqladminService, mockGetSqladminService)
-	// defer patch.Unpatch()
-
-	myGsql := &Gsql{
+func myMockGsql() *Gsql {
+	return &Gsql{
 		Name:        "test-instance",
 		ProjectID:   "test-project",
 		APIEndpoint: "http://127.0.0.1:8080",
+		Config:      mockGsqlConfig(),
+		User:        "test-user1",
+		Password:    "testPassw0rd",
 	}
+}
+
+func TestGsqlGetInstanceNonExist(t *testing.T) {
+	myGsql := myMockGsql()
 
 	rs, err := myGsql.getInstance()
 	logrus.Infof("%#v\n, %s", rs, err)
@@ -82,29 +72,14 @@ func TestGsqlGetInstanceNonExist(t *testing.T) {
 }
 
 func TestGsqlCreateInvalidInstance(t *testing.T) {
-	// patchSqladmin := monkey.Patch(getSqladminService, mockGetSqladminService)
-	// defer patchSqladmin.Unpatch()
-
-	myGsql := &Gsql{
-		Name:        "test-instance",
-		ProjectID:   "test-project",
-		APIEndpoint: "http://127.0.0.1:8080",
-	}
+	myGsql := myMockGsql()
 
 	err := myGsql.createInstance()
 	assert.Error(t, err)
 }
 
 func TestGsqlCreateInstance(t *testing.T) {
-	// patch := monkey.Patch(getSqladminService, mockGetSqladminService)
-	// defer patch.Unpatch()
-
-	myGsql := &Gsql{
-		Name:        "test-instance",
-		ProjectID:   "test-project",
-		APIEndpoint: "http://127.0.0.1:8080",
-		Config:      mockGsqlConfig(),
-	}
+	myGsql := myMockGsql()
 
 	patchWait := monkey.Patch((*Gsql).waitUntilRunnable, (*Gsql).mockWaitUntilRunnable)
 	defer patchWait.Unpatch()
@@ -114,14 +89,7 @@ func TestGsqlCreateInstance(t *testing.T) {
 }
 
 func TestGsqlGetInstanceExist(t *testing.T) {
-	// patch := monkey.Patch(getSqladminService, mockGetSqladminService)
-	// defer patch.Unpatch()
-
-	myGsql := &Gsql{
-		Name:        "test-instance",
-		ProjectID:   "test-project",
-		APIEndpoint: "http://127.0.0.1:8080",
-	}
+	myGsql := myMockGsql()
 
 	rs, err := myGsql.getInstance()
 	logrus.Infof("%#v\n, %s", rs, err)
@@ -129,30 +97,14 @@ func TestGsqlGetInstanceExist(t *testing.T) {
 }
 
 func TestGsqlCreateExistingInstance(t *testing.T) {
-	// patch := monkey.Patch(getSqladminService, mockGetSqladminService)
-	// defer patch.Unpatch()
-
-	myGsql := &Gsql{
-		Name:        "test-instance",
-		ProjectID:   "test-project",
-		APIEndpoint: "http://127.0.0.1:8080",
-		Config:      mockGsqlConfig(),
-	}
+	myGsql := myMockGsql()
 
 	err := myGsql.createInstance()
 	assert.Error(t, err)
 }
 
 func TestGsqlUpdateInstance(t *testing.T) {
-	// patch := monkey.Patch(getSqladminService, mockGetSqladminService)
-	// defer patch.Unpatch()
-
-	myGsql := &Gsql{
-		Name:        "test-instance",
-		ProjectID:   "test-project",
-		APIEndpoint: "http://127.0.0.1:8080",
-		Config:      mockGsqlConfig(),
-	}
+	myGsql := myMockGsql()
 
 	patchWait := monkey.Patch((*Gsql).waitUntilRunnable, (*Gsql).mockWaitUntilRunnable)
 	defer patchWait.Unpatch()
@@ -162,17 +114,8 @@ func TestGsqlUpdateInstance(t *testing.T) {
 }
 
 func TestGsqlUpdateUser(t *testing.T) {
-	// patch := monkey.Patch(getSqladminService, mockGetSqladminService)
-	// defer patch.Unpatch()
+	myGsql := myMockGsql()
 
-	myGsql := &Gsql{
-		Name:        "test-instance",
-		ProjectID:   "test-project",
-		APIEndpoint: "http://127.0.0.1:8080",
-		Config:      mockGsqlConfig(),
-		User:        "test-use1r",
-		Password:    "testPassw0rd",
-	}
-
-	myGsql.updateUser()
+	err := myGsql.updateUser()
+	assert.NoError(t, err)
 }
