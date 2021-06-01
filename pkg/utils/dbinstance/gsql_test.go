@@ -73,6 +73,7 @@ func TestGsqlGetInstanceNonExist(t *testing.T) {
 
 func TestGsqlCreateInvalidInstance(t *testing.T) {
 	myGsql := myMockGsql()
+	myGsql.Config = ""
 
 	err := myGsql.createInstance()
 	assert.Error(t, err)
