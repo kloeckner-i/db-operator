@@ -1,11 +1,11 @@
 apiVersion: kci.rocks/v1alpha1
 kind: DbInstance
 metadata:
-  name: pg-local-test
+  name: pg-generic-instance
 spec:
   adminSecretRef:
     Namespace: {{ .Release.Namespace }}
-    Name: pg-local-db-password
+    Name: pg-generic-admin-secret
   engine: postgres
   generic:
     host: {{ .Values.postgres.serviceName }}.{{ .Release.Namespace }}
@@ -15,7 +15,7 @@ spec:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: pg-local-db-password
+  name: pg-generic-admin-secret
 type: Opaque
 data:
   password: {{ .Values.postgres.adminPassword | b64enc }}

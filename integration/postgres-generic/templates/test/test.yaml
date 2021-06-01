@@ -21,17 +21,17 @@ spec:
       - name: POSTGRES_USERNAME
         valueFrom:
           secretKeyRef:
-            name: pg-db-test-credentials
+            name: pg-generic-db-credentials
             key: POSTGRES_USER
       - name: POSTGRES_DB
         valueFrom:
           secretKeyRef:
-            name: pg-db-test-credentials
+            name: pg-generic-db-credentials
             key: POSTGRES_DB
       - name: POSTGRES_HOST
         valueFrom:
           configMapKeyRef:
-            name: pg-db-test-credentials
+            name: pg-generic-db-credentials
             key: DB_CONN
     volumeMounts:
       - name: db-secret
@@ -58,17 +58,17 @@ spec:
       - name: POSTGRES_USERNAME
         valueFrom:
           secretKeyRef:
-            name: pg-db-test-credentials
+            name: pg-generic-db-credentials
             key: POSTGRES_USER
       - name: POSTGRES_DB
         valueFrom:
           secretKeyRef:
-            name: pg-db-test-credentials
+            name: pg-generic-db-credentials
             key: POSTGRES_DB
       - name: POSTGRES_HOST
         valueFrom:
           configMapKeyRef:
-            name: pg-db-test-credentials
+            name: pg-generic-db-credentials
             key: DB_CONN
     volumeMounts:
       - name: db-secret
@@ -87,7 +87,7 @@ spec:
   volumes:
     - name: db-secret
       secret:
-        secretName: pg-db-test-credentials
+        secretName: pg-generic-db-credentials
     - name: script
       configMap:
         name: postgres-test-script

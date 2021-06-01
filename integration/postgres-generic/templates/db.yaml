@@ -1,12 +1,12 @@
 apiVersion: "kci.rocks/v1alpha1"
 kind: "Database"
 metadata:
-  name: "pg-db-test"
+  name: pg-generic-db
   labels:
     env: test
 spec:
-  secretName: pg-db-test-credentials # where to save db name user, password for application
-  instance: pg-local-test
+  secretName: pg-generic-db-credentials # where to save db name user, password for application
+  instance: pg-generic-instance
   backup:
     enable: false
     cron: ""
