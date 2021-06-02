@@ -296,9 +296,7 @@ type disabledTokenSource struct{}
 // Token issues a mocked bearer token for local testing.
 func (ts *disabledTokenSource) Token() (*oauth2.Token, error) {
 	return &oauth2.Token{
-		AccessToken:  "",
-		TokenType:    "Bearer",
-		RefreshToken: "",
-		Expiry:       time.Now().Add(time.Hour),
+		TokenType: "Bearer",
+		Expiry:    time.Now().Add(time.Hour),
 	}, nil
 }
