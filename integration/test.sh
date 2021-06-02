@@ -106,7 +106,7 @@ run_test() {
     echo "[Test] testing read write to database"
     $HELM_CMD test test-mysql-generic -n ${TEST_NAMESPACE} \
     && $HELM_CMD test test-mysql-percona -n ${TEST_NAMESPACE} \
-    && $HELM_CMD test test-pg -n ${TEST_NAMESPACE}
+    && $HELM_CMD test test-pg-generic -n ${TEST_NAMESPACE}
     if [ $? -ne 0 ]; then
         echo "[Test] failed"
         exit 1;
