@@ -1,0 +1,42 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mock-google-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: googleAPI
+      role: test
+  template:
+    metadata:
+      labels:
+        app: googleAPI
+        role: test
+    spec:
+      containers:
+        - name: api
+          image: mock-googleapi:local
+          ports:
+          - containerPort: 8080
+            name: http
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: LOG_LEVEL
+              value: "DEBUG"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mock-google-api
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: http
+  selector:
+    app: googleAPI
+    role: test
+  type: ClusterIP

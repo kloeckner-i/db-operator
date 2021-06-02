@@ -23,23 +23,17 @@ jobs:
   include:
     - stage: test
       name: "Unit Tests"
-      script: go test -tags tests ./... -v -cover
-      services:
-        - postgresql
-        - mysql
-      env:
-        - POSTGRES_PASSWORD=""
-        - MYSQL_PASSWORD=""
-        - MYSQL_HOST="127.0.0.1"
+      script:
+      - docker-compose up -d
+      - docker-compose ps
+      - go test -tags tests ./... -v -cover
     - stage: test
       name: "Go Lint"
       script:
         - go get -u golang.org/x/lint/golint
-        - find . -type f -name "*\.go" | grep -v "zz_generated" | while read line; do
+        - find . -type f -name "*\.go" | grep -v "zz_generated" | grep -v "proxy/proxysql.go" | while read line; do
             golint -set_exit_status $line || exit 1;
           done
-      env:
-        - ALLOW_FAIL=true
     - stage: test
       name: "Go Vet"
       script:

@@ -7,16 +7,19 @@ require (
 	github.com/GoogleCloudPlatform/cloudsql-proxy v0.0.0-20191204003823-eaca70f0c07c
 	github.com/go-openapi/spec v0.19.4
 	github.com/go-sql-driver/mysql v1.5.0
+	github.com/gorilla/mux v1.7.4
+	github.com/jcelliott/lumber v0.0.0-20160324203708-dd349441af25 // indirect
 	github.com/kloeckner-i/can-haz-password v0.1.0
 	github.com/lib/pq v1.3.0
 	github.com/mitchellh/hashstructure v1.0.0
 	github.com/operator-framework/operator-sdk v0.18.0
 	github.com/prometheus/client_golang v1.5.1
+	github.com/sdomino/scribble v0.0.0-20200707180004-3cc68461d505 // indirect
 	github.com/sirupsen/logrus v1.5.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.6.1
-	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
-	google.golang.org/api v0.14.0
+	golang.org/x/oauth2 v0.0.0-20210514164344-f6687ab2804c
+	google.golang.org/api v0.47.0
 	gopkg.in/yaml.v2 v2.2.8
 	k8s.io/api v0.18.2
 	k8s.io/apimachinery v0.18.2

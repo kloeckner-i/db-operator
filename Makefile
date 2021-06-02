@@ -14,21 +14,11 @@ help:
 	@echo "make test: spin up mysql, postgres containers and run go unit test"
 	@echo "make microsetup: install microk8s locally and deploy db-operator (only for linux and mac)"
 
-miniup:
-	@minikube start --kubernetes-version=v1.17.17 --cpus 2 --memory 4096
-
-minidown:
-	@minikube stop
-
-minidelete:
-	@minikube delete
-
-minidashboard:
-	@minikube dashboard
-
 build:
-	@eval $$(minikube docker-env) ;\
-	operator-sdk build my-db-operator:local
+	@docker build -t my-db-operator:local .
+	@docker save my-db-operator > my-image.tar
+	@docker build -t mock-googleapi:local mock/
+	@docker save mock-googleapi > mock-google-api.tar
 
 helm:
 	@helm upgrade --install --create-namespace --namespace operator my-dboperator helm/db-operator -f helm/db-operator/values.yaml -f helm/db-operator/values-local.yaml
@@ -49,12 +39,11 @@ deploy:
 update: build deploy
 
 test:
-	@docker run --rm --name postgres -e POSTGRES_PASSWORD=test1234 -p 5432:5432 -d postgres:11-alpine
-	@docker run --rm --name mysql -e MYSQL_ROOT_PASSWORD=test1234 -p 3306:3306 -d mysql:5.7
+	@docker-compose up -d
+	@docker-compose restart sqladmin
 	@sleep 2
-	@go test -tags tests ./... -v -cover
-	@docker stop postgres
-	@docker stop mysql
+	@go test -count=1 -tags tests ./... -v -cover
+	@docker-compose down
 
 lint:
 	@golint ./...
@@ -62,31 +51,31 @@ lint:
 vet:
 	@go vet ./...
 
-microsetup: microup microbuild microhelm
+minisetup: miniup miniimage helm
 
-microup:
-	@sudo snap install microk8s --classic --channel=1.18/stable
-	@sudo microk8s.status --wait-ready
-	@sudo microk8s.enable dns registry helm3
-	@sudo microk8s.status --wait-ready
+miniup:
+	@minikube start --kubernetes-version=v1.17.17 --cpus 2 --memory 4096
 
-microbuild:
-	@docker build -t my-db-operator:local .
-	@docker save my-db-operator > my-image.tar
-	@sudo microk8s ctr image import my-image.tar
+minidown:
+	@minikube stop
 
-microhelm:
-	@sudo microk8s kubectl create ns operator --dry-run=client -o yaml | sudo microk8s kubectl apply -f -
-	@sudo microk8s helm3 upgrade --install --namespace operator db-operator helm/db-operator -f helm/db-operator/values.yaml -f helm/db-operator/values-local.yaml
+minidelete:
+	@minikube delete
 
-k3d_setup: k3d_install k3d_build helm
+minidashboard:
+	@minikube dashboard
+
+miniimage: build
+	@minikube image load my-image.tar
+	@minikube image load mock-google-api.tar
+
+k3d_setup: k3d_install k3d_image helm
 
 k3d_install:
 	@wget -q -O - https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
 	@k3d cluster create myk3s -i rancher/k3s:v1.17.17-k3s1
 	@kubectl get pod
 
-k3d_build:
-	@docker build -t my-db-operator:local .
-	@docker save my-db-operator > my-image.tar
+k3d_image: build
 	@k3d image import my-image.tar -c myk3s
+	@k3d image import mock-google-api.tar -c myk3s

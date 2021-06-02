@@ -56,13 +56,18 @@ check_instance_status() {
     exit 1 # return false
 }
 
+create_googleapi_mock_server() {
+    $HELM_CMD upgrade --install --namespace ${OPERATOR_NAMESPACE} mock-googleapi integration/mock-googleapi --wait
+}
+
 create_test_resources() {
     echo "[Test] creating"
     $KUBECTL_CMD create ns ${TEST_NAMESPACE} --dry-run=client -o yaml | $KUBECTL_CMD apply -f - \
     && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-mysql-generic integration/mysql-generic --wait \
     && $HELM_CMD dependency build --namespace ${TEST_NAMESPACE} integration/mysql-percona \
     && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-mysql-percona integration/mysql-percona --wait \
-    && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-pg integration/postgres --wait
+    && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-pg-generic integration/postgres-generic --wait \
+    && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-pg-gsql integration/postgres-gsql --wait
     if [ $? -ne 0 ]; then
         echo "[Test] failed to create"
         exit 1;
@@ -101,7 +106,7 @@ run_test() {
     echo "[Test] testing read write to database"
     $HELM_CMD test test-mysql-generic -n ${TEST_NAMESPACE} \
     && $HELM_CMD test test-mysql-percona -n ${TEST_NAMESPACE} \
-    && $HELM_CMD test test-pg -n ${TEST_NAMESPACE}
+    && $HELM_CMD test test-pg-generic -n ${TEST_NAMESPACE}
     if [ $? -ne 0 ]; then
         echo "[Test] failed"
         exit 1;
@@ -134,6 +139,7 @@ check_databases_deleted() {
 }
 
 check_requirements
+create_googleapi_mock_server
 create_test_resources
 check_instance_status
 check_databases_status

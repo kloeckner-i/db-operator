@@ -2,8 +2,9 @@ package proxy
 
 import (
 	"fmt"
-	"github.com/kloeckner-i/db-operator/pkg/config"
 	"strconv"
+
+	"github.com/kloeckner-i/db-operator/pkg/config"
 
 	v1apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"

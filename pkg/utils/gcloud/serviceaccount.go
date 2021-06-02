@@ -15,7 +15,7 @@ func GetServiceAccount() ServiceAccount {
 	credentialPath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
 	credentialFile, err := os.Open(credentialPath)
 	if err != nil {
-		logrus.Fatal(err)
+		logrus.Fatalf("failed to open service account file - %s", err)
 	}
 	// defer the closing of our jsonFile so that we can parse it later on
 	defer credentialFile.Close()

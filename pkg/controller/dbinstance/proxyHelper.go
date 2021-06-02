@@ -2,8 +2,9 @@ package dbinstance
 
 import (
 	"errors"
-	"github.com/kloeckner-i/db-operator/pkg/config"
 	"strconv"
+
+	"github.com/kloeckner-i/db-operator/pkg/config"
 
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/pkg/apis/kci/v1alpha1"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
@@ -54,6 +55,7 @@ func determinProxyType(conf *config.Config, dbin *kciv1alpha1.DbInstance) (proxy
 			Engine:                 dbin.Spec.Engine,
 			Port:                   int32(port),
 			Labels:                 kci.LabelBuilder(labels),
+			Conf:                   conf,
 		}, nil
 	default:
 		return nil, ErrNoProxySupport
