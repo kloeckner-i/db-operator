@@ -34,6 +34,7 @@ func GsqlNew(name, config, user, password, apiEndpoint string) *Gsql {
 	return &Gsql{
 		Name:        name,
 		Config:      config,
+		User:        user,
 		Password:    password,
 		ProjectID:   projectID,
 		APIEndpoint: apiEndpoint,
@@ -153,7 +154,7 @@ func (ins *Gsql) updateUser() error {
 		Password: ins.Password,
 	}
 
-	resp, err := sqladminService.Users.Update(ins.ProjectID, ins.Name, rb).Host(host).Name(rb.Name).Context(ctx).Do()
+	resp, err := sqladminService.Users.Update(ins.ProjectID, ins.Name, rb).Host(host).Name(ins.User).Context(ctx).Do()
 	if err != nil {
 		return err
 	}
