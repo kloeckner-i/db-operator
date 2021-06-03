@@ -187,13 +187,13 @@ func updateUserHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	hostList, ok := r.URL.Query()["host"]
-	if !ok {
+	if !ok || hostList[0] == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode("Missing parameter: host.")
 		return
 	}
 	nameList, ok := r.URL.Query()["name"]
-	if !ok {
+	if !ok || nameList[0] == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode("Missing parameter: user.")
 		return
@@ -207,6 +207,8 @@ func updateUserHandler(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(err)
 		return
 	}
+
+	logrus.Infof("Request body: %v", sqlUser)
 
 	s := newapiService()
 	s.project = vars["project"]
