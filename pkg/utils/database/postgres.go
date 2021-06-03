@@ -63,6 +63,9 @@ func (p Postgres) getDbConn(dbname, user, password string) (*sql.DB, error) {
 
 	dataSourceName := fmt.Sprintf("host=%s port=%d dbname=%s user=%s password=%s sslmode=%s", p.Host, p.Port, dbname, user, password, p.sslMode())
 	db, err := sql.Open(sqldriver, dataSourceName)
+	if err != nil {
+		return nil, fmt.Errorf("sql.Open: %v", err)
+	}
 
 	return db, err
 }
