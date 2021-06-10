@@ -1,3 +1,6 @@
+# Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
+CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
+
 .PHONY: all deploy build helm
 all: help
 
@@ -6,13 +9,15 @@ help:
 	@echo "make minidown: stop minikube"
 	@echo "make minidelete: delete minikube"
 	@echo "make minidashboard: open minikube dashboard"
-	@echo "make build: build db-operator docker image using operator-sdk"
+	@echo "make build: build db-operator docker image"
 	@echo "make helm: install helm if not exist and install local chart using helm upgrade --install command"
 	@echo "make setup: build db-operator image, install helm"
 	@echo "make update: build db-operator image again and delete running pod"
 	@echo "make addexamples: kubectl create -f examples/"
 	@echo "make test: spin up mysql, postgres containers and run go unit test"
 	@echo "make microsetup: install microk8s locally and deploy db-operator (only for linux and mac)"
+	@echo "make manifests: generate custom resource definitions"
+	@echo "make generate: generate supporting code for custom resource types"
 
 build:
 	@docker build -t my-db-operator:local .
@@ -79,3 +84,29 @@ k3d_install:
 k3d_image: build
 	@k3d image import my-image.tar -c myk3s
 	@k3d image import mock-google-api.tar -c myk3s
+
+## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
+manifests: controller-gen
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+
+## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+generate: controller-gen
+	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+
+CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
+controller-gen: ## Download controller-gen locally if necessary.
+	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1)
+
+# go-get-tool will 'go get' any package $2 and install it to $1.
+PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
+define go-get-tool
+@[ -f $(1) ] || { \
+set -e ;\
+TMP_DIR=$$(mktemp -d) ;\
+cd $$TMP_DIR ;\
+go mod init tmp ;\
+echo "Downloading $(2)" ;\
+GOBIN=$(PROJECT_DIR)/bin go get $(2) ;\
+rm -rf $$TMP_DIR ;\
+}
+endef

@@ -1,4 +1,4 @@
-FROM golang:1.13-alpine3.11 as builder
+FROM golang:1.15.12-alpine3.13 as builder
 
 RUN apk update && apk upgrade && \
     apk add --no-cache bash build-base
@@ -12,7 +12,7 @@ RUN go mod download
 
 # build
 COPY . .
-RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -tags build -o /usr/local/bin/db-operator ./cmd/manager
+RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -tags build -o /usr/local/bin/db-operator main.go
 
 FROM alpine:3.13
 LABEL maintainer="dev@kloeckner-i.com"

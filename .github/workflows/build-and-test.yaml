@@ -1,0 +1,62 @@
+name: Build and Test
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Check Code Style
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.40.1
+        # Until we fix up linting completely
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
+
+  test:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.15
+      # The existing apparmor profile for mysql needs to be removed.
+      # https://github.com/actions/virtual-environments/issues/181
+      # https://github.com/moby/moby/issues/7512#issuecomment-51845976
+      - name: Remove MySQL App Armour Configuration
+        run: |
+          set -x
+          sudo apt-get remove mysql-server --purge
+          sudo apt-get install apparmor-profiles
+          sudo apparmor_parser -R /etc/apparmor.d/usr.sbin.mysqld
+      - name: Start dependencies using docker-compose
+        run: docker-compose up -d
+      - name: Run the unit tests
+        run: go test -tags tests ./... -v -cover
+      - name: Create k3d cluster
+        run: make k3d_install
+      - name: Build and import docker images
+        run: |
+          docker build -t my-db-operator:local .
+          docker build -t mock-googleapi:local mock/
+          k3d image import my-db-operator:local -c myk3s
+          k3d image import mock-googleapi:local -c myk3s
+      - name: Install Helm chart
+        run: make helm
+      - name: Integration test
+        run: ./integration/test.sh
