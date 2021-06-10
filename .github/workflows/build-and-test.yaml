@@ -19,7 +19,7 @@ jobs:
         with:
           version: v1.40.1
         # Until we fix up linting completely
-        continue-on-error: ${{ github.event_name == 'pull_request' }}
+        continue-on-error: true
 
   test:
     runs-on: ubuntu-latest
