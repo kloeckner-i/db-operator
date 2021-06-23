@@ -31,11 +31,11 @@ data:
     monitoring:
     {{- if .Values.config.monitoring.promPushGateway }}
       promPushGateway: {{ .Values.config.monitoring.promPushGateway }}
-    {{ end }}
+    {{- end }}
       nodeSelector:
-        {{ toYaml .Values.config.monitoring.nodeSelector | nindent 8 }}
+        {{- toYaml .Values.config.monitoring.nodeSelector | nindent 8 }}
       postgres:
         image: {{ .Values.config.monitoring.postgres.image }}
         queries: |-
-          {{ toYaml .Values.config.monitoring.postgres.queries | nindent 10 }}
+          {{- toYaml .Values.config.monitoring.postgres.queries | nindent 10 }}
       mysql: {}
