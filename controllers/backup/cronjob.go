@@ -19,6 +19,7 @@ package backup
 import (
 	"errors"
 	"fmt"
+
 	"github.com/kloeckner-i/db-operator/pkg/config"
 
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
@@ -116,7 +117,7 @@ func buildJobTemplate(conf *config.Config, dbcr *kciv1alpha1.Database) (batchv1b
 }
 
 func postgresBackupContainer(conf *config.Config, dbcr *kciv1alpha1.Database) (v1.Container, error) {
-	env, err := postgresEnvVars(dbcr)
+	env, err := postgresEnvVars(conf, dbcr)
 	if err != nil {
 		return v1.Container{}, err
 	}
@@ -179,7 +180,7 @@ func volumes(dbcr *kciv1alpha1.Database) []v1.Volume {
 	}
 }
 
-func postgresEnvVars(dbcr *kciv1alpha1.Database) ([]v1.EnvVar, error) {
+func postgresEnvVars(conf *config.Config, dbcr *kciv1alpha1.Database) ([]v1.EnvVar, error) {
 	instance, err := dbcr.GetInstanceRef()
 	if err != nil {
 		logrus.Errorf("can not build backup environment variables - %s", err)
@@ -193,7 +194,7 @@ func postgresEnvVars(dbcr *kciv1alpha1.Database) ([]v1.EnvVar, error) {
 
 	port := instance.Status.Info["DB_PORT"]
 
-	return []v1.EnvVar{
+	envList := []v1.EnvVar{
 		v1.EnvVar{
 			Name: "DB_HOST", Value: host,
 		},
@@ -217,7 +218,15 @@ func postgresEnvVars(dbcr *kciv1alpha1.Database) ([]v1.EnvVar, error) {
 		v1.EnvVar{
 			Name: "GCS_BUCKET", Value: instance.Spec.Backup.Bucket,
 		},
-	}, nil
+	}
+
+	if instance.IsMonitoringEnabled() {
+		envList = append(envList, v1.EnvVar{
+			Name: "PROMETHEUS_PUSH_GATEWAY", Value: conf.Monitoring.PromPushGateway,
+		})
+	}
+
+	return envList, nil
 }
 
 func mysqlEnvVars(dbcr *kciv1alpha1.Database) ([]v1.EnvVar, error) {

@@ -16,6 +16,7 @@ backup:
   mysql:
     image: mysqlbackupimage:latest
 monitoring:
+  promPushGateway: foo.bar:9200
   nodeSelector: {}
   postgres:
     image: wrouesnel/postgres_exporter:latest
