@@ -19,6 +19,8 @@ backup:
     image: kloeckneri/pgdump-gcs:latest
   mysql: {}
 monitoring:
+  # append as an ENV variable "PROMETHEUS_PUSH_GATEWAY" to the backup cronjob
+  promPushGateway: ""
   nodeSelector: {}
   postgres:
     image: wrouesnel/postgres_exporter:latest

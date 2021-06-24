@@ -14,7 +14,7 @@ data:
         clientSecretName: "cloudsql-readonly-serviceaccount"
         proxy:
           nodeSelector:
-  {{ toYaml .Values.config.instance.google.proxy.nodeSelector | indent 10 }}
+            {{- toYaml .Values.config.instance.google.proxy.nodeSelector | nindent 12 }}
           image: {{ .Values.config.instance.google.proxy.image }}
       generic: {}
       percona:
@@ -23,16 +23,19 @@ data:
     backup:
       activeDeadlineSeconds: {{ .Values.config.backup.activeDeadlineSeconds }}
       nodeSelector:
-{{ toYaml .Values.config.backup.nodeSelector | indent 8 }}
+        {{- toYaml .Values.config.backup.nodeSelector | nindent 8 }}
       postgres:
         image: {{ .Values.config.backup.postgres.image }}
       mysql:
         image: {{ .Values.config.backup.mysql.image }}
     monitoring:
+    {{- if .Values.config.monitoring.promPushGateway }}
+      promPushGateway: {{ .Values.config.monitoring.promPushGateway }}
+    {{- end }}
       nodeSelector:
-{{ toYaml .Values.config.monitoring.nodeSelector | indent 8 }}
+        {{- toYaml .Values.config.monitoring.nodeSelector | nindent 8 }}
       postgres:
         image: {{ .Values.config.monitoring.postgres.image }}
         queries: |-
-{{ toYaml .Values.config.monitoring.postgres.queries | indent 10 }}
+          {{- toYaml .Values.config.monitoring.postgres.queries | nindent 10 }}
       mysql: {}
