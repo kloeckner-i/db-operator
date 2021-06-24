@@ -115,8 +115,9 @@ func (m Mysql) executeQuery(query string, admin AdminCredentials) error {
 		logrus.Fatalf("failed to get db connection: %s", err)
 	}
 
+	rows, err := db.Query(query)
+	defer rows.Close()
 	defer db.Close()
-	_, err = db.Query(query)
 	if err != nil {
 		logrus.Debugf("failed to execute query: %s", err)
 		return err
