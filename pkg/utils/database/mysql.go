@@ -70,7 +70,6 @@ func (m Mysql) CheckStatus() error {
 	if err != nil {
 		return err
 	}
-	defer db.Close()
 
 	if err := db.Ping(); err != nil {
 		db.Close()
@@ -116,12 +115,11 @@ func (m Mysql) executeQuery(query string, admin AdminCredentials) error {
 	}
 
 	rows, err := db.Query(query)
-	defer rows.Close()
-	defer db.Close()
 	if err != nil {
 		logrus.Debugf("failed to execute query: %s", err)
 		return err
 	}
+	rows.Close()
 
 	return nil
 }
@@ -200,7 +198,6 @@ func (m Mysql) isRowExist(query string, admin AdminCredentials) bool {
 	if err != nil {
 		logrus.Fatalf("failed to get db connection: %s", err)
 	}
-	defer db.Close()
 
 	var result string
 	err = db.QueryRow(query).Scan(&result)
