@@ -27,6 +27,8 @@ $ helm install --name my-release db-operator/db-operator
 
 To see more options of helm values [here](helm/README.md)
 
+To see which version is working together check out our [version matrix](https://github.com/kloeckner-i/db-operator/wiki/Version-Matrix).
+
 ## Development
 
 #### Prerequisites
