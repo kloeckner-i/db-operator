@@ -44,7 +44,7 @@ The following table lists the configurable parameters of the db-operator chart a
 | `nodeSelector`        | Node labels for pod assignment        | `{}`                      |
 | `affinity`            | Node affinity for pod assignment      | `{}`                      |
 | `annotations`         | Annotations to add to the db-operator pod | `{}`                  |
-| `config.instance.google.proxy.image` | Container image of google cloud proxy | `gcr.io/cloudsql-docker/gce-proxy:1.11` |
+| `config.instance.google.proxy.image` | Container image of db-auth-gateway | `kloeckneri/db-auth-gateway:0.1.7` |
 | `config.instance.google.proxy.nodeSelector` | Node labels for google cloud proxy pod assignment | `{}` |
 | `config.backup.nodeSelector` | Node labels for backup pod assignment | `{}` |
 | `config.backup.activeDeadlineSeconds` | activeDeadlineSeconds of backup cronjob | `600` |
