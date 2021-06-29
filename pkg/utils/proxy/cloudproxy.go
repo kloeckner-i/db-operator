@@ -18,8 +18,6 @@ package proxy
 
 import (
 	"fmt"
-	"strconv"
-
 	"github.com/kloeckner-i/db-operator/pkg/config"
 
 	v1apps "k8s.io/api/apps/v1"
@@ -132,15 +130,14 @@ func (cp *CloudProxy) deploymentSpec() (v1apps.DeploymentSpec, error) {
 func (cp *CloudProxy) container() (v1.Container, error) {
 	RunAsUser := int64(2)
 	AllowPrivilegeEscalation := false
-	instanceArg := fmt.Sprintf("-instances=%s=tcp:0.0.0.0:%s", cp.InstanceConnectionName, strconv.FormatInt(int64(cp.Port), 10))
-	timeoutSecond := 60 // wait given seconds after SIGTERM
-	timeoutArg := fmt.Sprintf("-term_timeout=%ss", strconv.FormatInt(int64(timeoutSecond), 10))
+	listenArg := fmt.Sprintf("--listen=0.0.0.0:%d", cp.Port)
+	instanceArg := fmt.Sprintf("--instance=%s", cp.InstanceConnectionName)
 
 	return v1.Container{
-		Name:    "cloudsql-proxy",
+		Name:    "db-auth-gateway",
 		Image:   cp.Conf.Instances.Google.ProxyConfig.Image,
-		Command: []string{"/cloud_sql_proxy"},
-		Args:    []string{instanceArg, "-credential_file=/srv/gcloud/credentials.json", timeoutArg},
+		Command: []string{"/usr/local/bin/db-auth-gateway"},
+		Args:    []string{"--credential-file=/srv/gcloud/credentials.json", listenArg, instanceArg},
 		SecurityContext: &v1.SecurityContext{
 			RunAsUser:                &RunAsUser,
 			AllowPrivilegeEscalation: &AllowPrivilegeEscalation,
