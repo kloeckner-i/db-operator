@@ -11,7 +11,7 @@ instance:
     clientSecretName: "cloudsql-readonly-serviceaccount"
     proxy:
       nodeSelector: {}
-      image: gcr.io/cloudsql-docker/gce-proxy:1.11
+      image: kloeckneri/db-auth-gateway:0.1.7
   generic: {}
 backup:
   nodeSelector: {}
