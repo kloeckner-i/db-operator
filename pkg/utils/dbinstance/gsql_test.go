@@ -15,12 +15,11 @@ func (ins *Gsql) mockWaitUntilRunnable() error {
 
 	time.Sleep(10 * time.Second)
 
-	instance, err := ins.getInstance()
+	state, err := ins.state()
 	if err != nil {
 		return err
 	}
-
-	if instance.State != "RUNNABLE" {
+	if state != "RUNNABLE" {
 		return errors.New("gsql instance not ready yet")
 	}
 

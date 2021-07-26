@@ -49,6 +49,15 @@ func Update(ins DbInstance) (map[string]string, error) {
 		return nil, ErrNotExists
 	}
 
+	state, err := ins.state()
+	if err != nil {
+		return nil, err
+	}
+
+	if state != "RUNNABLE" {
+		return nil, ErrInstanceNotReady
+	}
+
 	err = ins.update()
 	if err != nil {
 		logrus.Debug("update failed")
