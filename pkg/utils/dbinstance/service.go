@@ -54,7 +54,7 @@ func Update(ins DbInstance) (map[string]string, error) {
 		return nil, err
 	}
 
-	if state != "RUNNABLE" {
+	if (state != "RUNNABLE") && (state != "NOT_SUPPORTED") {
 		return nil, ErrInstanceNotReady
 	}
 
