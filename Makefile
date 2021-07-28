@@ -3,13 +3,12 @@ CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 
 .PHONY: all deploy build helm
 .ONESHELL: test
-all: help
 
 help:   ## show this help
 	@echo 'usage: make [target] ...'
 	@echo ''
 	@echo 'targets:'
-	@egrep '^(.+)\:\ .*##\ (.+)' ${MAKEFILE_LIST} | sort | sed 's/:.*##/#/' | column -t -c 2 -s '#'
+	@grep -E '^(.+)\:\ .*##\ (.+)' ${MAKEFILE_LIST} | sort | sed 's/:.*##/#/' | column -t -c 2 -s '#'
 
 build: ## build db-operator docker image
 	@docker build -t my-db-operator:local .
