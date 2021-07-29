@@ -21,5 +21,6 @@ type DbInstance interface {
 	exist() error
 	create() error
 	update() error
+	state() (string, error)
 	getInfoMap() (map[string]string, error)
 }

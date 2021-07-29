@@ -23,4 +23,6 @@ var (
 	ErrAlreadyExists = errors.New("instance already exists")
 	// ErrNotExists is thrown when db instance does not exists
 	ErrNotExists = errors.New("instance does not exists")
+	// ErrInstanceNotReady is thrown when gsql instance is still not marked as Ready
+	ErrInstanceNotReady = errors.New("instance is not ready")
 )
