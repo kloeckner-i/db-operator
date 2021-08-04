@@ -2,6 +2,7 @@ package dbinstance
 
 import (
 	"errors"
+	"github.com/google/uuid"
 	"testing"
 	"time"
 
@@ -54,7 +55,7 @@ func mockGsqlConfig() string {
 
 func myMockGsql() *Gsql {
 	return &Gsql{
-		Name:        "test-instance",
+		Name:        uuid.New().String(),
 		ProjectID:   "test-project",
 		APIEndpoint: "http://127.0.0.1:8080",
 		Config:      mockGsqlConfig(),
@@ -92,6 +93,9 @@ func TestGsqlCreateInstance(t *testing.T) {
 func TestGsqlGetInstanceExist(t *testing.T) {
 	myGsql := myMockGsql()
 
+	err := myGsql.createInstance()
+	assert.NoError(t, err)
+
 	rs, err := myGsql.getInstance()
 	logrus.Infof("%#v\n, %s", rs, err)
 	assert.NoError(t, err)
@@ -101,22 +105,31 @@ func TestGsqlCreateExistingInstance(t *testing.T) {
 	myGsql := myMockGsql()
 
 	err := myGsql.createInstance()
+	assert.NoError(t, err)
+
+	err = myGsql.createInstance()
 	assert.Error(t, err)
 }
 
 func TestGsqlUpdateInstance(t *testing.T) {
 	myGsql := myMockGsql()
 
+	err := myGsql.createInstance()
+	assert.NoError(t, err)
+
 	patchWait := monkey.Patch((*Gsql).waitUntilRunnable, (*Gsql).mockWaitUntilRunnable)
 	defer patchWait.Unpatch()
 
-	err := myGsql.updateInstance()
+	err = myGsql.updateInstance()
 	assert.NoError(t, err)
 }
 
 func TestGsqlUpdateUser(t *testing.T) {
 	myGsql := myMockGsql()
 
-	err := myGsql.updateUser()
+	err := myGsql.createInstance()
+	assert.NoError(t, err)
+
+	err = myGsql.updateUser()
 	assert.NoError(t, err)
 }
