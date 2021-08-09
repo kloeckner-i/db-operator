@@ -1,7 +1,7 @@
 nameOverride: ""
 
 image:
-  repository: kloeckneri/db-operator
+  repository: ghcr.io/kloeckner-i/db-operator
   pullPolicy: Always
 
 # imagePullSecrets:
