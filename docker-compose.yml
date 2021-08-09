@@ -13,8 +13,10 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: "test1234"
   sqladmin:
-    build: ./mock
+    image: ghcr.io/kloeckner-i/cloudish-sql:v1.0.0
     ports:
       - "8080:8080"
     environment:
       LOG_LEVEL: "DEBUG"
+    command:
+      - --db-address=postgres:5432

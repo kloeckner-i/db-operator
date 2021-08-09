@@ -13,8 +13,6 @@ help:   ## show this help
 build: ## build db-operator docker image
 	@docker build -t my-db-operator:local .
 	@docker save my-db-operator > my-image.tar
-	@docker build -t mock-googleapi:local mock/
-	@docker save mock-googleapi > mock-google-api.tar
 
 helm: ## install helm if not exist and install local chart using helm upgrade --install command
 	@helm upgrade --install --create-namespace --namespace operator my-dboperator helm/db-operator -f helm/db-operator/values.yaml -f helm/db-operator/values-local.yaml
@@ -66,7 +64,6 @@ minidashboard: ## open minikube dashboard
 
 miniimage: build
 	@minikube image load my-image.tar
-	@minikube image load mock-google-api.tar
 
 k3d_setup: k3d_install k3d_image helm ## install microk8s locally and deploy db-operator (only for linux and mac)
 
@@ -77,7 +74,6 @@ k3d_install:
 
 k3d_image: build
 	@k3d image import my-image.tar -c myk3s
-	@k3d image import mock-google-api.tar -c myk3s
 
 ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 manifests: controller-gen ## generate custom resource definitions

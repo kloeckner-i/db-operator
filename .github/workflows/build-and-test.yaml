@@ -31,6 +31,12 @@ jobs:
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
@@ -53,9 +59,7 @@ jobs:
       - name: Build and import docker images
         run: |
           docker build -t my-db-operator:local .
-          docker build -t mock-googleapi:local mock/
           k3d image import my-db-operator:local -c myk3s
-          k3d image import mock-googleapi:local -c myk3s
       - name: Install Helm chart
         run: make helm
       - name: Integration test

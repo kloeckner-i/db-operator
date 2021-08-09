@@ -115,7 +115,6 @@ tags
 # End of https://www.gitignore.io/api/go,vim,emacs,visualstudiocode
 
 my-image.tar
-mock-google-api.tar
 
 /.idea/
 *.iml
