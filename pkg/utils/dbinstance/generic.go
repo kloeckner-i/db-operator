@@ -66,6 +66,11 @@ func makeInterface(in *Generic) (kcidb.Database, error) {
 	}
 }
 
+func (ins *Generic) state() (string, error) {
+	logrus.Debug("generic db instance not support a state check")
+	return "NOT_SUPPORTED", nil
+}
+
 func (ins *Generic) exist() error {
 	db, err := makeInterface(ins)
 	if err != nil {

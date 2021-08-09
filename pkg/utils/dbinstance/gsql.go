@@ -202,13 +202,11 @@ func (ins *Gsql) waitUntilRunnable() error {
 	time.Sleep(delay * time.Second)
 
 	err := kci.Retry(10, 60*time.Second, func() error {
-		instance, err := ins.getInstance()
+		state, err := ins.state()
 		if err != nil {
 			return err
 		}
-		logrus.Debugf("waiting gsql instance %s state: %s", ins.Name, instance.State)
-
-		if instance.State != "RUNNABLE" {
+		if state != "RUNNABLE" {
 			return errors.New("gsql instance not ready yet")
 		}
 
@@ -224,6 +222,15 @@ func (ins *Gsql) waitUntilRunnable() error {
 	}
 
 	return nil
+}
+
+func (ins *Gsql) state() (string, error) {
+	instance, err := ins.getInstance()
+	if err != nil {
+		return "", err
+	}
+	logrus.Debugf("check gsql instance %s state: %s", ins.Name, instance.State)
+	return instance.State, nil
 }
 
 func (ins *Gsql) create() error {
