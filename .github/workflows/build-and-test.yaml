@@ -58,8 +58,8 @@ jobs:
         run: make k3d_install
       - name: Build and import docker images
         run: |
-          docker build -t my-db-operator:local .
-          k3d image import my-db-operator:local -c myk3s
+          docker build -t my-db-operator:v1.0.0-dev .
+          k3d image import my-db-operator:v1.0.0-dev -c myk3s
       - name: Install Helm chart
         run: make helm
       - name: Integration test

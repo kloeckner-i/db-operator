@@ -1,6 +1,6 @@
 image:
   repository: my-db-operator
-  tag: "local"
+  tag: "1.0.0-dev"
   pullPolicy: IfNotPresent
 
 
