@@ -35,7 +35,7 @@ spec:
       {{- end }}
       containers:
         - name: operator
-          image: "{{ .Values.image.repository }}:{{ template "db-operator.image_version" . }}"
+          image: "{{ .Values.image.repository }}:{{ template "db-operator.github_packages_image_version" . }}"
           ports:
           - containerPort: 60000
             name: metrics

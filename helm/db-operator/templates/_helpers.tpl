@@ -39,6 +39,13 @@ Image version definition;
 {{- end -}}
 
 {{/*
+Image version definition using Github Packages format ('v' prefix);
+*/}}
+{{- define "db-operator.github_packages_image_version" -}}
+{{- printf "v%s" (default .Chart.AppVersion .Values.image.tag) }}
+{{- end -}}
+
+{{/*
 Create the name of the service account to use
 */}}
 {{- define "db-operator.serviceAccountName" -}}
