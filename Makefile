@@ -13,7 +13,7 @@ help:   ## show this help
 	@grep -E '^(.+)\:\ .*##\ (.+)' ${MAKEFILE_LIST} | sort | sed 's/:.*##/#/' | column -t -c 2 -s '#'
 
 build: $(SRC) ## build db-operator docker image
-	@docker build -t my-db-operator:local .
+	@docker build -t my-db-operator:v1.0.0-dev .
 	@docker save my-db-operator > my-image.tar
 
 helm: ## install helm if not exist and install local chart using helm upgrade --install command
