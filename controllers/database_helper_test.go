@@ -20,7 +20,6 @@ import (
 	"testing"
 
 	"github.com/kloeckner-i/db-operator/pkg/utils/database"
-
 	"github.com/stretchr/testify/assert"
 )
 

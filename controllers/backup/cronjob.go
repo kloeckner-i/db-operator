@@ -20,11 +20,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/kloeckner-i/db-operator/pkg/config"
-
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
+	"github.com/kloeckner-i/db-operator/pkg/config"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
-
 	"github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
@@ -148,11 +146,11 @@ func mysqlBackupContainer(conf *config.Config, dbcr *kciv1alpha1.Database) (v1.C
 
 func volumeMounts() []v1.VolumeMount {
 	return []v1.VolumeMount{
-		v1.VolumeMount{
+		{
 			Name:      "gcloud-secret",
 			MountPath: "/srv/gcloud/",
 		},
-		v1.VolumeMount{
+		{
 			Name:      "db-cred",
 			MountPath: "/srv/k8s/db-cred/",
 		},
@@ -161,7 +159,7 @@ func volumeMounts() []v1.VolumeMount {
 
 func volumes(dbcr *kciv1alpha1.Database) []v1.Volume {
 	return []v1.Volume{
-		v1.Volume{
+		{
 			Name: "gcloud-secret",
 			VolumeSource: v1.VolumeSource{
 				Secret: &v1.SecretVolumeSource{
@@ -169,7 +167,7 @@ func volumes(dbcr *kciv1alpha1.Database) []v1.Volume {
 				},
 			},
 		},
-		v1.Volume{
+		{
 			Name: "db-cred",
 			VolumeSource: v1.VolumeSource{
 				Secret: &v1.SecretVolumeSource{
@@ -195,13 +193,13 @@ func postgresEnvVars(conf *config.Config, dbcr *kciv1alpha1.Database) ([]v1.EnvV
 	port := instance.Status.Info["DB_PORT"]
 
 	envList := []v1.EnvVar{
-		v1.EnvVar{
+		{
 			Name: "DB_HOST", Value: host,
 		},
-		v1.EnvVar{
+		{
 			Name: "DB_PORT", Value: port,
 		},
-		v1.EnvVar{
+		{
 			Name: "DB_NAME", ValueFrom: &v1.EnvVarSource{
 				SecretKeyRef: &v1.SecretKeySelector{
 					LocalObjectReference: v1.LocalObjectReference{Name: dbcr.Spec.SecretName},
@@ -209,13 +207,13 @@ func postgresEnvVars(conf *config.Config, dbcr *kciv1alpha1.Database) ([]v1.EnvV
 				},
 			},
 		},
-		v1.EnvVar{
+		{
 			Name: "DB_PASSWORD_FILE", Value: "/srv/k8s/db-cred/POSTGRES_PASSWORD",
 		},
-		v1.EnvVar{
+		{
 			Name: "DB_USERNAME_FILE", Value: "/srv/k8s/db-cred/POSTGRES_USER",
 		},
-		v1.EnvVar{
+		{
 			Name: "GCS_BUCKET", Value: instance.Spec.Backup.Bucket,
 		},
 	}
@@ -243,13 +241,13 @@ func mysqlEnvVars(dbcr *kciv1alpha1.Database) ([]v1.EnvVar, error) {
 	port := instance.Status.Info["DB_PORT"]
 
 	return []v1.EnvVar{
-		v1.EnvVar{
+		{
 			Name: "DB_HOST", Value: host,
 		},
-		v1.EnvVar{
+		{
 			Name: "DB_PORT", Value: port,
 		},
-		v1.EnvVar{
+		{
 			Name: "DB_NAME", ValueFrom: &v1.EnvVarSource{
 				SecretKeyRef: &v1.SecretKeySelector{
 					LocalObjectReference: v1.LocalObjectReference{Name: dbcr.Spec.SecretName},
@@ -257,7 +255,7 @@ func mysqlEnvVars(dbcr *kciv1alpha1.Database) ([]v1.EnvVar, error) {
 				},
 			},
 		},
-		v1.EnvVar{
+		{
 			Name: "DB_USER", ValueFrom: &v1.EnvVarSource{
 				SecretKeyRef: &v1.SecretKeySelector{
 					LocalObjectReference: v1.LocalObjectReference{Name: dbcr.Spec.SecretName},
@@ -265,17 +263,17 @@ func mysqlEnvVars(dbcr *kciv1alpha1.Database) ([]v1.EnvVar, error) {
 				},
 			},
 		},
-		v1.EnvVar{
+		{
 			Name: "DB_PASSWORD_FILE", Value: "/srv/k8s/db-cred/PASSWORD",
 		},
-		v1.EnvVar{
+		{
 			Name: "GCS_BUCKET", Value: instance.Spec.Backup.Bucket,
 		},
 	}, nil
 }
 
 func getBackupHost(dbcr *kciv1alpha1.Database) (string, error) {
-	var host = ""
+	host := ""
 
 	instance, err := dbcr.GetInstanceRef()
 	if err != nil {
@@ -289,7 +287,7 @@ func getBackupHost(dbcr *kciv1alpha1.Database) (string, error) {
 
 	switch backend {
 	case "google":
-		host = "db-" + dbcr.Name + "-svc" //cloud proxy service name
+		host = "db-" + dbcr.Name + "-svc" // cloud proxy service name
 		return host, nil
 	case "generic":
 		if instance.Spec.Generic.BackupHost != "" {

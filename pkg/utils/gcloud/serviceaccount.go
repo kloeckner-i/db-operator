@@ -39,7 +39,10 @@ func GetServiceAccount() ServiceAccount {
 	credentialValues, _ := ioutil.ReadAll(credentialFile)
 
 	// parse credentials.json file
-	json.Unmarshal([]byte(credentialValues), &serviceaccount)
+	err = json.Unmarshal([]byte(credentialValues), &serviceaccount)
+	if err != nil {
+		logrus.Fatalf("failed to parse service account file - %s", err)
+	}
 
 	return serviceaccount
 }

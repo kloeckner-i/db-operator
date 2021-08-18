@@ -23,7 +23,6 @@ import (
 
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
 	"github.com/kloeckner-i/db-operator/pkg/config"
-
 	"github.com/stretchr/testify/assert"
 )
 

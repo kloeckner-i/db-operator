@@ -18,9 +18,9 @@ package monitoring
 
 import (
 	"fmt"
-	"github.com/kloeckner-i/db-operator/pkg/config"
 
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
+	"github.com/kloeckner-i/db-operator/pkg/config"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 	v1 "k8s.io/api/core/v1"
 )

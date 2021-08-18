@@ -19,6 +19,10 @@ package controllers
 import (
 	"context"
 	"errors"
+	"time"
+
+	"github.com/go-logr/logr"
+	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
 	"github.com/kloeckner-i/db-operator/pkg/config"
 	"github.com/kloeckner-i/db-operator/pkg/utils/database"
 	"github.com/kloeckner-i/db-operator/pkg/utils/dbinstance"
@@ -26,15 +30,10 @@ import (
 	"github.com/kloeckner-i/db-operator/pkg/utils/proxy"
 	"github.com/sirupsen/logrus"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"time"
-
-	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 var (
@@ -88,7 +87,11 @@ func (r *DbInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	// Update object status always when function returns, either normally or through a panic.
-	defer r.Status().Update(ctx, dbin)
+	defer func() {
+		if err := r.Status().Update(ctx, dbin); err != nil {
+			logrus.Errorf("failed to update status - %s", err)
+		}
+	}()
 
 	// Check if spec changed
 	if isDBInstanceSpecChanged(ctx, dbin) {
@@ -139,7 +142,7 @@ func (r *DbInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 		dbin.Status.Phase = dbInstancePhaseRunning
 	case dbInstancePhaseRunning:
-		return reconcileResult, nil //do nothing and don't requeue
+		return reconcileResult, nil // do nothing and don't requeue
 	default:
 		logrus.Errorf("Instance: name=%s unknown phase %s", dbin.Name, phase)
 		dbin.Status.Phase = dbInstancePhaseValidate // set phase to initial state

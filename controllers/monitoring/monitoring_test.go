@@ -17,12 +17,11 @@
 package monitoring
 
 import (
-	"github.com/kloeckner-i/db-operator/pkg/config"
 	"testing"
 
-	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
-
 	"bou.ke/monkey"
+	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
+	"github.com/kloeckner-i/db-operator/pkg/config"
 	"github.com/stretchr/testify/assert"
 	v1apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"

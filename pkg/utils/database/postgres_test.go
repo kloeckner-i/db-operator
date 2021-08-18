@@ -20,7 +20,6 @@ import (
 	"testing"
 
 	"github.com/kloeckner-i/db-operator/pkg/test"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -49,7 +48,6 @@ func TestPostgresCreateDatabase(t *testing.T) {
 
 	err = p.createDatabase(admin)
 	assert.NoErrorf(t, err, "Unexpected error %v", err)
-
 }
 
 func TestPostgresCreateUser(t *testing.T) {
@@ -96,6 +94,7 @@ func TestPostgresDeleteDatabase(t *testing.T) {
 	err = p.deleteDatabase(admin)
 	assert.NoErrorf(t, err, "Unexpected error %v", err)
 }
+
 func TestPostgresDeleteUser(t *testing.T) {
 	admin := getPostgresAdmin()
 	p := testPostgres()

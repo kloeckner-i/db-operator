@@ -18,16 +18,15 @@ package controllers
 
 import (
 	"context"
+
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 )
 
 func isDBSpecChanged(dbcr *kciv1alpha1.Database) bool {
 	annotations := dbcr.ObjectMeta.GetAnnotations()
-	if annotations["checksum/spec"] != kci.GenerateChecksum(dbcr.Spec) {
-		return true
-	}
-	return false
+
+	return annotations["checksum/spec"] != kci.GenerateChecksum(dbcr.Spec)
 }
 
 func addDBSpecChecksum(dbcr *kciv1alpha1.Database) {

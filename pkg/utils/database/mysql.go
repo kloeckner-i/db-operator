@@ -22,12 +22,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
+	"github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/mysql"
 
 	// do not delete
 	_ "github.com/go-sql-driver/mysql"
-
-	"github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/mysql"
+	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 	"github.com/sirupsen/logrus"
 )
 
@@ -223,7 +222,6 @@ func (m Mysql) isUserExist(admin AdminCredentials) bool {
 
 // GetCredentials returns credentials of the mysql database
 func (m Mysql) GetCredentials() Credentials {
-
 	return Credentials{
 		Name:     m.Database,
 		Username: m.User,

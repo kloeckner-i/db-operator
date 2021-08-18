@@ -23,7 +23,6 @@ import (
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
 	"github.com/kloeckner-i/db-operator/pkg/utils/database"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
-
 	"github.com/sirupsen/logrus"
 )
 
@@ -174,13 +173,15 @@ func generateDatabaseSecretData(dbcr *kciv1alpha1.Database) (map[string][]byte, 
 		data := map[string][]byte{
 			"POSTGRES_DB":       []byte(dbName),
 			"POSTGRES_USER":     []byte(dbUser),
-			"POSTGRES_PASSWORD": []byte(dbPassword)}
+			"POSTGRES_PASSWORD": []byte(dbPassword),
+		}
 		return data, nil
 	case "mysql":
 		data := map[string][]byte{
 			"DB":       []byte(kci.StringSanitize(dbName, mysqlDBNameLengthLimit)),
 			"USER":     []byte(kci.StringSanitize(dbUser, mysqlUserLengthLimit)),
-			"PASSWORD": []byte(dbPassword)}
+			"PASSWORD": []byte(dbPassword),
+		}
 		return data, nil
 	default:
 		return nil, errors.New("not supported engine type")
