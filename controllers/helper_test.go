@@ -17,19 +17,18 @@
 package controllers
 
 import (
-	"bou.ke/monkey"
 	"context"
 	"errors"
-	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"testing"
 
+	"bou.ke/monkey"
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
 	"github.com/kloeckner-i/db-operator/pkg/test"
-
+	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 func newPostgresTestDbInstanceCr() kciv1alpha1.DbInstance {

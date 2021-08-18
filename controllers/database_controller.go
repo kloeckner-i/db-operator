@@ -19,29 +19,29 @@ package controllers
 import (
 	"context"
 	"errors"
+	"io/ioutil"
+	"os"
+	"strconv"
+	"time"
+
 	"github.com/go-logr/logr"
+	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
 	"github.com/kloeckner-i/db-operator/controllers/backup"
 	"github.com/kloeckner-i/db-operator/pkg/config"
 	"github.com/kloeckner-i/db-operator/pkg/utils/database"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 	"github.com/kloeckner-i/db-operator/pkg/utils/proxy"
 	"github.com/sirupsen/logrus"
-	"io/ioutil"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
-	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"strconv"
-	"time"
-
-	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
 )
 
 // DatabaseReconciler reconciles a Database object
@@ -103,7 +103,11 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 
 	// Update object status always when function exit abnormally or through a panic.
-	defer r.Status().Update(ctx, dbcr)
+	defer func() {
+		if err := r.Status().Update(ctx, dbcr); err != nil {
+			logrus.Errorf("failed to update status - %s", err)
+		}
+	}()
 
 	promDBsStatus.WithLabelValues(dbcr.Namespace, dbcr.Spec.Instance, dbcr.Name).Set(boolToFloat64(dbcr.Status.Status))
 	promDBsPhase.WithLabelValues(dbcr.Namespace, dbcr.Spec.Instance, dbcr.Name).Set(dbPhaseToFloat64(dbcr.Status.Phase))
@@ -210,7 +214,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			dbcr.Status.Status = true
 			dbcr.Status.Phase = dbPhaseReady
 		case dbPhaseReady:
-			return reconcileResult, nil //do nothing and don't requeue
+			return reconcileResult, nil // do nothing and don't requeue
 		default:
 			logrus.Errorf("DB: namespace=%s, name=%s unknown phase %s", dbcr.Namespace, dbcr.Name, phase)
 			err := r.initialize(ctx, dbcr)
@@ -563,7 +567,7 @@ func (r *DatabaseReconciler) createInfoConfigMap(ctx context.Context, dbcr *kciv
 	info := instance.Status.DeepCopy().Info
 	proxyStatus := dbcr.Status.ProxyStatus
 
-	if proxyStatus.Status == true {
+	if proxyStatus.Status {
 		info["DB_HOST"] = proxyStatus.ServiceName
 		info["DB_PORT"] = strconv.FormatInt(int64(proxyStatus.SQLPort), 10)
 	}
@@ -611,7 +615,11 @@ func (r *DatabaseReconciler) createBackupJob(ctx context.Context, dbcr *kciv1alp
 		return err
 	}
 
-	controllerutil.SetControllerReference(dbcr, cronjob, r.Scheme)
+	err = controllerutil.SetControllerReference(dbcr, cronjob, r.Scheme)
+	if err != nil {
+		return err
+	}
+
 	err = r.Create(ctx, cronjob)
 	if err != nil {
 		if k8serrors.IsAlreadyExists(err) {
@@ -668,7 +676,7 @@ func (r *DatabaseReconciler) manageError(ctx context.Context, dbcr *kciv1alpha1.
 	logrus.Errorf("DB: namespace=%s, name=%s failed %s - %s", dbcr.Namespace, dbcr.Name, dbcr.Status.Phase, issue)
 	promDBsPhaseError.WithLabelValues(dbcr.Status.Phase).Inc()
 
-	var retryInterval = 60 * time.Second
+	retryInterval := 60 * time.Second
 
 	r.Recorder.Event(dbcr, "Warning", "Failed"+dbcr.Status.Phase, issue.Error())
 	err := r.Status().Update(ctx, dbcr)

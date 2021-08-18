@@ -25,7 +25,7 @@ func podAntiAffinity(labelSelector map[string]string) *v1.PodAntiAffinity {
 	var weight int32 = 1
 	return &v1.PodAntiAffinity{
 		RequiredDuringSchedulingIgnoredDuringExecution: []v1.PodAffinityTerm{
-			v1.PodAffinityTerm{
+			{
 				LabelSelector: &metav1.LabelSelector{
 					MatchLabels: labelSelector,
 				},
@@ -33,7 +33,7 @@ func podAntiAffinity(labelSelector map[string]string) *v1.PodAntiAffinity {
 			},
 		},
 		PreferredDuringSchedulingIgnoredDuringExecution: []v1.WeightedPodAffinityTerm{
-			v1.WeightedPodAffinityTerm{
+			{
 				PodAffinityTerm: v1.PodAffinityTerm{
 					LabelSelector: &metav1.LabelSelector{
 						MatchLabels: labelSelector,

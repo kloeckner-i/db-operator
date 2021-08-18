@@ -2,11 +2,11 @@ package dbinstance
 
 import (
 	"errors"
-	"github.com/google/uuid"
 	"testing"
 	"time"
 
 	"bou.ke/monkey"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )

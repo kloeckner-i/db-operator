@@ -34,8 +34,7 @@ type googleInstanceConfig struct {
 	ProxyConfig      proxyConfig `yaml:"proxy"`
 }
 
-type genericInstanceConfig struct {
-	// TODO
+type genericInstanceConfig struct { // TODO
 }
 
 type perconaClusterConfig struct {
@@ -78,6 +77,5 @@ type postgresMonitoringConfig struct {
 	Queries       string `yaml:"queries"`
 }
 
-type mysqlMonitoringConfig struct {
-	// TODO
+type mysqlMonitoringConfig struct { // TODO
 }

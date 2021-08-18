@@ -59,7 +59,6 @@ func SecretBuilder(secretName string, namespace string, data map[string][]byte) 
 
 // BuildEnvVarSource builds kubernetes a source for the value of an EnvVar
 func BuildEnvVarSource(fieldPath string) *corev1.EnvVarSource {
-
 	return &corev1.EnvVarSource{
 		FieldRef: &corev1.ObjectFieldSelector{FieldPath: fieldPath},
 	}

@@ -21,7 +21,6 @@ import (
 	"strconv"
 
 	kcidb "github.com/kloeckner-i/db-operator/pkg/utils/database"
-
 	"github.com/sirupsen/logrus"
 )
 

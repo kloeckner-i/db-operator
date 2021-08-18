@@ -19,17 +19,16 @@ package controllers
 
 import (
 	"errors"
-	"github.com/kloeckner-i/db-operator/pkg/config"
-	"github.com/kloeckner-i/db-operator/pkg/utils/proxy/proxysql"
 	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
 
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
+	"github.com/kloeckner-i/db-operator/pkg/config"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 	proxy "github.com/kloeckner-i/db-operator/pkg/utils/proxy"
-
+	"github.com/kloeckner-i/db-operator/pkg/utils/proxy/proxysql"
 	"github.com/sirupsen/logrus"
 )
 

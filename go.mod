@@ -7,7 +7,7 @@ require (
 	github.com/GoogleCloudPlatform/cloudsql-proxy v1.23.0
 	github.com/go-logr/logr v0.3.0
 	github.com/go-sql-driver/mysql v1.6.0
-	github.com/google/uuid v1.3.0 // indirect
+	github.com/google/uuid v1.3.0
 	github.com/kloeckner-i/can-haz-password v0.1.0
 	github.com/lib/pq v1.10.2
 	github.com/mitchellh/hashstructure v1.1.0

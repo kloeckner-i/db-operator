@@ -22,15 +22,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
-
-	"github.com/lib/pq"
-	"github.com/sirupsen/logrus"
-
-	// Don't delete below package. Used for driver "postgres"
-	_ "github.com/lib/pq"
 	// Don't delete below package. Used for driver "cloudsqlpostgres"
 	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
+	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
+
+	// Don't delete below package. Used for driver "postgres"
+	"github.com/lib/pq"
+	"github.com/sirupsen/logrus"
 )
 
 // Postgres is a database interface, abstraced object
@@ -113,19 +111,13 @@ func (p Postgres) executeExec(database, query string, admin AdminCredentials) er
 func (p Postgres) isDbExist(admin AdminCredentials) bool {
 	check := fmt.Sprintf("SELECT 1 FROM pg_database WHERE datname = '%s';", p.Database)
 
-	if p.isRowExist("postgres", check, admin.Username, admin.Password) {
-		return true
-	}
-	return false
+	return p.isRowExist("postgres", check, admin.Username, admin.Password)
 }
 
 func (p Postgres) isUserExist(admin AdminCredentials) bool {
 	check := fmt.Sprintf("SELECT 1 FROM pg_user WHERE usename = '%s';", p.User)
 
-	if p.isRowExist("postgres", check, admin.Username, admin.Password) {
-		return true
-	}
-	return false
+	return p.isRowExist("postgres", check, admin.Username, admin.Password)
 }
 
 // CheckStatus checks status of postgres database
@@ -250,7 +242,7 @@ func (p Postgres) deleteUser(admin AdminCredentials) error {
 		if err != nil {
 			pqErr := err.(*pq.Error)
 			if pqErr.Code == "2BP01" {
-				//2BP01 dependent_objects_still_exist
+				// 2BP01 dependent_objects_still_exist
 				logrus.Infof("%s", err)
 				return nil
 			}

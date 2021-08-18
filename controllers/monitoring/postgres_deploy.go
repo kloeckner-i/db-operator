@@ -18,15 +18,13 @@ package monitoring
 
 import (
 	"fmt"
-	"github.com/kloeckner-i/db-operator/pkg/config"
 
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
+	"github.com/kloeckner-i/db-operator/pkg/config"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
-
 	"github.com/sirupsen/logrus"
 	v1apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -88,19 +86,6 @@ func pgPodLabels() map[string]string {
 	return kci.LabelBuilder(labels)
 }
 
-func pgContainerExporterResources() v1.ResourceRequirements {
-	return v1.ResourceRequirements{
-		Limits: v1.ResourceList{
-			v1.ResourceCPU:    resource.MustParse("100m"),
-			v1.ResourceMemory: resource.MustParse("256Mi"),
-		},
-		Requests: v1.ResourceList{
-			v1.ResourceCPU:    resource.MustParse("50m"),
-			v1.ResourceMemory: resource.MustParse("64Mi"),
-		},
-	}
-}
-
 func pgContainerExporter(conf *config.Config, dbcr *kciv1alpha1.Database) v1.Container {
 	RunAsUser := int64(2)
 	AllowPrivilegeEscalation := false
@@ -120,11 +105,11 @@ func pgContainerExporter(conf *config.Config, dbcr *kciv1alpha1.Database) v1.Con
 
 func pgVolumeMountsExporter() []v1.VolumeMount {
 	return []v1.VolumeMount{
-		v1.VolumeMount{
+		{
 			Name:      "db-secrets",
 			MountPath: "/run/secrets/db-secrets",
 		},
-		v1.VolumeMount{
+		{
 			Name:      "queries",
 			MountPath: "/run/cm/queries/queries.yaml",
 			SubPath:   "queries.yaml",
@@ -134,7 +119,7 @@ func pgVolumeMountsExporter() []v1.VolumeMount {
 
 func pgVolumes(dbcr *kciv1alpha1.Database) []v1.Volume {
 	return []v1.Volume{
-		v1.Volume{
+		{
 			Name: "db-secrets",
 			VolumeSource: v1.VolumeSource{
 				Secret: &v1.SecretVolumeSource{
@@ -142,7 +127,7 @@ func pgVolumes(dbcr *kciv1alpha1.Database) []v1.Volume {
 				},
 			},
 		},
-		v1.Volume{
+		{
 			Name: "queries",
 			VolumeSource: v1.VolumeSource{
 				ConfigMap: &v1.ConfigMapVolumeSource{
@@ -164,28 +149,28 @@ func pgEnvExporter(dbcr *kciv1alpha1.Database) []v1.EnvVar {
 	port := instance.Status.Info["DB_PORT"]
 
 	return []v1.EnvVar{
-		v1.EnvVar{
+		{
 			Name: "DATA_SOURCE_URI", Value: host + ":" + port + "/postgres?sslmode=disable",
 		},
-		v1.EnvVar{
+		{
 			Name: "DATA_SOURCE_PASS_FILE", Value: "/run/secrets/db-secrets/POSTGRES_PASSWORD",
 		},
-		v1.EnvVar{
+		{
 			Name: "DATA_SOURCE_USER_FILE", Value: "/run/secrets/db-secrets/POSTGRES_USER",
 		},
-		v1.EnvVar{
+		{
 			Name: "PG_EXPORTER_WEB_LISTEN_ADDRESS", Value: ":60000",
 		},
-		v1.EnvVar{
+		{
 			Name: "PG_EXPORTER_EXTEND_QUERY_PATH", Value: "/run/cm/queries/queries.yaml",
 		},
-		v1.EnvVar{
+		{
 			Name: "PG_EXPORTER_CONSTANT_LABELS", Value: fmt.Sprintf("dbinstance=%s", dbcr.Spec.Instance),
 		},
-		v1.EnvVar{
+		{
 			Name: "PG_EXPORTER_DISABLE_DEFAULT_METRICS", Value: "true",
 		},
-		v1.EnvVar{
+		{
 			Name: "PG_EXPORTER_DISABLE_SETTINGS_METRICS", Value: "true",
 		},
 	}

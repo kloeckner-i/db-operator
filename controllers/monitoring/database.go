@@ -18,10 +18,9 @@ package monitoring
 
 import (
 	"fmt"
-	"github.com/kloeckner-i/db-operator/pkg/config"
 
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
-
+	"github.com/kloeckner-i/db-operator/pkg/config"
 	v1apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 )
@@ -56,5 +55,4 @@ func ConfigMap(conf *config.Config, dbcr *kciv1alpha1.Database) (*v1.ConfigMap, 
 	default:
 		return nil, fmt.Errorf("monitoring: exporter query creation for db engine %s not implemented", engine)
 	}
-
 }

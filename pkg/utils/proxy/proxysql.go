@@ -18,14 +18,13 @@ package proxy
 
 import (
 	"bytes"
-	"github.com/kloeckner-i/db-operator/pkg/config"
 	"log"
 	"strconv"
 	"text/template"
 
+	"github.com/kloeckner-i/db-operator/pkg/config"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 	proxysql "github.com/kloeckner-i/db-operator/pkg/utils/proxy/proxysql"
-
 	v1apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -45,8 +44,10 @@ type ProxySQL struct {
 	configCheckSum        string
 }
 
-const sqlPort = 6033
-const adminPort = 6032
+const (
+	sqlPort   = 6033
+	adminPort = 6032
+)
 
 func (ps *ProxySQL) configMapName() string {
 	return ps.NamePrefix + "-proxysql-config-template"
@@ -69,7 +70,7 @@ func (ps *ProxySQL) buildService() (*v1.Service, error) {
 		},
 		Spec: v1.ServiceSpec{
 			Ports: []v1.ServicePort{
-				v1.ServicePort{
+				{
 					Name:     ps.Engine,
 					Protocol: v1.ProtocolTCP,
 					Port:     sqlPort,
@@ -114,13 +115,13 @@ func (ps *ProxySQL) deploymentSpec() (v1apps.DeploymentSpec, error) {
 	}
 
 	volumes := []v1.Volume{
-		v1.Volume{
+		{
 			Name: "shared-data",
 			VolumeSource: v1.VolumeSource{
 				EmptyDir: &v1.EmptyDirVolumeSource{},
 			},
 		},
-		v1.Volume{
+		{
 			Name: "proxysql-config-template",
 			VolumeSource: v1.VolumeSource{
 				ConfigMap: &v1.ConfigMapVolumeSource{
@@ -130,13 +131,13 @@ func (ps *ProxySQL) deploymentSpec() (v1apps.DeploymentSpec, error) {
 				},
 			},
 		},
-		v1.Volume{
+		{
 			Name: "monitoruser-secret",
 			VolumeSource: v1.VolumeSource{
 				Secret: &v1.SecretVolumeSource{
 					SecretName: ps.MonitorUserSecretName,
 					Items: []v1.KeyToPath{
-						v1.KeyToPath{
+						{
 							Key:  "password",
 							Path: "monitoruser-password",
 						},
@@ -144,13 +145,13 @@ func (ps *ProxySQL) deploymentSpec() (v1apps.DeploymentSpec, error) {
 				},
 			},
 		},
-		v1.Volume{
+		{
 			Name: "user-secret",
 			VolumeSource: v1.VolumeSource{
 				Secret: &v1.SecretVolumeSource{
 					SecretName: ps.UserSecretName,
 					Items: []v1.KeyToPath{
-						v1.KeyToPath{
+						{
 							Key:  "PASSWORD",
 							Path: "user-password",
 						},
@@ -194,7 +195,7 @@ func (ps *ProxySQL) configGeneratorContainer() (v1.Container, error) {
 		ImagePullPolicy: v1.PullIfNotPresent,
 		Command:         []string{"sh", "-c", "MONITOR_PASSWORD=$(cat /run/secrets/monitoruser-password) DB_PASSWORD=$(cat /run/secrets/user-password) envsubst < /tmp/proxysql.cnf.tmpl > /mnt/proxysql.cnf"},
 		Env: []v1.EnvVar{
-			v1.EnvVar{
+			{
 				Name: "MONITOR_USERNAME", ValueFrom: &v1.EnvVarSource{
 					SecretKeyRef: &v1.SecretKeySelector{
 						LocalObjectReference: v1.LocalObjectReference{Name: ps.MonitorUserSecretName},
@@ -202,7 +203,7 @@ func (ps *ProxySQL) configGeneratorContainer() (v1.Container, error) {
 					},
 				},
 			},
-			v1.EnvVar{
+			{
 				Name: "DB_USERNAME", ValueFrom: &v1.EnvVarSource{
 					SecretKeyRef: &v1.SecretKeySelector{
 						LocalObjectReference: v1.LocalObjectReference{Name: ps.UserSecretName},
@@ -212,22 +213,22 @@ func (ps *ProxySQL) configGeneratorContainer() (v1.Container, error) {
 			},
 		},
 		VolumeMounts: []v1.VolumeMount{
-			v1.VolumeMount{
+			{
 				Name:      "proxysql-config-template",
 				MountPath: "/tmp/proxysql.cnf.tmpl",
 				SubPath:   "proxysql.cnf.tmpl",
 			},
-			v1.VolumeMount{
+			{
 				Name:      "shared-data",
 				MountPath: "/mnt",
 			},
-			v1.VolumeMount{
+			{
 				Name:      "monitoruser-secret",
 				MountPath: "/run/secrets/monitoruser-password",
 				SubPath:   "monitoruser-password",
 				ReadOnly:  true,
 			},
-			v1.VolumeMount{
+			{
 				Name:      "user-secret",
 				MountPath: "/run/secrets/user-password",
 				SubPath:   "user-password",
@@ -243,19 +244,19 @@ func (ps *ProxySQL) proxyContainer() (v1.Container, error) {
 		Image:           ps.Conf.Instances.Percona.ProxyConfig.Image,
 		ImagePullPolicy: v1.PullIfNotPresent,
 		Ports: []v1.ContainerPort{
-			v1.ContainerPort{
+			{
 				Name:          "sql",
 				ContainerPort: sqlPort,
 				Protocol:      v1.ProtocolTCP,
 			},
-			v1.ContainerPort{
+			{
 				Name:          "admin",
 				ContainerPort: adminPort,
 				Protocol:      v1.ProtocolTCP,
 			},
 		},
 		VolumeMounts: []v1.VolumeMount{
-			v1.VolumeMount{
+			{
 				Name:      "shared-data",
 				MountPath: "/etc/proxysql.cnf",
 				SubPath:   "proxysql.cnf",

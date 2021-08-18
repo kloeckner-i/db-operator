@@ -4,14 +4,16 @@ CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 .PHONY: all deploy build helm
 .ONESHELL: test
 
+SRC = $(shell find . -type f -name '*.go')
+
 help:   ## show this help
 	@echo 'usage: make [target] ...'
 	@echo ''
 	@echo 'targets:'
 	@grep -E '^(.+)\:\ .*##\ (.+)' ${MAKEFILE_LIST} | sort | sed 's/:.*##/#/' | column -t -c 2 -s '#'
 
-build: ## build db-operator docker image
-	@docker build -t my-db-operator:v1.0.0-dev .
+build: $(SRC) ## build db-operator docker image
+	@docker build -t my-db-operator:local .
 	@docker save my-db-operator > my-image.tar
 
 helm: ## install helm if not exist and install local chart using helm upgrade --install command
@@ -32,7 +34,7 @@ deploy:
 
 update: build deploy ## build db-operator image again and delete running pod
 
-test: ## spin up mysql, postgres containers and run go unit test
+test: $(SRC) ## spin up mysql, postgres containers and run go unit test
 	tearDown() {
 		docker-compose down
 	}
@@ -42,10 +44,13 @@ test: ## spin up mysql, postgres containers and run go unit test
 	sleep 10
 	go test -count=1 -tags tests ./... -v -cover
 
-lint:
-	@golint ./...
+lint: $(SRC)
+	@go mod tidy
+	@gofumpt -s -l -w $^
+	@gci -w $^
+	@golangci-lint run ./...
 
-vet:
+vet: $(SRC)
 	@go vet ./...
 
 minisetup: miniup miniimage helm
