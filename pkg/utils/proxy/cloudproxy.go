@@ -111,6 +111,10 @@ func (cp *CloudProxy) deploymentSpec() (v1apps.DeploymentSpec, error) {
 		},
 		Template: v1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
+				Annotations: map[string]string{
+					"prometheus.io/scrape": "true",
+					"prometheus.io/port":   "9090",
+				},
 				Labels: cp.Labels,
 			},
 			Spec: v1.PodSpec{
