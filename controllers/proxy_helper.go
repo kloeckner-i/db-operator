@@ -74,6 +74,11 @@ func determineProxyTypeForDB(conf *config.Config, dbcr *kciv1alpha1.Database) (p
 			"db-name": dbcr.Name,
 		}
 
+		monitoringEnabled, err := dbcr.IsMonitoringEnabled()
+		if err != nil {
+			return nil, err
+		}
+
 		return &proxy.CloudProxy{
 			NamePrefix:             "db-" + dbcr.Name,
 			Namespace:              dbcr.Namespace,
@@ -83,6 +88,7 @@ func determineProxyTypeForDB(conf *config.Config, dbcr *kciv1alpha1.Database) (p
 			Port:                   int32(port),
 			Labels:                 kci.LabelBuilder(labels),
 			Conf:                   conf,
+			MonitoringEnabled:      monitoringEnabled,
 		}, nil
 	case "percona":
 		labels := map[string]string{
@@ -144,6 +150,8 @@ func determineProxyTypeForInstance(conf *config.Config, dbin *kciv1alpha1.DbInst
 			"instance-name": dbin.Name,
 		}
 
+		monitoringEnabled := dbin.IsMonitoringEnabled()
+
 		return &proxy.CloudProxy{
 			NamePrefix:             "dbinstance-" + dbin.Name,
 			Namespace:              operatorNamespace,
@@ -153,6 +161,7 @@ func determineProxyTypeForInstance(conf *config.Config, dbin *kciv1alpha1.DbInst
 			Port:                   int32(port),
 			Labels:                 kci.LabelBuilder(labels),
 			Conf:                   conf,
+			MonitoringEnabled:      monitoringEnabled,
 		}, nil
 	default:
 		return nil, ErrNoProxySupport
