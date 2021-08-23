@@ -16,6 +16,7 @@ data:
           nodeSelector:
             {{- toYaml .Values.config.instance.google.proxy.nodeSelector | nindent 12 }}
           image: {{ .Values.config.instance.google.proxy.image }}
+          metricsPort: {{ .Values.config.instance.google.proxy.metricsPort }}
       generic: {}
       percona:
         proxy:

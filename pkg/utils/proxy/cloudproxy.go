@@ -18,6 +18,7 @@ package proxy
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/kloeckner-i/db-operator/pkg/config"
 	v1apps "k8s.io/api/apps/v1"
@@ -110,7 +111,7 @@ func (cp *CloudProxy) deploymentSpec() (v1apps.DeploymentSpec, error) {
 	if cp.MonitoringEnabled {
 		annotations = map[string]string{
 			"prometheus.io/scrape": "true",
-			"prometheus.io/port":   "9090",
+			"prometheus.io/port":   strconv.Itoa(cp.Conf.Instances.Google.ProxyConfig.MetricsPort),
 		}
 	}
 
