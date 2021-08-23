@@ -35,6 +35,7 @@ config:
     percona:
       proxy:
         image: severalnines/proxysql:2.0
+        metricsPort: 9090
   backup:
     activeDeadlineSeconds: 600 # 10m
     nodeSelector: {}

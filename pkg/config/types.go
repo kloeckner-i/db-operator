@@ -44,6 +44,7 @@ type perconaClusterConfig struct {
 type proxyConfig struct {
 	NodeSelector map[string]string `yaml:"nodeSelector"`
 	Image        string            `yaml:"image"`
+	MetricsPort  int               `yaml:"metricsPort"`
 }
 
 // backupConfig defines docker image for creating database dump by backup cronjob

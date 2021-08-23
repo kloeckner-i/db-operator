@@ -18,6 +18,7 @@ package proxy
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/kloeckner-i/db-operator/pkg/config"
 	v1apps "k8s.io/api/apps/v1"
@@ -35,6 +36,7 @@ type CloudProxy struct {
 	Port                   int32
 	Labels                 map[string]string
 	Conf                   *config.Config
+	MonitoringEnabled      bool
 }
 
 const instanceAccessSecretVolumeName string = "gcloud-secret"
@@ -104,6 +106,15 @@ func (cp *CloudProxy) deploymentSpec() (v1apps.DeploymentSpec, error) {
 
 	terminationGracePeriodSeconds := int64(120) // force kill pod after this time
 
+	var annotations map[string]string
+
+	if cp.MonitoringEnabled {
+		annotations = map[string]string{
+			"prometheus.io/scrape": "true",
+			"prometheus.io/port":   strconv.Itoa(cp.Conf.Instances.Google.ProxyConfig.MetricsPort),
+		}
+	}
+
 	return v1apps.DeploymentSpec{
 		Replicas: &replicas,
 		Selector: &metav1.LabelSelector{
@@ -111,7 +122,8 @@ func (cp *CloudProxy) deploymentSpec() (v1apps.DeploymentSpec, error) {
 		},
 		Template: v1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
-				Labels: cp.Labels,
+				Annotations: annotations,
+				Labels:      cp.Labels,
 			},
 			Spec: v1.PodSpec{
 				Containers:    []v1.Container{container},
