@@ -31,6 +31,7 @@ config:
       proxy:
         nodeSelector: {}
         image: kloeckneri/db-auth-gateway:0.1.7
+        metricsPort: 9090
     generic: {}
     percona:
       proxy:
