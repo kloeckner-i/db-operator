@@ -26,6 +26,9 @@ spec:
         heritage: {{ .Release.Service }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/config.yaml") . | sha256sum }}
+{{- if .Values.podLabels }}
+{{ toYaml .Values.podLabels | trim | indent 8 }}
+{{- end }}
 {{- if .Values.annotations }}
 {{ toYaml .Values.annotations | indent 8 }}
 {{- end }}
