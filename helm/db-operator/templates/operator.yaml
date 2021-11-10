@@ -24,6 +24,9 @@ spec:
         chart: {{ template "db-operator.chart" . }}
         release: {{ .Release.Name }}
         heritage: {{ .Release.Service }}
+        {{- if .Values.podLabels }}
+{{ toYaml .Values.podLabels | trim | indent 8 }}
+        {{- end }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/config.yaml") . | sha256sum }}
 {{- if .Values.annotations }}
