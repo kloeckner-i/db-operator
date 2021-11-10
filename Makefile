@@ -54,7 +54,7 @@ vet: $(SRC)
 minisetup: miniup miniimage helm
 
 miniup: ## start minikube
-	@minikube start --kubernetes-version=v1.19.12 --cpus 2 --memory 4096
+	@minikube start --kubernetes-version=v1.22.3 --cpus 2 --memory 4096
 
 minidown: ## stop minikube
 	@minikube stop
@@ -72,7 +72,7 @@ k3d_setup: k3d_install k3d_image helm
 
 k3d_install:
 	@wget -q -O - https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
-	@k3d cluster create myk3s -i rancher/k3s:v1.19.16-k3s1
+	@k3d cluster create myk3s -i rancher/k3s:v1.22.3+k3s1
 	@kubectl get pod
 
 k3d_image: build
