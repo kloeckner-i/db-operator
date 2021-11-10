@@ -72,7 +72,7 @@ k3d_setup: k3d_install k3d_image helm
 
 k3d_install:
 	@wget -q -O - https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
-	@k3d cluster create myk3s -i rancher/k3s:v1.22.3+k3s1
+	@k3d cluster create myk3s -i rancher/k3s:v1.22.3-k3s1
 	@kubectl get pod
 
 k3d_image: build
