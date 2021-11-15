@@ -1,6 +1,3 @@
-# Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
-CRD_OPTIONS ?= "crd"
-
 .PHONY: all deploy build helm
 .ONESHELL: test
 
@@ -80,8 +77,8 @@ k3d_image: build
 
 ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 manifests: controller-gen ## generate custom resource definitions
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=helm/db-operator/files/gen/crd output:rbac:artifacts:config=helm/db-operator/files/gen/rbac
+	$(CONTROLLER_GEN) crd rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) crd rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=helm/db-operator/files/gen/crd output:rbac:artifacts:config=helm/db-operator/files/gen/rbac
 
 ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 generate: controller-gen ## generate supporting code for custom resource types

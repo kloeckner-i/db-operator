@@ -80,7 +80,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 Merge of generated db crd resource with helm related labels
 */}}
 {{- define "db-operator.crd_db" -}}
-{{ toYaml (merge (.Files.Get "files/gen/crd/kci.rocks_databases.yaml" | fromYaml) (dict "metadata" (dict "labels" (include "db-operator.labels" . ) ) ) ) }}
+{{ toYaml (merge (.Files.Get "files/gen/crd/kci.rocks_databases.yaml" | fromYaml) (dict "metadata" (dict "labels" (include "db-operator.labels" . | fromYaml  ) ) ) ) }}
 {{- end -}}
 
 
@@ -88,12 +88,12 @@ Merge of generated db crd resource with helm related labels
 Merge of generated dbin crd resource with helm related labels
 */}}
 {{- define "db-operator.crd_dbin" -}}
-{{ toYaml (merge (.Files.Get "files/gen/crd/kci.rocks_dbinstances.yaml" | fromYaml) (dict "metadata" (dict "labels" (include "db-operator.labels" . ) ) ) ) }}
+{{ toYaml (merge (.Files.Get "files/gen/crd/kci.rocks_dbinstances.yaml" | fromYaml) (dict "metadata" (dict "labels" (include "db-operator.labels" . | fromYaml  ) ) ) ) }}
 {{- end -}}
 
 {{/*
 Merge of generated rbac resource with helm related labels
 */}}
 {{- define "db-operator.rbac_role" -}}
-{{ toYaml (merge (.Files.Get "files/gen/rbac/role.yaml" | fromYaml) (dict "metadata" (dict "labels" (include "db-operator.labels" . ) ) ) ) }}
+{{ toYaml (merge (.Files.Get "files/gen/rbac/role.yaml" | fromYaml) (dict "metadata" (dict "labels" (include "db-operator.labels" . | fromYaml ) ) ) ) }}
 {{- end -}}
