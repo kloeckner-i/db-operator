@@ -1,0 +1,4 @@
+---
+{{ template "db-operator.crd_db" . }}
+---
+{{ template "db-operator.crd_dbin" . }}

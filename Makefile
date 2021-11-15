@@ -1,5 +1,5 @@
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
-CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
+CRD_OPTIONS ?= "crd"
 
 .PHONY: all deploy build helm
 .ONESHELL: test
@@ -81,7 +81,7 @@ k3d_image: build
 ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 manifests: controller-gen ## generate custom resource definitions
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=helm/db-operator/templates/crd
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=helm/db-operator/files/gen/crd output:rbac:artifacts:config=helm/db-operator/files/gen/rbac
 
 ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 generate: controller-gen ## generate supporting code for custom resource types
@@ -89,7 +89,7 @@ generate: controller-gen ## generate supporting code for custom resource types
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
-	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1)
+	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.7.0)
 
 # go-get-tool will 'go get' any package $2 and install it to $1.
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))

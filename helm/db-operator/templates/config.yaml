@@ -3,10 +3,7 @@ kind: ConfigMap
 metadata:
   name: {{ template "db-operator.name" . }}-config
   labels:
-    app: {{ template "db-operator.name" . }}
-    chart: {{ template "db-operator.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+    {{- include "db-operator.labels" . | nindent 4 }}
 data:
   config.yaml: |
     instance:
