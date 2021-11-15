@@ -35,10 +35,7 @@ deploy:
 update: build deploy ## build db-operator image again and delete running pod
 
 test: $(SRC) ## spin up mysql, postgres containers and run go unit test
-	tearDown() {
-		docker-compose down
-	}
-	trap tearDown EXIT
+	docker-compose down
 	docker-compose up -d
 	docker-compose restart sqladmin
 	sleep 10

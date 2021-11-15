@@ -157,7 +157,7 @@ func (m Mysql) deleteDatabase(admin AdminCredentials) error {
 func (m Mysql) createUser(admin AdminCredentials) error {
 	create := fmt.Sprintf("CREATE USER `%s` IDENTIFIED BY '%s';", m.User, m.Password)
 	grant := fmt.Sprintf("GRANT ALL PRIVILEGES ON `%s`.* TO '%s'@'%%';", m.Database, m.User)
-	update := fmt.Sprintf("SET PASSWORD FOR `%s` = PASSWORD('%s');", m.User, m.Password)
+	update := fmt.Sprintf("SET PASSWORD FOR `%s` = '%s';", m.User, m.Password)
 
 	if !m.isUserExist(admin) {
 		err := m.executeQuery(create, admin)
