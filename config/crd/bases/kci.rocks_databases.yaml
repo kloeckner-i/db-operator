@@ -14,7 +14,7 @@ spec:
     listKind: DatabaseList
     plural: databases
     shortNames:
-    - dbin
+    - db
     singular: database
   scope: Namespaced
   versions:

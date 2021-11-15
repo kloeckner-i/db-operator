@@ -62,7 +62,7 @@ type DatabaseBackup struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-//+kubebuilder:resource:shortName=dbin
+//+kubebuilder:resource:shortName=db
 
 // Database is the Schema for the databases API
 type Database struct {
