@@ -176,7 +176,6 @@ spec:
                 type: object
             required:
             - adminSecretRef
-            - backup
             - engine
             type: object
           status:

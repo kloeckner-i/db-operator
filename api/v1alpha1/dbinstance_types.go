@@ -29,7 +29,7 @@ type DbInstanceSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 	Engine           string                  `json:"engine"`
 	AdminUserSecret  NamespacedName          `json:"adminSecretRef"`
-	Backup           DbInstanceBackup        `json:"backup"`
+	Backup           DbInstanceBackup        `json:"backup,omitempty"`
 	Monitoring       DbInstanceMonitoring    `json:"monitoring,omitempty"`
 	SSLConnection    DbInstanceSSLConnection `json:"sslConnection,omitempty"`
 	DbInstanceSource `json:",inline"`
