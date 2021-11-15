@@ -234,8 +234,6 @@ spec:
                     - adminSecretRef
                     - backup
                     - engine
-                    - monitoring
-                    - sslConnection
                     type: object
                   status:
                     description: DbInstanceStatus defines the observed state of DbInstance

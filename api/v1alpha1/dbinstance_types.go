@@ -30,8 +30,8 @@ type DbInstanceSpec struct {
 	Engine           string                  `json:"engine"`
 	AdminUserSecret  NamespacedName          `json:"adminSecretRef"`
 	Backup           DbInstanceBackup        `json:"backup"`
-	Monitoring       DbInstanceMonitoring    `json:"monitoring"`
-	SSLConnection    DbInstanceSSLConnection `json:"sslConnection"`
+	Monitoring       DbInstanceMonitoring    `json:"monitoring,omitempty"`
+	SSLConnection    DbInstanceSSLConnection `json:"sslConnection,omitempty"`
 	DbInstanceSource `json:",inline"`
 }
 
