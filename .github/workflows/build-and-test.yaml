@@ -21,9 +21,12 @@ jobs:
         # Until we fix up linting completely
         continue-on-error: true
 
-  test-1_22_3:
+  test:
     runs-on: ubuntu-latest
     needs: lint
+    strategy:
+      matrix:
+        k8s_version: ['v1.19.12', 'v1.20.12', 'v1.21.6', 'v1.22.3']
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -55,6 +58,8 @@ jobs:
       - name: Run the unit tests
         run: go test -tags tests ./... -v -cover
       - name: Create k3d cluster
+        env:
+          K8S_VERSION: ${{ matrix.k8s_version }}
         run: make k3d_install
       - name: Build and import docker images
         run: |
@@ -64,141 +69,3 @@ jobs:
         run: make helm
       - name: Integration test
         run: ./integration/test.sh
-
-  test-1_19_12:
-    runs-on: ubuntu-latest
-    needs: lint
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.15
-      # The existing apparmor profile for mysql needs to be removed.
-      # https://github.com/actions/virtual-environments/issues/181
-      # https://github.com/moby/moby/issues/7512#issuecomment-51845976
-      - name: Remove MySQL App Armour Configuration
-        run: |
-          set -x
-          sudo apt-get remove mysql-server --purge
-          sudo apt-get install apparmor-profiles
-          sudo apparmor_parser -R /etc/apparmor.d/usr.sbin.mysqld
-      - name: Start dependencies using docker-compose
-        run: docker-compose up -d
-      - name: Run the unit tests
-        run: go test -tags tests ./... -v -cover
-      - name: Create k3d cluster
-        run: make k3d_install
-      - name: Build and import docker images
-        run: |
-          docker build -t my-db-operator:v1.0.0-dev .
-          k3d image import my-db-operator:v1.0.0-dev -c myk3s
-      - name: Install Helm chart
-        run: make helm
-      - name: Integration test
-        run: ./integration/test.sh
-    env:
-      K8S_VERSION: v1.19.12
-
-  test-1_20_12:
-    runs-on: ubuntu-latest
-    needs: lint
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.15
-      # The existing apparmor profile for mysql needs to be removed.
-      # https://github.com/actions/virtual-environments/issues/181
-      # https://github.com/moby/moby/issues/7512#issuecomment-51845976
-      - name: Remove MySQL App Armour Configuration
-        run: |
-          set -x
-          sudo apt-get remove mysql-server --purge
-          sudo apt-get install apparmor-profiles
-          sudo apparmor_parser -R /etc/apparmor.d/usr.sbin.mysqld
-      - name: Start dependencies using docker-compose
-        run: docker-compose up -d
-      - name: Run the unit tests
-        run: go test -tags tests ./... -v -cover
-      - name: Create k3d cluster
-        run: make k3d_install
-      - name: Build and import docker images
-        run: |
-          docker build -t my-db-operator:v1.0.0-dev .
-          k3d image import my-db-operator:v1.0.0-dev -c myk3s
-      - name: Install Helm chart
-        run: make helm
-      - name: Integration test
-        run: ./integration/test.sh
-    env:
-      K8S_VERSION: v1.20.12
-
-  test-1_21_6:
-    runs-on: ubuntu-latest
-    needs: lint
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.15
-      # The existing apparmor profile for mysql needs to be removed.
-      # https://github.com/actions/virtual-environments/issues/181
-      # https://github.com/moby/moby/issues/7512#issuecomment-51845976
-      - name: Remove MySQL App Armour Configuration
-        run: |
-          set -x
-          sudo apt-get remove mysql-server --purge
-          sudo apt-get install apparmor-profiles
-          sudo apparmor_parser -R /etc/apparmor.d/usr.sbin.mysqld
-      - name: Start dependencies using docker-compose
-        run: docker-compose up -d
-      - name: Run the unit tests
-        run: go test -tags tests ./... -v -cover
-      - name: Create k3d cluster
-        run: make k3d_install
-      - name: Build and import docker images
-        run: |
-          docker build -t my-db-operator:v1.0.0-dev .
-          k3d image import my-db-operator:v1.0.0-dev -c myk3s
-      - name: Install Helm chart
-        run: make helm
-      - name: Integration test
-        run: ./integration/test.sh
-    env:
-      K8S_VERSION: v1.21.6
