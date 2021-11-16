@@ -21,7 +21,7 @@ jobs:
         # Until we fix up linting completely
         continue-on-error: true
 
-  test:
+  test-1_22_3: &test_template
     runs-on: ubuntu-latest
     needs: lint
     steps:
@@ -64,3 +64,18 @@ jobs:
         run: make helm
       - name: Integration test
         run: ./integration/test.sh
+
+  test-1_19_12:
+    << : *test_template
+    env:
+      K8S_VERSION: v1.19.12
+
+  test-1_20_12:
+    << : *test_template
+    env:
+      K8S_VERSION: v1.20.12
+
+  test-1_21_6:
+    << : *test_template
+    env:
+      K8S_VERSION: v1.21.6
