@@ -67,7 +67,7 @@ minidashboard: ## open minikube dashboard
 miniimage: build
 	@minikube image load my-image.tar
 
-k3d_setup: k3d_install k3d_image helm ## install microk8s locally and deploy db-operator (only for linux and mac)
+k3d_setup: k3d_install k3d_image helm
 
 k3d_install:
 	@wget -q -O - https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash

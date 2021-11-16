@@ -57,7 +57,7 @@ check_instance_status() {
 }
 
 create_googleapi_mock_server() {
-    $HELM_CMD upgrade --install --namespace ${OPERATOR_NAMESPACE} mock-googleapi integration/mock-googleapi --wait
+    $HELM_CMD upgrade --install --namespace ${OPERATOR_NAMESPACE} --create-namespace mock-googleapi integration/mock-googleapi --wait
 }
 
 create_test_resources() {
