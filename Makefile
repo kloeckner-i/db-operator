@@ -78,7 +78,7 @@ k3d_image: build
 ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 manifests: controller-gen ## generate custom resource definitions
 	$(CONTROLLER_GEN) crd rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
-	$(CONTROLLER_GEN) crd rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=helm/db-operator/files/gen/crd output:rbac:artifacts:config=helm/db-operator/files/gen/rbac
+	$(CONTROLLER_GEN) crd webhook paths="./..." output:crd:artifacts:config=helm/db-operator/files/gen/crd
 
 ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 generate: controller-gen ## generate supporting code for custom resource types

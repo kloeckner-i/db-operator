@@ -159,7 +159,6 @@ spec:
                           publicIp:
                             type: string
                         required:
-                        - backupHost
                         - host
                         - port
                         type: object

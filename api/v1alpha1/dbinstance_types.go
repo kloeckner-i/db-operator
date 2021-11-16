@@ -84,7 +84,7 @@ type GenericInstance struct {
 	// BackupHost address will be used for dumping database for backup
 	// Usually secondary address for primary-secondary setup or cluster lb address
 	// If it's not defined, above Host will be used as backup host address.
-	BackupHost string `json:"backupHost"`
+	BackupHost string `json:"backupHost,omitempty"`
 }
 
 // DbInstanceBackup defines name of google bucket to use for storing database dumps for backup when backup is enabled
