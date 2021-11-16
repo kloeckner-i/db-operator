@@ -63,6 +63,11 @@ type DatabaseBackup struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:resource:shortName=db
+//+kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`,description="current db phase"
+//+kubebuilder:printcolumn:name="Status",type=boolean,JSONPath=`.status.status`,description="current db status"
+//+kubebuilder:printcolumn:name="Protected",type=boolean,JSONPath=`.spec.deletionProtected`,description="If database is protected to not get deleted."
+//+kubebuilder:printcolumn:name="DBInstance",type=string,JSONPath=`.status.instanceRef.metadata.name`,description="instance reference"
+//+kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`,description="time since creation of resource"
 
 // Database is the Schema for the databases API
 type Database struct {

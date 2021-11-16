@@ -107,6 +107,8 @@ type DbInstanceSSLConnection struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:resource:scope=Cluster,shortName=dbin
+//+kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`,description="current phase"
+//+kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.status`,description="health status"
 
 // DbInstance is the Schema for the dbinstances API
 type DbInstance struct {

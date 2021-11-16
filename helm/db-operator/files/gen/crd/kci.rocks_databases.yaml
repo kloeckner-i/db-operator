@@ -17,7 +17,28 @@ spec:
     singular: database
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - description: current db phase
+      jsonPath: .status.phase
+      name: Phase
+      type: string
+    - description: current db status
+      jsonPath: .status.status
+      name: Status
+      type: boolean
+    - description: If database is protected to not get deleted.
+      jsonPath: .spec.deletionProtected
+      name: Protected
+      type: boolean
+    - description: instance reference
+      jsonPath: .status.instanceRef.metadata.name
+      name: DBInstance
+      type: string
+    - description: time since creation of resource
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: Database is the Schema for the databases API

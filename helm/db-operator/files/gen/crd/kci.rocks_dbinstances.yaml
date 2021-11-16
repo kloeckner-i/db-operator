@@ -17,7 +17,16 @@ spec:
     singular: dbinstance
   scope: Cluster
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - description: current phase
+      jsonPath: .status.phase
+      name: Phase
+      type: string
+    - description: health status
+      jsonPath: .status.status
+      name: Status
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: DbInstance is the Schema for the dbinstances API
