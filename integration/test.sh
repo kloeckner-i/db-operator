@@ -65,8 +65,9 @@ create_test_resources() {
     $KUBECTL_CMD create ns ${TEST_NAMESPACE} --dry-run=client -o yaml | $KUBECTL_CMD apply -f - \
     && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-mysql-generic integration/mysql-generic --wait \
     && $HELM_CMD dependency build --namespace ${TEST_NAMESPACE} integration/mysql-percona \
-    && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-mysql-percona integration/mysql-percona --wait --timeout 10m --debug \
-    && kubectl get pod -n ${TEST_NAMESPACE} \
+    && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-mysql-percona integration/mysql-percona --wait --debug \
+    || kubectl get pod -n ${TEST_NAMESPACE} \
+    && kubectl get logs -f test-mysql-percona-pxc-1 -n ${TEST_NAMESPACE} \
     && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-pg-generic integration/postgres-generic --wait \
     && $HELM_CMD upgrade --install --namespace ${TEST_NAMESPACE} test-pg-gsql integration/postgres-gsql --wait
     if [ $? -ne 0 ]; then
