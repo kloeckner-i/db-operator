@@ -35,14 +35,12 @@ deploy:
 update: build deploy ## build db-operator image again and delete running pod
 
 test: $(SRC) ## spin up mysql, postgres containers and run go unit test
-	tearDown() {
-		docker-compose down
-	}
-	trap tearDown EXIT
+	docker-compose down
 	docker-compose up -d
 	docker-compose restart sqladmin
 	sleep 10
 	go test -count=1 -tags tests ./... -v -cover
+	docker-compose down
 
 lint: $(SRC)
 	@go mod tidy
@@ -70,11 +68,11 @@ minidashboard: ## open minikube dashboard
 miniimage: build
 	@minikube image load my-image.tar
 
-k3d_setup: k3d_install k3d_image helm ## install microk8s locally and deploy db-operator (only for linux and mac)
+k3d_setup: k3d_install k3d_image helm
 
 k3d_install:
 	@wget -q -O - https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
-	@k3d cluster create myk3s -i rancher/k3s:v1.19.12-k3s1
+	@k3d cluster create myk3s -i rancher/k3s:v1.19.16-k3s1
 	@kubectl get pod
 
 k3d_image: build
