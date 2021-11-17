@@ -40,6 +40,7 @@ test: $(SRC) ## spin up mysql, postgres containers and run go unit test
 	docker-compose restart sqladmin
 	sleep 10
 	go test -count=1 -tags tests ./... -v -cover
+	docker-compose down
 
 lint: $(SRC)
 	@go mod tidy
