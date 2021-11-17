@@ -1,5 +1,0 @@
-dependencies:
-- name: percona-xtradb-cluster
-  repository: "file://./percona-xtradb-cluster"
-  version: 1.0.3
-  alias: percona
