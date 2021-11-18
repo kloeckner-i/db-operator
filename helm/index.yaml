@@ -3,7 +3,7 @@ entries:
   db-instances:
   - apiVersion: v1
     appVersion: "1.0"
-    created: "2021-11-09T15:19:29.345307-05:00"
+    created: "2021-11-17T17:24:55.886996+01:00"
     description: Database Instances for db operator
     digest: 312b8c8e7adff876cb43ff1243dcb176c2db5e5cff533806d903dc0fba44b8fd
     name: db-instances
@@ -12,7 +12,7 @@ entries:
     version: 0.5.1
   - apiVersion: v1
     appVersion: "1.0"
-    created: "2021-11-09T15:19:29.344641-05:00"
+    created: "2021-11-17T17:24:55.88514+01:00"
     description: Database Instances for db operator
     digest: 77e5674516f5f7257901da7c128cd75ff03f1f03a0291e8ffcbf0ec28bef24f6
     name: db-instances
@@ -21,7 +21,7 @@ entries:
     version: 0.5.0
   - apiVersion: v1
     appVersion: "1.0"
-    created: "2021-11-09T15:19:29.344042-05:00"
+    created: "2021-11-17T17:24:55.884292+01:00"
     description: Database Instances for db operator
     digest: b039af38554da0fc8037b16397d49757d2c0b1a9e652867309df81b45950f375
     name: db-instances
@@ -30,7 +30,7 @@ entries:
     version: 0.4.0
   - apiVersion: v1
     appVersion: "1.0"
-    created: "2021-11-09T15:19:29.343376-05:00"
+    created: "2021-11-17T17:24:55.88346+01:00"
     description: Database Instances for db operator
     digest: 3593c0f28606ed4ee028d779ce70b23e257f85d8c96f93449ed4deb25bcea208
     name: db-instances
@@ -39,7 +39,7 @@ entries:
     version: 0.3.1
   - apiVersion: v1
     appVersion: "1.0"
-    created: "2021-11-09T15:19:29.34281-05:00"
+    created: "2021-11-17T17:24:55.881462+01:00"
     description: Database Instances for db operator
     digest: 6abeb95a030681041d41bb416624846819a7fb284a1f9b8cd8ef00d4517343e4
     name: db-instances
@@ -48,7 +48,7 @@ entries:
     version: 0.3.0
   - apiVersion: v1
     appVersion: "1.0"
-    created: "2021-11-09T15:19:29.34196-05:00"
+    created: "2021-11-17T17:24:55.88058+01:00"
     description: Database Instances for db operator
     digest: ba545b09123c5cf0276da24cf16fcaeae1d51a92e253731768b35478fb0294f4
     name: db-instances
@@ -57,7 +57,7 @@ entries:
     version: 0.2.0
   - apiVersion: v1
     appVersion: "1.0"
-    created: "2021-11-09T15:19:29.340973-05:00"
+    created: "2021-11-17T17:24:55.87973+01:00"
     description: Database Instances for db operator
     digest: 0a9f5c620c9ee8d8e33ea96f797be989efab296fbeeca24e26c84fdb2136d704
     name: db-instances
@@ -66,8 +66,17 @@ entries:
     version: 0.1.0
   db-operator:
   - apiVersion: v1
+    appVersion: 0.14.1
+    created: "2021-11-17T17:24:55.910094+01:00"
+    description: A Database Operator
+    digest: 0fd7c5558280493de5e3a291c0ee5c448b095506d663fe08822b80dfca2fdf57
+    name: db-operator
+    urls:
+    - https://kloeckner-i.github.io/db-operator/helm/db-operator-0.6.8.tgz
+    version: 0.6.8
+  - apiVersion: v1
     appVersion: 0.14.0
-    created: "2021-11-09T15:19:29.365898-05:00"
+    created: "2021-11-17T17:24:55.909144+01:00"
     description: A Database Operator
     digest: ef22bc4936f1b54215f8e63b9cc552cee9c13482a8ff57f51925e83139d2b8fe
     name: db-operator
@@ -76,7 +85,7 @@ entries:
     version: 0.6.7
   - apiVersion: v1
     appVersion: 0.14.0
-    created: "2021-11-09T15:19:29.365089-05:00"
+    created: "2021-11-17T17:24:55.908319+01:00"
     description: A Database Operator
     digest: 75c41e7f0d13ca80b5ee409391a1d077f80f0db340ba12bca3f98f339d9707bd
     name: db-operator
@@ -85,7 +94,7 @@ entries:
     version: 0.6.6
   - apiVersion: v1
     appVersion: 0.14.0
-    created: "2021-11-09T15:19:29.363554-05:00"
+    created: "2021-11-17T17:24:55.907482+01:00"
     description: A Database Operator
     digest: 89f714bbd05e993634b96a51fb19d1fc07abb438a01e78171afcc0494b754c2b
     name: db-operator
@@ -94,7 +103,7 @@ entries:
     version: 0.6.5
   - apiVersion: v1
     appVersion: 0.13.2
-    created: "2021-11-09T15:19:29.362596-05:00"
+    created: "2021-11-17T17:24:55.906671+01:00"
     description: A Database Operator
     digest: 0b45b01d864668b324848e99e1723502dc32c000c2e2d5c53a8d39fb627a59ee
     name: db-operator
@@ -112,7 +121,7 @@ entries:
     version: 0.6.3
   - apiVersion: v1
     appVersion: 0.13.1
-    created: "2021-11-09T15:19:29.361685-05:00"
+    created: "2021-11-17T17:24:55.905804+01:00"
     description: A Database Operator
     digest: c4bb156add63d0207d831c3fe3a7cf7540cb925913f78418ca58112550f70cbf
     name: db-operator
@@ -121,7 +130,7 @@ entries:
     version: 0.6.2
   - apiVersion: v1
     appVersion: 0.12.1
-    created: "2021-11-09T15:19:29.36074-05:00"
+    created: "2021-11-17T17:24:55.904614+01:00"
     description: A Database Operator
     digest: 2368e47da7744cef288c8a1ba243556d367b111a0e37d7dabfe589d862228291
     name: db-operator
@@ -130,7 +139,7 @@ entries:
     version: 0.6.1
   - apiVersion: v1
     appVersion: 0.12.0
-    created: "2021-11-09T15:19:29.359479-05:00"
+    created: "2021-11-17T17:24:55.903481+01:00"
     description: A Database Operator
     digest: 048d9c2424deeeae1385466c91d5a803ee8b5c29f146a2e4da0a09bb580dc4f8
     name: db-operator
@@ -139,7 +148,7 @@ entries:
     version: 0.6.0
   - apiVersion: v1
     appVersion: v0.11.3
-    created: "2021-11-09T15:19:29.358516-05:00"
+    created: "2021-11-17T17:24:55.901989+01:00"
     description: A Database Operator
     digest: 1fdfa04f6e44f1516da0dfe591c5f08c81fe73829230ec5f48fee52a9a98e25c
     name: db-operator
@@ -148,7 +157,7 @@ entries:
     version: 0.5.1
   - apiVersion: v1
     appVersion: v0.11.0
-    created: "2021-11-09T15:19:29.357622-05:00"
+    created: "2021-11-17T17:24:55.900789+01:00"
     description: A Database Operator
     digest: 5d41951841df565d7cd932af6735ac6dde371ab34ab95b63022ac787917e75d5
     name: db-operator
@@ -157,7 +166,7 @@ entries:
     version: 0.5.0
   - apiVersion: v1
     appVersion: v0.10.0
-    created: "2021-11-09T15:19:29.356776-05:00"
+    created: "2021-11-17T17:24:55.897977+01:00"
     description: A Database Operator
     digest: 35156de1b3147580058b99e9dfa84142587fc839f96933f8d7f070352ae3334e
     name: db-operator
@@ -166,7 +175,7 @@ entries:
     version: 0.4.2
   - apiVersion: v1
     appVersion: v0.10.0
-    created: "2021-11-09T15:19:29.355901-05:00"
+    created: "2021-11-17T17:24:55.896463+01:00"
     description: A Database Operator
     digest: ea285400e9559404de1a057275fe02dc2d0c727a395869c489cf5ed8f3a62700
     name: db-operator
@@ -175,7 +184,7 @@ entries:
     version: 0.4.1
   - apiVersion: v1
     appVersion: v0.10.0
-    created: "2021-11-09T15:19:29.35441-05:00"
+    created: "2021-11-17T17:24:55.895358+01:00"
     description: A Database Operator
     digest: 87d60156202002a3224ca04c8d90f201b2c29648f39c23f6507107bf23dcedc3
     name: db-operator
@@ -184,7 +193,7 @@ entries:
     version: 0.4.0
   - apiVersion: v1
     appVersion: "1.0"
-    created: "2021-11-09T15:19:29.353507-05:00"
+    created: "2021-11-17T17:24:55.893955+01:00"
     description: A Database Operator
     digest: 2a018ac35e235e895ca5fdbd2b32a0c291e971e11b3c29ef47bfaebef814af93
     name: db-operator
@@ -193,7 +202,7 @@ entries:
     version: 0.3.0
   - apiVersion: v1
     appVersion: "1.0"
-    created: "2021-11-09T15:19:29.352533-05:00"
+    created: "2021-11-17T17:24:55.892346+01:00"
     description: A Database Operator
     digest: a00294defa1914f326b363c1cb0d36b22297fefd71e72a83510c70a1a8020d31
     name: db-operator
@@ -202,7 +211,7 @@ entries:
     version: 0.2.0
   - apiVersion: v1
     appVersion: "1.0"
-    created: "2021-11-09T15:19:29.350861-05:00"
+    created: "2021-11-17T17:24:55.890236+01:00"
     description: A Database Operator
     digest: d2d2a7f6b7913585283d72cea95770067e6c9625479e349c2e18b7dc3fbd3a52
     name: db-operator
@@ -211,11 +220,11 @@ entries:
     version: 0.1.1
   - apiVersion: v1
     appVersion: "1.0"
-    created: "2021-11-09T15:19:29.346536-05:00"
+    created: "2021-11-17T17:24:55.88837+01:00"
     description: A Database Operator
     digest: 6f41f18fe10b74edaec021defdcca99e2c65b5ed60b3c53b3d7ee7b124ccfeb0
     name: db-operator
     urls:
     - https://kloeckner-i.github.io/db-operator/helm/db-operator-0.1.0.tgz
     version: 0.1.0
-generated: "2021-11-09T15:19:29.338282-05:00"
+generated: "2021-11-17T17:24:55.878714+01:00"
