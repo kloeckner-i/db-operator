@@ -4,7 +4,7 @@
 OPERATOR_NAMESPACE="operator"
 TEST_NAMESPACE="test"
 
-retry=10
+retry=20
 interval=10
 
 case $TEST_K8S in
@@ -31,17 +31,17 @@ check_dboperator_log() {
 
 check_instance_status() {
     echo "[DbInstance] checking"
-    for i in `seq 1 $retry`
+    for i in $(seq 1 $retry)
     do
         count=$($KUBECTL_CMD get dbin -o json | jq '.items | length')
-        if [ $count -eq 0 ]; then
+        if [ "$count" -eq 0 ]; then
             echo "DbInstance resource doesn't exists"
             continue;
         fi
 
         ready_count=$($KUBECTL_CMD get dbin -o json | jq '[.items[] | select(.status.status == true)] | length')
 
-        if [ $ready_count -eq $count ]; then
+        if [ "$ready_count" -eq "$count" ]; then
             echo "[DbInstance] Status OK!"
             return 0 # finish check
         fi
@@ -75,7 +75,7 @@ create_test_resources() {
 
 check_databases_status() {
     echo "[Database] checking"
-    for i in `seq 1 $retry`
+    for i in $(seq 1 $retry)
     do
         count=$($KUBECTL_CMD get db -n ${TEST_NAMESPACE} -o json | jq '.items | length')
         if [ $count -eq 0 ]; then
@@ -85,7 +85,7 @@ check_databases_status() {
 
         ready_count=$($KUBECTL_CMD get db -n ${TEST_NAMESPACE} -o json | jq '[.items[] | select(.status.status == true)] | length')
 
-        if [ $ready_count -eq $count ]; then
+        if [ "$ready_count" -eq "$count" ]; then
             echo "[Database] Status OK!"
             return 0 # finish check
         fi
@@ -119,10 +119,10 @@ delete_databases() {
 
 check_databases_deleted() {
     echo "[Database] checking deleted"
-    for i in `seq 1 $retry`
+    for _ in $(seq 1 $retry)
     do
         count=$($KUBECTL_CMD get db -n ${TEST_NAMESPACE} -o json | jq '.items | length')
-        if [ $count -ne 0 ]; then
+        if [ "$count" -ne 0 ]; then
             echo "[Database] $(echo $item | jq -r '.metadata.name') not deleted"
             check_dboperator_log
             continue;
