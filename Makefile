@@ -1,10 +1,12 @@
-# Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
-CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
-
 .PHONY: all deploy build helm
 .ONESHELL: test
 
 SRC = $(shell find . -type f -name '*.go')
+
+ifeq ($(K8S_VERSION),)
+K8S_VERSION := v1.22.3
+endif
+
 
 help:   ## show this help
 	@echo 'usage: make [target] ...'
@@ -54,7 +56,7 @@ vet: $(SRC)
 minisetup: miniup miniimage helm
 
 miniup: ## start minikube
-	@minikube start --kubernetes-version=v1.19.12 --cpus 2 --memory 4096
+	@minikube start --kubernetes-version=$(K8S_VERSION) --cpus 2 --memory 4096
 
 minidown: ## stop minikube
 	@minikube stop
@@ -72,7 +74,7 @@ k3d_setup: k3d_install k3d_image helm
 
 k3d_install:
 	@wget -q -O - https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
-	@k3d cluster create myk3s -i rancher/k3s:v1.19.16-k3s1
+	@k3d cluster create myk3s -i rancher/k3s:$(K8S_VERSION)-k3s1
 	@kubectl get pod
 
 k3d_image: build
@@ -80,7 +82,8 @@ k3d_image: build
 
 ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 manifests: controller-gen ## generate custom resource definitions
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) crd rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) crd webhook paths="./..." output:crd:artifacts:config=helm/db-operator/files/gen/crd
 
 ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 generate: controller-gen ## generate supporting code for custom resource types
@@ -88,7 +91,7 @@ generate: controller-gen ## generate supporting code for custom resource types
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
-	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1)
+	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.7.0)
 
 # go-get-tool will 'go get' any package $2 and install it to $1.
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))

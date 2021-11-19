@@ -55,3 +55,31 @@ Create the name of the service account to use
 {{ default "default" .Values.serviceAccount.name }}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Common labels
+*/}}
+{{- define "db-operator.labels" -}}
+helm.sh/chart: {{ include "db-operator.chart" . }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+app.kubernetes.io/name: {{ include "db-operator.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+{{- end -}}
+
+{{/*
+Merge of generated db crd resource with helm related labels
+*/}}
+{{- define "db-operator.crd_db" -}}
+{{ toYaml (merge (.Files.Get "files/gen/crd/kci.rocks_databases.yaml" | fromYaml) (dict "metadata" (dict "labels" (include "db-operator.labels" . | fromYaml  ) ) ) ) }}
+{{- end -}}
+
+
+{{/*
+Merge of generated dbin crd resource with helm related labels
+*/}}
+{{- define "db-operator.crd_dbin" -}}
+{{ toYaml (merge (.Files.Get "files/gen/crd/kci.rocks_dbinstances.yaml" | fromYaml) (dict "metadata" (dict "labels" (include "db-operator.labels" . | fromYaml  ) ) ) ) }}
+{{- end -}}

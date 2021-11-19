@@ -1,6 +1,7 @@
 {{- if .Values.rbac.create -}}
+---
 kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: {{ template "db-operator.name" . }}
   labels:
@@ -65,18 +66,15 @@ rules:
   - update
 ---
 kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: {{ template "db-operator.name" . }}-sa
   labels:
-    app: {{ template "db-operator.name" . }}
-    chart: {{ template "db-operator.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+    {{- include "db-operator.labels" . | nindent 4 }}
 subjects:
 - kind: ServiceAccount
   name: {{ template "db-operator.serviceAccountName" . }}
-  namespace: {{ .Release.Namespace }}  
+  namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
   name: {{ template "db-operator.name" . }}

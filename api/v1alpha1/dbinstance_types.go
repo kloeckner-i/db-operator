@@ -29,9 +29,9 @@ type DbInstanceSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 	Engine           string                  `json:"engine"`
 	AdminUserSecret  NamespacedName          `json:"adminSecretRef"`
-	Backup           DbInstanceBackup        `json:"backup"`
-	Monitoring       DbInstanceMonitoring    `json:"monitoring"`
-	SSLConnection    DbInstanceSSLConnection `json:"sslConnection"`
+	Backup           DbInstanceBackup        `json:"backup,omitempty"`
+	Monitoring       DbInstanceMonitoring    `json:"monitoring,omitempty"`
+	SSLConnection    DbInstanceSSLConnection `json:"sslConnection,omitempty"`
 	DbInstanceSource `json:",inline"`
 }
 
@@ -84,7 +84,7 @@ type GenericInstance struct {
 	// BackupHost address will be used for dumping database for backup
 	// Usually secondary address for primary-secondary setup or cluster lb address
 	// If it's not defined, above Host will be used as backup host address.
-	BackupHost string `json:"backupHost"`
+	BackupHost string `json:"backupHost,omitempty"`
 }
 
 // DbInstanceBackup defines name of google bucket to use for storing database dumps for backup when backup is enabled
@@ -106,7 +106,9 @@ type DbInstanceSSLConnection struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-//+kubebuilder:resource:scope=Cluster
+//+kubebuilder:resource:scope=Cluster,shortName=dbin
+//+kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`,description="current phase"
+//+kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.status`,description="health status"
 
 // DbInstance is the Schema for the dbinstances API
 type DbInstance struct {

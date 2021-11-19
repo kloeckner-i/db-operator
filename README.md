@@ -45,20 +45,22 @@ To have kubernetes environment locally, you need to install [minikube](https://k
 #### makefile help
 
 ```
-make miniup: start minikube
-make minidown: stop minikube
-make minidelete: delete minikube
-make minidashboard: open minikube dashboard
-make build: build db-operator docker image
-make helm: install helm if not exist and install local chart using helm upgrade --install command
-make setup: build db-operator image, install helm
-make update: build db-operator image again and delete running pod
-make addexamples: kubectl create -f examples/
-make test: spin up mysql, postgres containers and run go unit test
-make microsetup: install microk8s locally and deploy db-operator (only for linux)
-make k3d_setup: install k3d locally and deploy db-operator
-make manifests: generate custom resource definitions
-make generate: generate supporting code for custom resource types
+addexamples      add examples via kubectl create -f examples/
+build            build db-operator docker image
+controller-gen   Download controller-gen locally if necessary.
+generate         generate supporting code for custom resource types
+helm             install helm if not exist and install local chart using helm upgrade --install command
+helm-lint        lint helm manifests
+help             show this help
+k3d_setup        install microk8s locally and deploy db-operator (only for linux and mac)
+manifests        generate custom resource definitions
+minidashboard    open minikube dashboard
+minidelete       delete minikube
+minidown         stop minikube
+miniup           start minikube
+setup            build db-operator image, install helm
+test             spin up mysql, postgres containers and run go unit test
+update           build db-operator image again and delete running pod
 ```
 
 ### Developing with Minikube
@@ -71,6 +73,11 @@ $ make setup
 ```
 
 #### After code changes
+
+rebuild CRD manifests
+```
+$ make manifests
+```
 
 rebuild local docker image
 ```

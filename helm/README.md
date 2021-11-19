@@ -1,5 +1,5 @@
 # db-operator
-DB Operator is Kubernetes operator 
+DB Operator is Kubernetes operator
 
 ## Prerequisites
 * Kubernetes v1.14+
@@ -60,7 +60,7 @@ The following table lists the configurable parameters of the db-operator chart a
 ## Releasing new chart version
 
 First, change the version of Chart.yaml in the chart directory.
-And then create package and add to the index. 
+And then create package and add to the index.
 
 ```
 helm package ./db-instances

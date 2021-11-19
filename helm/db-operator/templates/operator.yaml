@@ -4,26 +4,16 @@ kind: Deployment
 metadata:
   name: {{ template "db-operator.name" . }}
   labels:
-    app: {{ template "db-operator.name" . }}
-    chart: {{ template "db-operator.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+    {{- include "db-operator.labels" . | nindent 4 }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: {{ template "db-operator.name" . }}
-      app: {{ template "db-operator.name" . }}
-      release: {{ .Release.Name }}
-      heritage: {{ .Release.Service }}
+      {{- include "db-operator.labels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        name: {{ template "db-operator.name" . }}
-        app: {{ template "db-operator.name" . }}
-        chart: {{ template "db-operator.chart" . }}
-        release: {{ .Release.Name }}
-        heritage: {{ .Release.Service }}
+        {{- include "db-operator.labels" . | nindent 8 }}
         {{- if .Values.podLabels }}
 {{ toYaml .Values.podLabels | trim | indent 8 }}
         {{- end }}
