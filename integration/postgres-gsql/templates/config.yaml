@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: pg-gsql-instance-config
-data:
-  config: |
-{{ .Values.instanceConfig.data | indent 4 }}

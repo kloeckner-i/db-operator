@@ -1,6 +1,0 @@
-backup:
-  nodeSelector: {}
-  postgres:
-    image: postgresbackupimage:latest
-  mysql:
-    image: mysqlbackupimage:latest
