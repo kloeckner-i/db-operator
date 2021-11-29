@@ -59,11 +59,5 @@ The following table lists the configurable parameters of the db-operator chart a
 
 ## Releasing new chart version
 
-First, change the version of Chart.yaml in the chart directory.
-And then create package and add to the index.
-
-```
-helm package ./db-instances
-helm package ./db-operator
-helm repo index --url https://kloeckner-i.github.io/db-operator/helm/ --merge index.yaml .
-```
+The new chart version release is executed automatically with Github actions.
+For triggering it, change the version of Chart.yaml in the chart directory and merge on master branch.
