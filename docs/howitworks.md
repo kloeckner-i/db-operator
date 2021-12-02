@@ -17,7 +17,7 @@ Regarding creation of a **generic** type `DbInstance`, this is currently not sup
 
 When a `Database` resource is created in Kubernetes, the operator creates the actual database in the instance. Afterwards, it creates a `ConfigMap` and a `Secret` containing connection information such as host, user and password for accessing database. So the application `Pods` can use the database by reading the `ConfigMap` and the `Secret` through `envFrom` or `volumeMounts`. 
 
-Please find example usage in [examples/](examples/). (TODO: write kubernetes menifests how to use from app in examples/)
+Please find example usage in [examples/](examples/). (TODO: write kubernetes manifests how to use from app in examples/)
 
 ![Operator Workflow](./images/workflow.svg)
 

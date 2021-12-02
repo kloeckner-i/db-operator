@@ -99,8 +99,6 @@ $ make update
 ```
 $ make helm
 ```
-helm upgrade --install -f {LOCAL CHART DIR}/values-local.yaml {LOCAL CHART DIR}
-
 ### Developing with k3d
 #### How to run db-operator
 ```
