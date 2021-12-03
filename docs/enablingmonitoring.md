@@ -79,3 +79,9 @@ pg_stat_statements:
 
 
 For more query examples see [here](https://github.com/wrouesnel/postgres_exporter/blob/master/queries.yaml).
+
+## Grafana dashboard
+
+[This file](./dashboard.json) contains a dashboard configured for displaying the exported metrics.
+
+It can be imported in Grafana by using the import dashboard functionality.
