@@ -1,4 +1,4 @@
-FROM golang:1.15.12-alpine3.13 as builder
+FROM golang:1.17.4-alpine3.15 as builder
 
 RUN apk update && apk upgrade && \
     apk add --no-cache bash build-base
@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -tags build -o /usr/local/bin/db-operator main.go
 
-FROM alpine:3.13
+FROM alpine:3.15
 LABEL maintainer="dev@kloeckner-i.com"
 
 ENV USER_UID=1001
