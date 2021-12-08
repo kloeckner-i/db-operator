@@ -19,11 +19,11 @@ build: $(SRC) ## build db-operator docker image
 	@docker save my-db-operator > my-image.tar
 
 helm: ## install helm if not exist and install local chart using helm upgrade --install command
-	@helm upgrade --install --create-namespace --namespace operator my-dboperator helm/db-operator -f helm/db-operator/values.yaml -f helm/db-operator/values-local.yaml
+	@helm upgrade --install --create-namespace --namespace operator my-dboperator charts/db-operator -f charts/db-operator/values.yaml -f charts/db-operator/values-local.yaml
 
 helm-lint: ## lint helm manifests
-	@helm lint -f helm/db-operator/values.yaml -f helm/db-operator/ci/ci-1.yaml --strict ./helm/db-operator
-	@helm lint -f helm/db-instances/values.yaml --strict ./helm/db-instances
+	@helm lint -f charts/db-operator/values.yaml -f charts/db-operator/ci/ci-1.yaml --strict ./charts/db-operator
+	@helm lint -f charts/db-instances/values.yaml --strict ./charts/db-instances
 
 addexamples: ## add examples via kubectl create -f examples/
 	cd ./examples/; ls | while read line; do kubectl apply -f $$line; done
@@ -83,7 +83,7 @@ k3d_image: build
 ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 manifests: controller-gen ## generate custom resource definitions
 	$(CONTROLLER_GEN) crd rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
-	$(CONTROLLER_GEN) crd webhook paths="./..." output:crd:artifacts:config=helm/db-operator/files/gen/crd
+	$(CONTROLLER_GEN) crd webhook paths="./..." output:crd:artifacts:config=charts/db-operator/files/gen/crd
 
 ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 generate: controller-gen ## generate supporting code for custom resource types
