@@ -9,7 +9,7 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      {{- include "db-operator.labels" . | nindent 6 }}
+      {{- include "db-operator.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:

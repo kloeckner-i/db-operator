@@ -61,7 +61,17 @@ Common labels
 */}}
 {{- define "db-operator.labels" -}}
 helm.sh/chart: {{ include "db-operator.chart" . }}
+{{ include "db-operator.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end -}}
+
+{{/*
+Selector labels
+*/}}
+{{- define "db-operator.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "db-operator.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
