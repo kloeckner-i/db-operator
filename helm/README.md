@@ -7,7 +7,7 @@ DB Operator is Kubernetes operator
 
 ## Configuring helm client
 ```
-$ helm repo add myhelmrepo https://kloeckner-i.github.io/db-operator/helm/
+$ helm repo add myhelmrepo https://kloeckner-i.github.io/db-operator
 ```
 Test the helm chart repository
 ```
