@@ -40,7 +40,6 @@ type DbInstanceSpec struct {
 type DbInstanceSource struct {
 	Google  *GoogleInstance  `json:"google,omitempty" protobuf:"bytes,1,opt,name=google"`
 	Generic *GenericInstance `json:"generic,omitempty" protobuf:"bytes,2,opt,name=generic"`
-	Percona *PerconaCluster  `json:"percona,omitempty" protobuf:"bytes,3,opt,name=percona"`
 }
 
 // DbInstanceStatus defines the observed state of DbInstance
@@ -58,12 +57,6 @@ type GoogleInstance struct {
 	InstanceName  string         `json:"instance"`
 	ConfigmapName NamespacedName `json:"configmapRef"`
 	APIEndpoint   string         `json:"apiEndpoint,omitempty"`
-}
-
-// PerconaCluster is used when instance type is percona cluster
-type PerconaCluster struct {
-	ServerList        []BackendServer `json:"servers"` // hostgroup: host address
-	MonitorUserSecret NamespacedName  `json:"monitorUserSecretRef"`
 }
 
 // BackendServer defines backend database server
@@ -147,7 +140,7 @@ func (dbin *DbInstance) ValidateEngine() error {
 func (dbin *DbInstance) ValidateBackend() error {
 	source := dbin.Spec.DbInstanceSource
 
-	if (source.Google == nil) && (source.Generic == nil) && (source.Percona == nil) {
+	if (source.Google == nil) && (source.Generic == nil) {
 		return errors.New("no instance type defined")
 	}
 
@@ -158,10 +151,6 @@ func (dbin *DbInstance) ValidateBackend() error {
 	}
 
 	if source.Generic != nil {
-		numSources++
-	}
-
-	if source.Percona != nil {
 		numSources++
 	}
 
@@ -188,10 +177,6 @@ func (dbin *DbInstance) GetBackendType() (string, error) {
 
 	if source.Generic != nil {
 		return "generic", nil
-	}
-
-	if source.Percona != nil {
-		return "percona", nil
 	}
 
 	return "", errors.New("no backend type defined")
