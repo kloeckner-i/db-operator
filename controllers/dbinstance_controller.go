@@ -205,9 +205,6 @@ func (r *DbInstanceReconciler) create(ctx context.Context, dbin *kciv1alpha1.DbI
 			SSLEnabled:   dbin.Spec.SSLConnection.Enabled,
 			SkipCAVerify: dbin.Spec.SSLConnection.SkipVerify,
 		}
-	case "percona":
-		logrus.Errorf("Instance: name=%s - percona instance type is deprecated. Please migrate it to general type", dbin.Name)
-		return errors.New("percona instance deprecated")
 	default:
 		return errors.New("not supported backend type")
 	}
