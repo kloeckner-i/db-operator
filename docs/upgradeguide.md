@@ -50,13 +50,13 @@ In proxysql.cnf
 mysql_variables=
 {
 ...
-    monitor_username=""
-    monitor_password=""
+    monitor_username="<username from monitorUserSecret>"
+    monitor_password="<password from monitorUserSecret>"
 ...
 }
 ```
 
-4. Create Generic type instance to have proxysql as host.
+4. Create Generic type instance with proxysql as host.
 
 ```YAML
 apiVersion: kci.rocks/v1alpha1
