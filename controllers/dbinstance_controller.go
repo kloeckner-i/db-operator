@@ -205,21 +205,6 @@ func (r *DbInstanceReconciler) create(ctx context.Context, dbin *kciv1alpha1.DbI
 			SSLEnabled:   dbin.Spec.SSLConnection.Enabled,
 			SkipCAVerify: dbin.Spec.SSLConnection.SkipVerify,
 		}
-	case "percona":
-		if dbin.Spec.Engine != "mysql" {
-			logrus.Errorf("Instance: name=%s - non mysql percona instance not supported", dbin.Name)
-			return errors.New("non mysql percona instance not supported")
-		}
-
-		instance = &dbinstance.Generic{
-			Host:         dbin.Spec.Percona.ServerList[0].Host,
-			Port:         dbin.Spec.Percona.ServerList[0].Port,
-			Engine:       dbin.Spec.Engine,
-			User:         cred.Username,
-			Password:     cred.Password,
-			SSLEnabled:   dbin.Spec.SSLConnection.Enabled,
-			SkipCAVerify: dbin.Spec.SSLConnection.SkipVerify,
-		}
 	default:
 		return errors.New("not supported backend type")
 	}

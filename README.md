@@ -15,6 +15,7 @@ DB Operator provides following features:
 * [Creating Instances](docs/creatinginstances.md) - make database instances available for the operator
 * [Creating Databases](docs/creatingdatabases.md) - creating databases in those instances
 * [Enabling regular Backup](docs/enablingbackup.md) - and schedule cronjob
+* [Upgrade guide](docs/upgradeguide.md) - breaking changes and guide for the upgrade
 
 ## Quickstart
 

@@ -197,47 +197,6 @@ spec:
                         required:
                         - enabled
                         type: object
-                      percona:
-                        description: PerconaCluster is used when instance type is
-                          percona cluster
-                        properties:
-                          monitorUserSecretRef:
-                            description: NamespacedName is a fork of the kubernetes
-                              api type of the same name. Sadly this is required because
-                              CRD structs must have all fields json tagged and the
-                              kubernetes type is not tagged.
-                            properties:
-                              Name:
-                                type: string
-                              Namespace:
-                                type: string
-                            required:
-                            - Name
-                            - Namespace
-                            type: object
-                          servers:
-                            items:
-                              description: BackendServer defines backend database
-                                server
-                              properties:
-                                host:
-                                  type: string
-                                maxConn:
-                                  type: integer
-                                port:
-                                  type: integer
-                                readonly:
-                                  type: boolean
-                              required:
-                              - host
-                              - maxConn
-                              - port
-                              type: object
-                            type: array
-                        required:
-                        - monitorUserSecretRef
-                        - servers
-                        type: object
                       sslConnection:
                         description: DbInstanceSSLConnection defines weather connection
                           from db-operator to instance has to be ssl or not

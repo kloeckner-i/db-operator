@@ -430,13 +430,6 @@ func (r *DatabaseReconciler) createProxy(ctx context.Context, dbcr *kciv1alpha1.
 		return nil
 	}
 
-	if backend == "percona" {
-		err := r.replicateMonitorUserSecret(ctx, dbcr)
-		if err != nil {
-			return err
-		}
-	}
-
 	proxyInterface, err := determineProxyTypeForDB(r.Conf, dbcr)
 	if err != nil {
 		return err
@@ -518,43 +511,6 @@ func (r *DatabaseReconciler) createProxy(ctx context.Context, dbcr *kciv1alpha1.
 	dbcr.Status.ProxyStatus.Status = true
 
 	logrus.Infof("DB: namespace=%s, name=%s proxy created", dbcr.Namespace, dbcr.Name)
-	return nil
-}
-
-func (r *DatabaseReconciler) replicateMonitorUserSecret(ctx context.Context, dbcr *kciv1alpha1.Database) error {
-	dbin, err := dbcr.GetInstanceRef()
-	if err != nil {
-		return err
-	}
-	source := dbin.Spec.DbInstanceSource
-
-	key := source.Percona.MonitorUserSecret
-	monitorUserSecret := &corev1.Secret{}
-
-	err = r.Get(ctx, key.ToKubernetesType(), monitorUserSecret)
-	if err != nil {
-		logrus.Errorf("DB: namespace=%s, name=%s couldn't get monitor user secret - %s", dbcr.Namespace, dbcr.Name, err)
-		return err
-	}
-
-	newSecret := kci.SecretBuilder(dbcr.Name+"-proxysql-monitoruser", dbcr.Namespace, monitorUserSecret.Data)
-	err = r.Create(ctx, newSecret)
-	if err != nil {
-		if k8serrors.IsAlreadyExists(err) {
-			// if resource already exists, update
-			err = r.Update(ctx, monitorUserSecret)
-			if err != nil {
-				logrus.Errorf("DB: namespace=%s, name=%s failed replicating monitor user secret", dbcr.Namespace, dbcr.Name)
-				return err
-			}
-		} else {
-			// failed to create deployment
-			logrus.Errorf("DB: namespace=%s, name=%s failed replicating monitor user secret", dbcr.Namespace, dbcr.Name)
-			return err
-		}
-	}
-
-	dbcr.Status.MonitorUserSecretName = dbcr.Name + "-proxysql-monitoruser"
 	return nil
 }
 

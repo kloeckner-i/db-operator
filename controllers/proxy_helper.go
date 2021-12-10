@@ -28,7 +28,6 @@ import (
 	"github.com/kloeckner-i/db-operator/pkg/config"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 	proxy "github.com/kloeckner-i/db-operator/pkg/utils/proxy"
-	"github.com/kloeckner-i/db-operator/pkg/utils/proxy/proxysql"
 	"github.com/sirupsen/logrus"
 )
 
@@ -90,33 +89,7 @@ func determineProxyTypeForDB(conf *config.Config, dbcr *kciv1alpha1.Database) (p
 			Conf:                   conf,
 			MonitoringEnabled:      monitoringEnabled,
 		}, nil
-	case "percona":
-		labels := map[string]string{
-			"app":     "proxysql",
-			"db-name": dbcr.Name,
-		}
 
-		var backends []proxysql.Backend
-		for _, s := range instance.Spec.Percona.ServerList {
-			backend := proxysql.Backend{
-				Host:     s.Host,
-				Port:     strconv.FormatInt(int64(s.Port), 10),
-				MaxConn:  strconv.FormatInt(int64(s.MaxConnection), 10),
-				ReadOnly: s.ReadOnly,
-			}
-			backends = append(backends, backend)
-		}
-
-		return &proxy.ProxySQL{
-			NamePrefix:            "db-" + dbcr.Name,
-			Namespace:             dbcr.Namespace,
-			Servers:               backends,
-			UserSecretName:        dbcr.Spec.SecretName,
-			MonitorUserSecretName: dbcr.Status.MonitorUserSecretName,
-			Engine:                engine,
-			Labels:                kci.LabelBuilder(labels),
-			Conf:                  conf,
-		}, nil
 	default:
 		err := errors.New("not supported backend type")
 		return nil, err
