@@ -25,4 +25,4 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: ghcr.io/kloeckner-i/db-operator:${{ github.event.release.tag_name }}
+          tags: ghcr.io/kloeckner-i/db-operator:v${{ github.event.release.tag_name }}
