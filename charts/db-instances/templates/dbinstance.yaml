@@ -57,21 +57,6 @@ spec:
     backupHost: {{ $value.generic.backupHost }}
   {{- end }}
   {{- end }}
-  {{- if $value.percona }}
-  percona:
-    servers:
-    {{- range $server := $value.percona.servers }}
-    - host: {{ $server.host }}
-      port: {{ $server.port }}
-      maxConn: {{ $server.maxConn }}
-      {{- if $server.readonly }}
-      readonly: {{ $server.readonly }}
-      {{- end }}
-    {{- end }}
-    monitorUserSecretRef:
-      Name: {{ $name }}-monitoruser-secret
-      Namespace: {{ $operatorNs }}
-  {{- end }}
 {{- if not $value.existingAdminSecret }}
 ---
 apiVersion: v1
@@ -102,21 +87,6 @@ metadata:
 data:
   config: |
 {{ $value.google.configMap.data | indent 4 }}
-{{- end }}
-{{- if $value.percona }}
-apiVersion: v1
-kind: Secret
-metadata:
-  name: {{ $name }}-monitoruser-secret
-  namespace: {{ $operatorNs }}
-  labels:
-    chart: {{ $chart }}
-    release: {{ $release.Name }}
-    heritage: {{ $heritage }}
-type: Opaque
-data:
-  user: {{ $value.percona.monitoruser.name | b64enc }}
-  password: {{ $value.percona.monitoruser.password | b64enc }}
 {{- end }}
 {{- end }}
 {{- end }}
