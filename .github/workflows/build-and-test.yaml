@@ -18,6 +18,7 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           version: v1.43.0
+          args: --timeout 3m0s
 
   unit-test:
     runs-on: ubuntu-latest
