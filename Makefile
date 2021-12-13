@@ -46,8 +46,7 @@ test: $(SRC) ## spin up mysql, postgres containers and run go unit test
 
 lint: $(SRC)
 	@go mod tidy
-	@gofumpt -s -l -w $^
-	@gci -w $^
+	@gofumpt -l -w $^
 	@golangci-lint run ./...
 
 vet: $(SRC)
