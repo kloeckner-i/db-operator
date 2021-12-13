@@ -17,24 +17,25 @@ require (
 	golang.org/x/oauth2 v0.0.0-20210514164344-f6687ab2804c
 	google.golang.org/api v0.47.0
 	gopkg.in/yaml.v2 v2.3.0
-	k8s.io/api v0.19.12
-	k8s.io/apimachinery v0.19.12
-	k8s.io/client-go v0.19.12
+	k8s.io/api v0.20.13
+	k8s.io/apimachinery v0.20.13
+	k8s.io/client-go v0.20.13
 	sigs.k8s.io/controller-runtime v0.7.2
 )
 
 require (
 	cloud.google.com/go v0.82.0 // indirect
-	github.com/Azure/go-autorest/autorest v0.9.6 // indirect
-	github.com/Azure/go-autorest/autorest/adal v0.8.2 // indirect
-	github.com/Azure/go-autorest/autorest/date v0.2.0 // indirect
-	github.com/Azure/go-autorest/logger v0.1.0 // indirect
-	github.com/Azure/go-autorest/tracing v0.5.0 // indirect
+	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
+	github.com/Azure/go-autorest/autorest v0.11.1 // indirect
+	github.com/Azure/go-autorest/autorest/adal v0.9.5 // indirect
+	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
+	github.com/Azure/go-autorest/logger v0.2.0 // indirect
+	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/evanphx/json-patch v4.9.0+incompatible // indirect
+	github.com/form3tech-oss/jwt-go v3.2.2+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/geozelot/intree v1.0.0 // indirect
 	github.com/go-logr/zapr v0.2.0 // indirect
@@ -62,7 +63,7 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.17.0 // indirect
-	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9 // indirect
+	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0 // indirect
 	golang.org/x/net v0.0.0-20210525063256-abc453219eb5 // indirect
 	golang.org/x/sys v0.0.0-20210601080250-7ecdf8ef093b // indirect
 	golang.org/x/text v0.3.6 // indirect
@@ -76,9 +77,9 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	k8s.io/apiextensions-apiserver v0.19.2 // indirect
 	k8s.io/component-base v0.19.2 // indirect
-	k8s.io/klog/v2 v2.2.0 // indirect
-	k8s.io/kube-openapi v0.0.0-20200805222855-6aeccd4b50c6 // indirect
-	k8s.io/utils v0.0.0-20200912215256-4140de9c8800 // indirect
-	sigs.k8s.io/structured-merge-diff/v4 v4.0.3 // indirect
+	k8s.io/klog/v2 v2.4.0 // indirect
+	k8s.io/kube-openapi v0.0.0-20211110013926-83f114cd0513 // indirect
+	k8s.io/utils v0.0.0-20201110183641-67b214c5f920 // indirect
+	sigs.k8s.io/structured-merge-diff/v4 v4.1.2 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
