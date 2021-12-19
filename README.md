@@ -22,7 +22,7 @@ DB Operator provides following features:
 ### To install DB Operator with helm:
 
 ```
-$ helm repo add db-operator https://kloeckner-i.github.io/db-operator/helm/
+$ helm repo add db-operator https://kloeckner-i.github.io/db-operator/
 $ helm install --name my-release db-operator/db-operator
 ```
 
