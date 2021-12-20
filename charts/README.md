@@ -55,6 +55,7 @@ The following table lists the configurable parameters of the db-operator chart a
 | `config.monitoring.postgres.queries` | Queries executed by prometheus exporter (only for postgres databases) | see `values.yaml` for defaults |
 | `secrets.gsql.admin`  |  Service account json used by operator to create Cloud SQL instance in GCE(**Cloud SQL Admin**) | `{}` |
 | `secrets.gsql.readonly`   |  Service account json will be used by application to access database Cloud SQL in GCE(**Cloud SQL Client** role) | `{}` |
+| `serviceMonitor.enabled`   |  Enabling ServiceMonitor for prometheus operator monitoring | `false` |
 
 
 ## Releasing new chart version
