@@ -1,6 +1,4 @@
-{{- $release := .Release }}
-{{- $heritage := .Release.Service }}
-{{- $chart := .Chart.Name }}
+{{- $selectorLabels := include "db-instances.selectorLabels" .}}
 {{- $operatorNs := include "db-instances.name" . -}}
 {{- if .Values.dbinstances }}
 {{- range $name, $value := .Values.dbinstances }}
@@ -14,9 +12,7 @@ metadata:
     checksum/config: {{ $value.google.configMap.data | sha256sum }}
     {{- end }}
   labels:
-    chart: {{ $chart }}
-    release: {{ $release.Name }}
-    heritage: {{ $heritage }}
+    {{- include "db-instances.labels" $ | nindent 4 }}
 spec:
   engine: {{ $value.engine }}
   {{- if $value.existingAdminSecret }}
@@ -65,9 +61,7 @@ metadata:
   name: {{ $name }}-admin-secret
   namespace: {{ $operatorNs }}
   labels:
-    chart: {{ $chart }}
-    release: {{ $release.Name }}
-    heritage: {{ $heritage }}
+    {{ include "db-instances.labels" $ | nindent 4 }}
 type: Opaque
 data:
   user: {{ $value.secrets.adminUser | b64enc }}
@@ -81,9 +75,7 @@ metadata:
   name: {{ $value.google.configMap.name }}
   namespace: {{ $operatorNs }}
   labels:
-    chart: {{ $chart }}
-    release: {{ $release.Name }}
-    heritage: {{ $heritage }}
+    {{- include "db-instances.labels" $ | nindent 4 }}
 data:
   config: |
 {{ $value.google.configMap.data | indent 4 }}

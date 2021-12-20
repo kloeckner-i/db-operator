@@ -166,3 +166,6 @@ mysql:
 
 postgresql:
   enabled: false
+
+serviceMonitor:
+  enabled: false
