@@ -5,11 +5,9 @@ metadata:
   name: {{ template "db-operator.name" . }}
   labels:
     {{- include "db-operator.labels" . | nindent 4 }}
-  {{- if .Values.service.annotations }}
   {{- with .Values.service.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
-  {{- end }}
   {{- end }}
 spec:
   type: {{ .Values.service.type }}
