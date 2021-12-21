@@ -1,6 +1,4 @@
-{{- $release := .Release.Name }}
-{{- $heritage := .Release.Service }}
-{{- $chart := .Chart.Name }}
+{{- $root := . }}
 {{- $nodeSelector := .Values.nodeSelector }}
 {{- $configSha := include (print $.Template.BasePath "/postgres_exporter_query.yaml") . | sha256sum }}
 {{- $exporter := .Values.exporter.postgres }}
@@ -17,9 +15,7 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      chart: {{ $chart }}
-      release: {{ $release }}
-      heritage: {{ $heritage }}
+      {{- include "db-instances.selectorLabels" $ | nindent 6 }}
       db-instance: {{ $name }}
   strategy:
     type: Recreate
@@ -30,9 +26,7 @@ spec:
         prometheus.io/scrape: "true"
         checksum/config: {{ $configSha }}
       labels:
-        chart: {{ $chart }}
-        release: {{ $release }}
-        heritage: {{ $heritage }}
+        {{- include "db-instances.labels" $ | nindent 8 }}
         db-instance: {{ $name }}
     spec:
       containers:
@@ -52,6 +46,9 @@ spec:
         image: {{ $exporter.image }}
         imagePullPolicy: Always
         name: exporter
+        ports:
+        - name: metrics
+          containerPort: 60000
         volumeMounts:
         - mountPath: /run/secrets/db-secrets
           name: db-secrets
@@ -73,6 +70,25 @@ spec:
           defaultMode: 420
           name: dbinstance-pgexporter-query
         name: queries
+{{- if $root.Values.serviceMonitor.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dbinstance-{{ $name }}-pgexporter
+  labels:
+    {{- include "db-instances.labels" $ | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+  selector:
+    {{- include "db-instances.selectorLabels" $ | nindent 4 }}
+    db-instance: {{ $name }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
