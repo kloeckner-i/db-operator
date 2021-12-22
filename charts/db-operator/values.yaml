@@ -110,3 +110,8 @@ serviceMonitor:
 #      targetLabel: nodename
 #      replacement: $1
 #      action: replace
+
+service:
+  annotations: {}
+  type: ClusterIP
+  port: 8080
