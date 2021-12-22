@@ -75,6 +75,15 @@ entries:
     version: 0.1.0
   db-operator:
   - apiVersion: v1
+    appVersion: 1.2.0
+    created: "2021-12-22T09:00:05.663844364Z"
+    description: A Database Operator
+    digest: 940d215a2c3915b1df2e634324b711d9de00c268edfd35f86aa3e2eda50db6da
+    name: db-operator
+    urls:
+    - https://github.com/kloeckner-i/db-operator/releases/download/db-operator-0.8.1/db-operator-0.8.1.tgz
+    version: 0.8.1
+  - apiVersion: v1
     appVersion: 0.15.1
     created: "2021-12-21T08:16:00.441147689Z"
     description: A Database Operator
@@ -272,4 +281,4 @@ entries:
     urls:
     - https://kloeckner-i.github.io/db-operator/helm/db-operator-0.1.0.tgz
     version: 0.1.0
-generated: "2021-12-21T08:16:00.441322587Z"
+generated: "2021-12-22T09:00:05.664039766Z"
