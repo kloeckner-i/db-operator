@@ -91,7 +91,7 @@ serviceMonitor:
 #   interval: 10s
 #   scrapeTimeout: 10s
 #   jobLabel: db-operator
-#   selector:Î
+#   selector:
 #    prometheus: my-prometheus
 #  ## metric relabel configs to apply to samples before ingestion.
 #  ##
