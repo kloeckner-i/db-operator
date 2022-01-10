@@ -22,20 +22,10 @@ jobs:
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.7
-
       - name: Install Helm
         uses: azure/setup-helm@v1
         with:
           version: v3.4.1
-
-      - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.2.0
-
-      - name: Run chart-testing (lint)
-        run: ct lint --validate-maintainers=false --check-version-increment=false
 
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@v1.2.1
