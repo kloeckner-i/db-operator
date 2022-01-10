@@ -1,18 +1,15 @@
 name: Release Charts
 
 on:
-  push:
-    branches:
-      - "**"
-  # workflow_run:
-  # workflows: ["Build and Test"]
-  # branches: [master, METAL-3280-add-a-job-for-checking-chart-with-different-values]
-  # types:
-  # - completed
+  workflow_run:
+    workflows: ["Build and Test"]
+    branches: [master]
+    types:
+      - completed
 
 jobs:
   chart-release:
-    # if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -40,7 +37,7 @@ jobs:
       - name: Run chart-testing (lint)
         run: ct lint --validate-maintainers=false --check-version-increment=false
 
-      # - name: Run chart-releaser
-      # uses: helm/chart-releaser-action@v1.2.1
-      # env:
-      # CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+      - name: Run chart-releaser
+        uses: helm/chart-releaser-action@v1.2.1
+        env:
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
