@@ -38,7 +38,7 @@ jobs:
         uses: helm/chart-testing-action@v2.2.0
 
       - name: Run chart-testing (lint)
-        run: ct lint --validate-maintainers=false --check-version-increment
+        run: ct lint --validate-maintainers=false --check-version-increment=false
 
       # - name: Run chart-releaser
       # uses: helm/chart-releaser-action@v1.2.1
