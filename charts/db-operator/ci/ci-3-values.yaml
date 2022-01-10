@@ -1,11 +1,6 @@
-nameOverride: ""
-
 image:
   repository: ghcr.io/kloeckner-i/db-operator
   pullPolicy: Always
-
-# imagePullSecrets:
-#   - name: myRegistrySecret
 
 reconcileInterval: "60"
 
@@ -15,17 +10,40 @@ rbac:
 serviceAccount:
   create: true
 
-resources: {}
+resources:
+  limits:
+    cpu: 10m
+    memory: 32Mi
+  requests:
+    cpu: 10m
+    memory: 32Mi
 
-nodeSelector: {}
+nodeSelector:
+  nodetype: database
 
-annotations: {}
+annotations:
+  some.custom.annotation: "*"
 
-podLabels: {}
+podLabels:
+  key1: value-one
+  key2: value-two
 
-affinity: {}
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/e2e-az-name
+              operator: In
+              values:
+                - e2e-eu1
+                - e2e-us2
 
-tolerations: []
+tolerations:
+  - key: "key1"
+    operator: "Equal"
+    value: "value1"
+    effect: "NoSchedule"
 
 config:
   instance:
@@ -41,14 +59,16 @@ config:
         metricsPort: 9090
   backup:
     activeDeadlineSeconds: 600  # 10m
-    nodeSelector: {}
+    nodeSelector:
+      nodetype: database
     postgres:
       image: "kloeckneri/pgdump-gcs:latest"
     mysql:
       image: "kloeckneri/mydump-gcs:latest"
   monitoring:
     promPushGateway: ""
-    nodeSelector: {}
+    nodeSelector:
+      nodetype: database
     postgres:
       image: wrouesnel/postgres_exporter:latest
       queries:
@@ -84,32 +104,54 @@ config:
                 description: "Total number of rows retrieved or affected by the statement"
 
 secrets:
-  gsql: {}
+  gsql:
+    admin: |
+      {
+        "type": "service_account",
+        "project_id": "test",
+        "private_key_id": "",
+        "private_key": "",
+        "client_email": "",
+        "client_id": "admin",
+        "auth_uri": "",
+        "token_uri": "",
+        "auth_provider_x509_cert_url": "",
+        "client_x509_cert_url": ""
+      }
+    readonly: |
+      {
+        "type": "service_account",
+        "project_id": "integration-project",
+        "private_key_id": "",
+        "private_key": "",
+        "client_email": "",
+        "client_id": "readonly",
+        "auth_uri": "",
+        "token_uri": "",
+        "auth_provider_x509_cert_url": "",
+        "client_x509_cert_url": ""
+      }
 
 serviceMonitor:
   enabled: false
-#   interval: 10s
-#   scrapeTimeout: 10s
-#   jobLabel: db-operator
-#   selector:Î
-#    prometheus: my-prometheus
-#  ## metric relabel configs to apply to samples before ingestion.
-#  ##
-#  metricRelabelings:
-#    - sourceLabels: [__meta_kubernetes_service_label_cluster]
-#      targetLabel: cluster
-#      regex: (.*)
-#      replacement: ${1}
-#      action: replace
-#  ## relabel configs to apply to samples after ingestion.
-#  ##
-#  relabelings:
-#    - sourceLabels: [__meta_kubernetes_pod_node_name]
-#      separator: ;
-#      regex: ^(.*)$
-#      targetLabel: nodename
-#      replacement: $1
-#      action: replace
+  interval: 10s
+  scrapeTimeout: 10s
+  jobLabel: db-operator
+  selector:
+    prometheus: my-prometheus
+metricRelabelings:
+  - sourceLabels: [__meta_kubernetes_service_label_cluster]
+    targetLabel: cluster
+    regex: (.*)
+    replacement: ${1}
+    action: replace
+relabelings:
+  - sourceLabels: [__meta_kubernetes_pod_node_name]
+    separator: ;
+    regex: ^(.*)$
+    targetLabel: nodename
+    replacement: $1
+    action: replace
 
 service:
   annotations: {}

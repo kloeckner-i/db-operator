@@ -1,19 +1,12 @@
-nameOverride: ""
-
 image:
   repository: ghcr.io/kloeckner-i/db-operator
   pullPolicy: Always
 
-# imagePullSecrets:
-#   - name: myRegistrySecret
-
 reconcileInterval: "60"
 
-rbac:
-  create: true
+rbac: {}
 
-serviceAccount:
-  create: true
+serviceAccount: {}
 
 resources: {}
 
@@ -21,11 +14,25 @@ nodeSelector: {}
 
 annotations: {}
 
-podLabels: {}
-
-affinity: {}
-
-tolerations: []
+affinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        preference:
+          matchExpressions:
+            - key: another-node-label-key
+              operator: In
+              values:
+                - another-node-label-value
+tolerations:
+  - key: "key1"
+    operator: "Equal"
+    value: "value1"
+    effect: "NoSchedule"
+  - key: "key2"
+    operator: "Equal"
+    value: "value2"
+    effect: "NoSchedule"
 
 config:
   instance:
@@ -41,14 +48,16 @@ config:
         metricsPort: 9090
   backup:
     activeDeadlineSeconds: 600  # 10m
-    nodeSelector: {}
+    nodeSelector:
+      nodetype: database
     postgres:
       image: "kloeckneri/pgdump-gcs:latest"
     mysql:
       image: "kloeckneri/mydump-gcs:latest"
   monitoring:
     promPushGateway: ""
-    nodeSelector: {}
+    nodeSelector:
+      nodetype: database
     postgres:
       image: wrouesnel/postgres_exporter:latest
       queries:
@@ -84,32 +93,30 @@ config:
                 description: "Total number of rows retrieved or affected by the statement"
 
 secrets:
-  gsql: {}
+  gsql:
+    admin: "sa-json"
+    readonly: "sa-json"
 
 serviceMonitor:
   enabled: false
-#   interval: 10s
-#   scrapeTimeout: 10s
-#   jobLabel: db-operator
-#   selector:Î
-#    prometheus: my-prometheus
-#  ## metric relabel configs to apply to samples before ingestion.
-#  ##
-#  metricRelabelings:
-#    - sourceLabels: [__meta_kubernetes_service_label_cluster]
-#      targetLabel: cluster
-#      regex: (.*)
-#      replacement: ${1}
-#      action: replace
-#  ## relabel configs to apply to samples after ingestion.
-#  ##
-#  relabelings:
-#    - sourceLabels: [__meta_kubernetes_pod_node_name]
-#      separator: ;
-#      regex: ^(.*)$
-#      targetLabel: nodename
-#      replacement: $1
-#      action: replace
+  interval: 10s
+  scrapeTimeout: 10s
+  jobLabel: db-operator
+  selector:
+    prometheus: my-prometheus
+metricRelabelings:
+  - sourceLabels: [__meta_kubernetes_service_label_cluster]
+    targetLabel: cluster
+    regex: (.*)
+    replacement: ${1}
+    action: replace
+relabelings:
+  - sourceLabels: [__meta_kubernetes_pod_node_name]
+    separator: ;
+    regex: ^(.*)$
+    targetLabel: nodename
+    replacement: $1
+    action: replace
 
 service:
   annotations: {}
