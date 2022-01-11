@@ -4,9 +4,8 @@ on:
   workflow_run:
     workflows: ["Build and Test"]
     branches: [master]
-    types: 
+    types:
       - completed
-
 
 jobs:
   chart-release:
@@ -27,7 +26,7 @@ jobs:
         uses: azure/setup-helm@v1
         with:
           version: v3.4.1
-          
+
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@v1.2.1
         env:
