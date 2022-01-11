@@ -49,7 +49,8 @@ config:
   instance:
     google:
       proxy:
-        nodeSelector: {}
+        nodeSelector: 
+          nodetype: database
         image: kloeckneri/db-auth-gateway:0.1.7
         metricsPort: 9090
     generic: {}
@@ -66,7 +67,7 @@ config:
     mysql:
       image: "kloeckneri/mydump-gcs:latest"
   monitoring:
-    promPushGateway: ""
+    promPushGateway: prometheus-pushgateway.monitoring:9090
     nodeSelector:
       nodetype: database
     postgres:
@@ -154,6 +155,7 @@ relabelings:
     action: replace
 
 service:
-  annotations: {}
+  annotations: 
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: tcp
   type: ClusterIP
   port: 8080

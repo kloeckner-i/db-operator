@@ -55,7 +55,7 @@ config:
     mysql:
       image: "kloeckneri/mydump-gcs:latest"
   monitoring:
-    promPushGateway: ""
+    promPushGateway: prometheus-pushgateway.monitoring:9090
     nodeSelector:
       nodetype: database
     postgres:
