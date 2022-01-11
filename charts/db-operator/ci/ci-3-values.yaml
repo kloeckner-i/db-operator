@@ -49,7 +49,7 @@ config:
   instance:
     google:
       proxy:
-        nodeSelector: 
+        nodeSelector:
           nodetype: database
         image: kloeckneri/db-auth-gateway:0.1.7
         metricsPort: 9090
@@ -155,7 +155,7 @@ relabelings:
     action: replace
 
 service:
-  annotations: 
+  annotations:
     service.beta.kubernetes.io/aws-load-balancer-backend-protocol: tcp
   type: ClusterIP
   port: 8080
