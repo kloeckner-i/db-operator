@@ -1,6 +1,6 @@
 apiVersion: v2
 type: application
-kubeVersion: ">= 1.19 < 1.22"
+kubeVersion: ">= 1.19 <= 1.22"
 appVersion: "1.2.0"
 description: A Database Operator
 name: db-operator
