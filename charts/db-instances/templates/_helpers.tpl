@@ -2,7 +2,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "db-instances.name" -}}
+{{- define "db-instances.smName" -}}
 {{- default .Release.Name .Values.serviceMonitorName | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
