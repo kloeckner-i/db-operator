@@ -2,7 +2,7 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: {{ template "db-instances.name" . }}
+  name: {{ template "db-instances.smName" . }}
   labels:
     {{- include "db-instances.labels" . | nindent 4 }}
     {{- with .Values.serviceMonitor.selector }}
