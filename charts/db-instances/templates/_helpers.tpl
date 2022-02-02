@@ -3,7 +3,7 @@
 Expand the name of the chart.
 */}}
 {{- define "db-instances.name" -}}
-{{- default .Release.Namespace .Values.operatorNamespace -}}
+{{- default .Release.Name .Values.serviceMonitorName | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*

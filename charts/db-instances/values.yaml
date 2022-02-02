@@ -1,3 +1,5 @@
+serviceMonitorName: ""
+
 dbinstances: {}
 
 nodeSelector: {}
