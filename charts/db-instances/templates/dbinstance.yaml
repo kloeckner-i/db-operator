@@ -1,5 +1,5 @@
 {{- $selectorLabels := include "db-instances.selectorLabels" .}}
-{{- $operatorNs := include "db-instances.name" . -}}
+{{- $operatorNs := include "db-instances.operatorNs" . -}}
 {{- if .Values.dbinstances }}
 {{- range $name, $value := .Values.dbinstances }}
 ---
@@ -16,11 +16,11 @@ metadata:
 spec:
   engine: {{ $value.engine }}
   {{- if $value.existingAdminSecret }}
-  adminSecretRef: 
+  adminSecretRef:
     Namespace: {{ $value.existingAdminSecret.namespace }}
     Name: {{ $value.existingAdminSecret.name }}
   {{- else }}
-  adminSecretRef: 
+  adminSecretRef:
     Namespace: {{ $operatorNs }}
     Name: {{ $name }}-admin-secret
   {{- end }}
@@ -38,7 +38,7 @@ spec:
   {{- if $value.google }}
   google:
     instance: {{ $value.google.instanceName }}
-    configmapRef: 
+    configmapRef:
       Namespace: {{ $operatorNs }}
       Name: {{ $value.google.configMap.name }}
   {{- end }}

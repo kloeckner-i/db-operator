@@ -1,9 +1,11 @@
 {{/* vim: set filetype=mustache: */}}
-{{/*
-Expand the name of the chart.
-*/}}
+
 {{- define "db-instances.smName" -}}
 {{- default .Release.Name .Values.serviceMonitorName | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{- define "db-instances.operatorNs" -}}
+{{- default .Release.Namespace .Values.operatorNamespace -}}
 {{- end -}}
 
 {{/*
