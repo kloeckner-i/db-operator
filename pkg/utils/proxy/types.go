@@ -26,6 +26,7 @@ import (
 type Proxy interface {
 	buildDeployment() (*v1apps.Deployment, error)
 	buildService() (*v1.Service, error)
-	buildPromService() (*promv1.ServiceMonitor, error)
+	buildServiceMonitor() (*promv1.ServiceMonitor, error)
 	buildConfigMap() (*v1.ConfigMap, error)
+	isMonitoringEnabled() bool
 }

@@ -45,3 +45,8 @@ func podAntiAffinity(labelSelector map[string]string) *v1.PodAntiAffinity {
 		},
 	}
 }
+
+// IsMonitoringEnabled get status of MonitoringEnabled
+func IsMonitoringEnabled(proxy Proxy) bool {
+	return proxy.isMonitoringEnabled()
+}

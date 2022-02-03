@@ -176,7 +176,7 @@ func (cp *CloudProxy) buildConfigMap() (*v1.ConfigMap, error) {
 	return nil, nil
 }
 
-func (cp *CloudProxy) buildPromService() (*promv1.ServiceMonitor, error) {
+func (cp *CloudProxy) buildServiceMonitor() (*promv1.ServiceMonitor, error) {
 	Endpoint := promv1.Endpoint{
 		Port: "metrics",
 	}
@@ -197,4 +197,8 @@ func (cp *CloudProxy) buildPromService() (*promv1.ServiceMonitor, error) {
 			},
 		},
 	}, nil
+}
+
+func (cp *CloudProxy) isMonitoringEnabled() bool {
+	return cp.MonitoringEnabled
 }

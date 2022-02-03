@@ -80,7 +80,8 @@ func containsString(slice []string, s string) bool {
 	return false
 }
 
-func checkCRD(crds crdv1.CustomResourceDefinitionList, api string) bool {
+// inCrdList returns true if monitoring is enabled in DbInstance spec.
+func inCrdList(crds crdv1.CustomResourceDefinitionList, api string) bool {
 	for _, crd := range crds.Items {
 		if crd.Name == api {
 			return true

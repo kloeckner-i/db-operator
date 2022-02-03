@@ -507,10 +507,10 @@ func (r *DatabaseReconciler) createProxy(ctx context.Context, dbcr *kciv1alpha1.
 	if err != nil {
 		return err
 	}
-	crdPromSvcMonitorInstalled := checkCRD(crdList, "servicemonitors.monitoring.coreos.com")
-	if crdPromSvcMonitorInstalled {
+
+	if proxy.IsMonitoringEnabled(proxyInterface) && inCrdList(crdList, "servicemonitors.monitoring.coreos.com") {
 		// create proxy PromServiceMonitor
-		promSvcMon, err := proxy.BuildPromService(proxyInterface)
+		promSvcMon, err := proxy.BuildServiceMonitor(proxyInterface)
 		if err != nil {
 			return err
 		}
