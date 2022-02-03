@@ -25,6 +25,7 @@ import (
 	kcirocksv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
 	"github.com/kloeckner-i/db-operator/controllers"
 	"github.com/kloeckner-i/db-operator/pkg/config"
+	"github.com/kloeckner-i/db-operator/pkg/utils/thirdpartyapi"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -47,6 +48,8 @@ func init() {
 
 	utilruntime.Must(kcirocksv1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
+
+	thirdpartyapi.AppendToScheme(scheme)
 }
 
 func main() {

@@ -5,19 +5,20 @@ metadata:
 spec:
   adminSecretRef:
     Name: example-instance-admin-secret
-    Namespace: << namespace of admin secret >>
+    Namespace: operator
   engine: postgres
   google:
     instance: dboperator-example-gsql
+    apiEndpoint: http://192.168.177.25:8080
     configmapRef:
       Name: example-gsql-config
-      Namespace: << namespace of configmap >>
+      Namespace: operator
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: example-gsql-config
-  namespace: << operator namespace >>
+  namespace: operator
 data:
   config: |
     {
@@ -43,7 +44,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: example-instance-admin-secret
-  namespace: << operator namespace >>
+  namespace: operator
 type: Opaque
 data:
   user: cG9zdGdyZXM=

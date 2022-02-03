@@ -17,6 +17,7 @@
 package proxy
 
 import (
+	promv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	v1apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 )
@@ -25,5 +26,6 @@ import (
 type Proxy interface {
 	buildDeployment() (*v1apps.Deployment, error)
 	buildService() (*v1.Service, error)
+	buildPromService() (*promv1.ServiceMonitor, error)
 	buildConfigMap() (*v1.ConfigMap, error)
 }

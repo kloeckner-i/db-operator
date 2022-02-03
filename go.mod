@@ -11,15 +11,16 @@ require (
 	github.com/kloeckner-i/can-haz-password v0.1.0
 	github.com/lib/pq v1.10.2
 	github.com/mitchellh/hashstructure v1.1.0
+	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.52.1
 	github.com/prometheus/client_golang v1.11.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/oauth2 v0.0.0-20210514164344-f6687ab2804c
 	google.golang.org/api v0.47.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.22.1
-	k8s.io/apimachinery v0.22.1
-	k8s.io/client-go v0.22.1
+	k8s.io/api v0.22.3
+	k8s.io/apimachinery v0.22.3
+	k8s.io/client-go v0.22.3
 	sigs.k8s.io/controller-runtime v0.10.0
 )
 
@@ -74,11 +75,11 @@ require (
 	google.golang.org/protobuf v1.26.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
-	k8s.io/apiextensions-apiserver v0.22.1 // indirect
-	k8s.io/component-base v0.22.1 // indirect
-	k8s.io/klog/v2 v2.9.0 // indirect
+	k8s.io/apiextensions-apiserver v0.22.3 // indirect
+	k8s.io/component-base v0.22.3 // indirect
+	k8s.io/klog/v2 v2.10.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20211110013926-83f114cd0513 // indirect
-	k8s.io/utils v0.0.0-20210802155522-efc7438f0176 // indirect
+	k8s.io/utils v0.0.0-20210819203725-bdf08cb9a70a // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.1.2 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
