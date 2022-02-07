@@ -28,5 +28,4 @@ type Proxy interface {
 	buildService() (*v1.Service, error)
 	buildServiceMonitor() (*promv1.ServiceMonitor, error)
 	buildConfigMap() (*v1.ConfigMap, error)
-	isMonitoringEnabled() bool
 }

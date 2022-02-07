@@ -65,6 +65,7 @@ rules:
   verbs:
   - create
   - update
+  - patch
   - get
   - list
   - watch

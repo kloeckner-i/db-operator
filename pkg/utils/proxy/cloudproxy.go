@@ -198,7 +198,3 @@ func (cp *CloudProxy) buildServiceMonitor() (*promv1.ServiceMonitor, error) {
 		},
 	}, nil
 }
-
-func (cp *CloudProxy) isMonitoringEnabled() bool {
-	return cp.MonitoringEnabled
-}
