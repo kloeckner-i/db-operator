@@ -21,6 +21,7 @@ import (
 
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
+	crdv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
 func isDBSpecChanged(dbcr *kciv1alpha1.Database) bool {
@@ -73,6 +74,16 @@ func addDBInstanceChecksumStatus(ctx context.Context, dbin *kciv1alpha1.DbInstan
 func containsString(slice []string, s string) bool {
 	for _, item := range slice {
 		if item == s {
+			return true
+		}
+	}
+	return false
+}
+
+// inCrdList returns true if monitoring is enabled in DbInstance spec.
+func inCrdList(crds crdv1.CustomResourceDefinitionList, api string) bool {
+	for _, crd := range crds.Items {
+		if crd.Name == api {
 			return true
 		}
 	}

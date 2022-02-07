@@ -17,6 +17,7 @@
 package proxy
 
 import (
+	promv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/sirupsen/logrus"
 	v1apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -53,4 +54,15 @@ func BuildConfigmap(proxy Proxy) (*v1.ConfigMap, error) {
 	}
 
 	return cm, nil
+}
+
+// BuildServiceMonitor builds kubernetes prometheus ServiceMonitor CR object used for monitoring
+func BuildServiceMonitor(proxy Proxy) (*promv1.ServiceMonitor, error) {
+	promSerMon, err := proxy.buildServiceMonitor()
+	if err != nil {
+		logrus.Error("failed building promServiceMonitor configmap")
+		return nil, err
+	}
+
+	return promSerMon, nil
 }

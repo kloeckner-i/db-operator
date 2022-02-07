@@ -21,6 +21,7 @@ import (
 	"strconv"
 
 	"github.com/kloeckner-i/db-operator/pkg/config"
+	promv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	v1apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -173,4 +174,27 @@ func (cp *CloudProxy) container() (v1.Container, error) {
 
 func (cp *CloudProxy) buildConfigMap() (*v1.ConfigMap, error) {
 	return nil, nil
+}
+
+func (cp *CloudProxy) buildServiceMonitor() (*promv1.ServiceMonitor, error) {
+	Endpoint := promv1.Endpoint{
+		Port: "metrics",
+	}
+
+	return &promv1.ServiceMonitor{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      cp.NamePrefix + "-sm",
+			Namespace: cp.Namespace,
+			Labels:    cp.Labels,
+		},
+		Spec: promv1.ServiceMonitorSpec{
+			Endpoints: []promv1.Endpoint{Endpoint},
+			NamespaceSelector: promv1.NamespaceSelector{
+				MatchNames: []string{cp.Namespace},
+			},
+			Selector: metav1.LabelSelector{
+				MatchLabels: cp.Labels,
+			},
+		},
+	}, nil
 }

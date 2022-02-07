@@ -33,6 +33,7 @@ import (
 	"github.com/kloeckner-i/db-operator/pkg/utils/proxy"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
+	crdv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -498,6 +499,40 @@ func (r *DatabaseReconciler) createProxy(ctx context.Context, dbcr *kciv1alpha1.
 			// failed to create service
 			logrus.Errorf("DB: namespace=%s, name=%s failed creating proxy service", dbcr.Namespace, dbcr.Name)
 			return err
+		}
+	}
+
+	crdList := crdv1.CustomResourceDefinitionList{}
+	err = r.List(ctx, &crdList)
+	if err != nil {
+		return err
+	}
+
+	isMonitoringEnabled, err := dbcr.IsMonitoringEnabled()
+	if err != nil {
+		return err
+	}
+
+	if isMonitoringEnabled && inCrdList(crdList, "servicemonitors.monitoring.coreos.com") {
+		// create proxy PromServiceMonitor
+		promSvcMon, err := proxy.BuildServiceMonitor(proxyInterface)
+		if err != nil {
+			return err
+		}
+		err = r.Create(ctx, promSvcMon)
+		if err != nil {
+			if k8serrors.IsAlreadyExists(err) {
+				patch := client.MergeFrom(promSvcMon)
+				err := r.Patch(ctx, promSvcMon, patch)
+				if err != nil {
+					logrus.Errorf("DB: namespace=%s, name=%s failed patching prometheus service monitor", dbcr.Namespace, dbcr.Name)
+					return err
+				}
+			} else {
+				// failed to create service
+				logrus.Errorf("DB: namespace=%s, name=%s failed creating prometehus service monitor", dbcr.Namespace, dbcr.Name)
+				return err
+			}
 		}
 	}
 

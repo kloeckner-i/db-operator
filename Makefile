@@ -69,14 +69,14 @@ minidashboard: ## open minikube dashboard
 miniimage: build
 	@minikube image load my-image.tar
 
-k3d_setup: k3d_install k3d_image helm
+k3d_setup: k3d_install k3d_image helm ## create a k3d cluster locally and install db-operator
 
 k3d_install:
 	@wget -q -O - https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
 	@k3d cluster create myk3s -i rancher/k3s:$(K8S_VERSION)-k3s1
 	@kubectl get pod
 
-k3d_image: build
+k3d_image: build ## rebuild the docker images and upload into your k3d cluster
 	@k3d image import my-image.tar -c myk3s
 
 ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
