@@ -56,8 +56,6 @@ rules:
   - get
   - list
   - watch
-  resourceNames:
-  - servicemonitors.monitoring.coreos.com
 - apiGroups:
   - monitoring.coreos.com
   resources:
