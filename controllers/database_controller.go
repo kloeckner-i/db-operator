@@ -513,9 +513,9 @@ func (r *DatabaseReconciler) createProxy(ctx context.Context, dbcr *kciv1alpha1.
 		return err
 	}
 
-	if isMonitoringEnabled && inCrdList(crdList, "servicemonitors.monitoring.coreos.com") {
-		// create proxy PromServiceMonitor
-		promSvcMon, err := proxy.BuildServiceMonitor(proxyInterface)
+	if isMonitoringEnabled && inCrdList(crdList, "podmonitors.monitoring.coreos.com") {
+		// create proxy PromPodMonitor
+		promSvcMon, err := proxy.BuildPodMonitor(proxyInterface)
 		if err != nil {
 			return err
 		}

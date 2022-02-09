@@ -25,6 +25,7 @@ import (
 	v1apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 // CloudProxy for google sql instance
@@ -162,6 +163,11 @@ func (cp *CloudProxy) container() (v1.Container, error) {
 				ContainerPort: cp.Port,
 				Protocol:      v1.ProtocolTCP,
 			},
+			{
+				Name:          "metrics",
+				ContainerPort: int32(cp.Conf.Instances.Google.ProxyConfig.MetricsPort),
+				Protocol:      v1.ProtocolTCP,
+			},
 		},
 		VolumeMounts: []v1.VolumeMount{
 			{
@@ -176,19 +182,21 @@ func (cp *CloudProxy) buildConfigMap() (*v1.ConfigMap, error) {
 	return nil, nil
 }
 
-func (cp *CloudProxy) buildServiceMonitor() (*promv1.ServiceMonitor, error) {
-	Endpoint := promv1.Endpoint{
-		Port: "metrics",
+func (cp *CloudProxy) buildPodMonitor() (*promv1.PodMonitor, error) {
+	metricsIntStr := intstr.FromString("metrics")
+	Endpoint := promv1.PodMetricsEndpoint{
+		TargetPort: &metricsIntStr,
+		Path:       "/metrics",
 	}
 
-	return &promv1.ServiceMonitor{
+	return &promv1.PodMonitor{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cp.NamePrefix + "-sm",
+			Name:      cp.NamePrefix + "-pm",
 			Namespace: cp.Namespace,
 			Labels:    cp.Labels,
 		},
-		Spec: promv1.ServiceMonitorSpec{
-			Endpoints: []promv1.Endpoint{Endpoint},
+		Spec: promv1.PodMonitorSpec{
+			PodMetricsEndpoints: []promv1.PodMetricsEndpoint{Endpoint},
 			NamespaceSelector: promv1.NamespaceSelector{
 				MatchNames: []string{cp.Namespace},
 			},

@@ -56,11 +56,11 @@ func BuildConfigmap(proxy Proxy) (*v1.ConfigMap, error) {
 	return cm, nil
 }
 
-// BuildServiceMonitor builds kubernetes prometheus ServiceMonitor CR object used for monitoring
-func BuildServiceMonitor(proxy Proxy) (*promv1.ServiceMonitor, error) {
-	promSerMon, err := proxy.buildServiceMonitor()
+// BuildPodMonitor builds kubernetes prometheus PodMonitor CR object used for monitoring
+func BuildPodMonitor(proxy Proxy) (*promv1.PodMonitor, error) {
+	promSerMon, err := proxy.buildPodMonitor()
 	if err != nil {
-		logrus.Error("failed building promServiceMonitor configmap")
+		logrus.Error("failed building promPodMonitor configmap")
 		return nil, err
 	}
 
