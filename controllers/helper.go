@@ -124,7 +124,6 @@ func (e *secretEventHandler) Update(evt event.UpdateEvent, q workqueue.RateLimit
 	default:
 		logrus.Error("secretEventHandler.Update ERROR: unknown object: type=`%s`, name=`%s`", v.GetObjectKind(), evt.ObjectNew.GetName())
 		return
-		
 	
 	case *corev1.Secret:
 		secretNew := evt.ObjectNew.(*corev1.Secret)
@@ -161,11 +160,6 @@ func (e *secretEventHandler) Update(evt event.UpdateEvent, q workqueue.RateLimit
 	
 	logrus.Info("secretEventHandler.Update event successfully processed")
 }
-
-
-
-
-
 
 
 func getDatabasesBySecret(c client.Client, secret types.NamespacedName) ([]kciv1alpha1.Database, error) {

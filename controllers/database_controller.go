@@ -248,8 +248,6 @@ func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	
 	
 	/* ------ Event Filters ------ */
-	
-	
 	isWatchedNamespace := func(ro runtime.Object) bool {
 		if r.WatchNamespaces[0] == "" { // # it's necessary to set "" to watch cluster wide
 			return true // watch for all namespaces
@@ -327,7 +325,6 @@ func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
 				return isPasswordUpdated
 			}
 		}
-		
 		return false // unknown object
 	}
 	

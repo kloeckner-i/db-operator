@@ -155,16 +155,15 @@ func parseDatabaseSecretData(dbcr *kciv1alpha1.Database, data map[string][]byte)
 
 func isFieldUpdated(dataOld map[string][]byte, dataNew map[string][]byte, keyName string) (bool) {
 	
+	// read old and new value
 	oldValue, oldValueOk := dataOld[keyName]
 	newValue, newValueOk := dataNew[keyName]
-	
 	
 	if !oldValueOk || !newValueOk {
 		return false // values empty or do not exist
 	}
 	
 	result := bytes.Compare(oldValue, newValue)
-	
 	if result == 0 {
 		return false // values are equal
 	}

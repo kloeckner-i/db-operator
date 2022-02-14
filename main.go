@@ -103,10 +103,10 @@ func main() {
 		os.Exit(1)
 	}
 	
+
 	watchNamespaces := os.Getenv("WATCH_NAMESPACE")
 	namespaces := strings.Split(watchNamespaces, ",")
 	setupLog.Info("Database resources will be served in the next namespaces", "namespaces", namespaces)
-	
 	
 	if err = (&controllers.DatabaseReconciler{
 		Client:   mgr.GetClient(),
