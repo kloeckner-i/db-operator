@@ -25,6 +25,7 @@ import (
 	v1apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 // CloudProxy for google sql instance
@@ -56,9 +57,16 @@ func (cp *CloudProxy) buildService() (*v1.Service, error) {
 		Spec: v1.ServiceSpec{
 			Ports: []v1.ServicePort{
 				{
-					Name:     cp.Engine,
-					Protocol: v1.ProtocolTCP,
-					Port:     cp.Port,
+					Name:       cp.Engine,
+					Port:       cp.Port,
+					TargetPort: intstr.FromString("sqlport"),
+					Protocol:   v1.ProtocolTCP,
+				},
+				{
+					Name:       "metrics",
+					Port:       int32(cp.Conf.Instances.Google.ProxyConfig.MetricsPort),
+					TargetPort: intstr.FromString("metrics"),
+					Protocol:   v1.ProtocolTCP,
 				},
 			},
 			Selector: cp.Labels,
@@ -160,6 +168,11 @@ func (cp *CloudProxy) container() (v1.Container, error) {
 			{
 				Name:          "sqlport",
 				ContainerPort: cp.Port,
+				Protocol:      v1.ProtocolTCP,
+			},
+			{
+				Name:          "metrics",
+				ContainerPort: int32(cp.Conf.Instances.Google.ProxyConfig.MetricsPort),
 				Protocol:      v1.ProtocolTCP,
 			},
 		},
