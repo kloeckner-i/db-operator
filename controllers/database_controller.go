@@ -21,6 +21,9 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 	"strconv"
 	"time"
 
@@ -53,6 +56,7 @@ type DatabaseReconciler struct {
 	Recorder record.EventRecorder
 	Interval time.Duration
 	Conf     *config.Config
+	WatchNamespaces []string
 }
 
 var (
@@ -241,8 +245,104 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	
+	
+	/* ------ Event Filters ------ */
+	
+	
+	isWatchedNamespace := func(ro runtime.Object) bool {
+		if r.WatchNamespaces[0] == "" { // # it's necessary to set "" to watch cluster wide
+			return true // watch for all namespaces
+		}
+		// define object's namespace
+		objectNamespace := ""
+		database, isDatabase := ro.(*kciv1alpha1.Database)
+		if isDatabase {
+			objectNamespace = database.Namespace
+		} else {
+			secret, isSecret := ro.(*corev1.Secret)
+			if isSecret {
+				objectNamespace = secret.Namespace
+			} else {
+				logrus.Info("unknown object", "object", ro)
+				return false
+			}
+		}
+		
+		// check that current namespace is watched by db-operator
+		for _, ns := range r.WatchNamespaces {
+			if ns == objectNamespace {
+				return true
+			}
+		}
+		return false
+	}
+	
+	
+	isDatabase := func(ro runtime.Object) bool {
+		// if object kind is an UaaClient check 'metadata.generation' field has been changed
+		_, isDatabase := ro.(*kciv1alpha1.Database)
+		return isDatabase
+	}
+	
+	
+	isObjectUpdated := func(e event.UpdateEvent) bool {
+		if e.ObjectOld == nil {
+			logrus.Error(nil, "Update event has no old runtime object to update", "event", e)
+			return false
+		}
+		if e.ObjectNew == nil {
+			logrus.Error(nil, "Update event has no new runtime object for update", "event", e)
+			return false
+		}
+		
+		// if object kind is a Database check that 'metadata.generation' field ('spec' section) has been changed
+		_, isDatabase := e.ObjectNew.(*kciv1alpha1.Database)
+		if isDatabase {
+			return e.ObjectNew.GetGeneration() != e.ObjectOld.GetGeneration()
+		}
+		
+		// if object kind is a Secret check that password value has changed
+		secretNew, isSecret := e.ObjectNew.(*corev1.Secret)
+		if isSecret {
+			// if object kind is a Secret let's check that DB password inside has been updated
+			secretOld, secretOldOk := e.ObjectOld.(*corev1.Secret)
+			if !secretOldOk {
+				logrus.Error(nil, "Update event ERROR: ObjectOld object is NOT a Secret", "e.ObjectOld.GetName()", e.ObjectOld.GetName())
+				return false
+			}
+			
+			// Currently, we do not know engine type without Database resource, let's do it by key name...
+			// TODO: think how to recognize engine type without Database resource
+			_, valueOk := secretNew.Data["POSTGRES_PASSWORD"] //postgresql engine
+			if valueOk {
+				isPasswordUpdated := isFieldUpdated(secretOld.Data, secretNew.Data, "POSTGRES_PASSWORD")
+				logrus.Info(nil, "Secret Update Event Detected:", "engine", "postgresql", "secretNew.Name", secretNew.Name, "isPasswordUpdated", isPasswordUpdated)
+				return isPasswordUpdated
+			}
+			_, valueOk = secretNew.Data["PASSWORD"] //mysql engine
+			if valueOk {
+				isPasswordUpdated := isFieldUpdated(secretOld.Data, secretNew.Data, "PASSWORD")
+				logrus.Info(nil, "Secret Update Event Detected:", "engine", "mysql", "secretNew.Name", secretNew.Name, "isPasswordUpdated", isPasswordUpdated)
+				return isPasswordUpdated
+			}
+		}
+		
+		return false // unknown object
+	}
+	
+	eventFilter := predicate.Funcs{
+		CreateFunc:  func(e event.CreateEvent) bool { return isWatchedNamespace(e.Object) && isDatabase(e.Object) }, // Reconcile only Database Create Event
+		DeleteFunc:  func(e event.DeleteEvent) bool { return isWatchedNamespace(e.Object) && isDatabase(e.Object) }, // Reconcile only Database Delete Event
+		UpdateFunc: func(e event.UpdateEvent) bool { return isWatchedNamespace(e.ObjectNew) && isObjectUpdated(e) }, // Reconcile Database and Secret Update Events
+		GenericFunc: func(e event.GenericEvent) bool { return true }, // Reconcile any Generic Events (operator POD or cluster restarted)
+	}
+	
+	
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&kciv1alpha1.Database{}).
+		WithEventFilter(eventFilter).
+		Watches(&source.Kind{Type: &corev1.Secret{}}, &secretEventHandler{r.Client}).
 		Complete(r)
 }
 

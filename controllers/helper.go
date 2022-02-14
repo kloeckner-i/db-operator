@@ -18,7 +18,14 @@ package controllers
 
 import (
 	"context"
-
+	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/util/workqueue"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 	crdv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -89,3 +96,89 @@ func inCrdList(crds crdv1.CustomResourceDefinitionList, api string) bool {
 	}
 	return false
 }
+
+
+/* ------ Secret Update Event Handler ------ */
+type secretEventHandler struct {
+	client.Client
+}
+
+func (e *secretEventHandler) Delete(event.DeleteEvent, workqueue.RateLimitingInterface) {
+	logrus.Error("secretEventHandler.Delete(...) event has been FIRED but NOT implemented!")
+	return
+}
+func (e *secretEventHandler) Generic(event.GenericEvent, workqueue.RateLimitingInterface) {
+	logrus.Error("secretEventHandler.Generic(...) event has been FIRED but NOT implemented!")
+	return
+}
+func (e *secretEventHandler) Create(evt event.CreateEvent, q workqueue.RateLimitingInterface) {
+	logrus.Error("secretEventHandler.Create(...) event has been FIRED but NOT implemented!")
+	return
+}
+func (e *secretEventHandler) Update(evt event.UpdateEvent, q workqueue.RateLimitingInterface) {
+	
+	logrus.Info("secretEventHandler.Update event has been started")
+	
+	switch v := evt.ObjectNew.(type) {
+	
+	default:
+		logrus.Error("secretEventHandler.Update ERROR: unknown object: type=`%s`, name=`%s`", v.GetObjectKind(), evt.ObjectNew.GetName())
+		return
+		
+	
+	case *corev1.Secret:
+		secretNew := evt.ObjectNew.(*corev1.Secret)
+		
+		databases, _ := getDatabasesBySecret(e.Client, types.NamespacedName{
+			Name:      evt.ObjectNew.GetName(),
+			Namespace: evt.ObjectNew.GetNamespace(),
+		})
+		
+		for _, database := range databases {
+			
+			// make sure that new credentials are valid
+			_, err := parseDatabaseSecretData(&database, secretNew.Data)
+			if err != nil {
+				logrus.Error("secretEventHandler.Update ERROR: secretNew.Data has incorrect credentials", "secretNew.Name", secretNew.Name)
+				return
+			}
+			
+			// make sure that old credentials were valid
+			secretOld := evt.ObjectOld.(*corev1.Secret)
+			_, err = parseDatabaseSecretData(&database, secretOld.Data)
+			if err != nil {
+				logrus.Error("secretEventHandler.Update ERROR: secretOld.Data has incorrect credentials", "secretOld.Name", secretOld.Name)
+				return
+			}
+			
+			logrus.Info("Database SecretData value has changed and Database resource will be reconciled", "ns", database.GetNamespace(), "secret", evt.ObjectNew.GetName(), "database", database.GetName())
+			q.Add(reconcile.Request{NamespacedName: types.NamespacedName{
+				Namespace: database.GetNamespace(),
+				Name:      database.GetName(),
+			}})
+		}
+	}
+	
+	logrus.Info("secretEventHandler.Update event successfully processed")
+}
+
+
+
+
+
+
+
+func getDatabasesBySecret(c client.Client, secret types.NamespacedName) ([]kciv1alpha1.Database, error) {
+	databaseList :=kciv1alpha1.DatabaseList{}
+	if err := c.List(context.Background(), &databaseList, &client.ListOptions{Namespace: secret.Namespace}); err != nil {
+		return nil, err
+	}
+	var matched []kciv1alpha1.Database
+	for _, database := range databaseList.Items {
+		if database.Spec.SecretName == secret.Name {
+			matched = append(matched, database)
+		}
+	}
+	return matched, nil
+}
+

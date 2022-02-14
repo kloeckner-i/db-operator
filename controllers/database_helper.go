@@ -17,6 +17,7 @@
 package controllers
 
 import (
+	"bytes"
 	"errors"
 	"strconv"
 
@@ -150,6 +151,27 @@ func parseDatabaseSecretData(dbcr *kciv1alpha1.Database, data map[string][]byte)
 		return cred, errors.New("not supported engine type")
 	}
 }
+
+
+func isFieldUpdated(dataOld map[string][]byte, dataNew map[string][]byte, keyName string) (bool) {
+	
+	oldValue, oldValueOk := dataOld[keyName]
+	newValue, newValueOk := dataNew[keyName]
+	
+	
+	if !oldValueOk || !newValueOk {
+		return false // values empty or do not exist
+	}
+	
+	result := bytes.Compare(oldValue, newValue)
+	
+	if result == 0 {
+		return false // values are equal
+	}
+	
+	return true // values are not empty and updated
+}
+
 
 func generateDatabaseSecretData(dbcr *kciv1alpha1.Database) (map[string][]byte, error) {
 	const (
