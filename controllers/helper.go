@@ -92,6 +92,4 @@ func inCrdList(crds crdv1.CustomResourceDefinitionList, api string) bool {
 		}
 	}
 	return false
-
 }
-

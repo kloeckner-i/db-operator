@@ -20,7 +20,7 @@ import (
 
 	"errors"
 	"strconv"
-	
+
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
 	"github.com/kloeckner-i/db-operator/pkg/utils/database"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
@@ -150,9 +150,7 @@ func parseDatabaseSecretData(dbcr *kciv1alpha1.Database, data map[string][]byte)
 	default:
 		return cred, errors.New("not supported engine type")
 	}
-
 }
-
 
 func generateDatabaseSecretData(dbcr *kciv1alpha1.Database) (map[string][]byte, error) {
 	const (
