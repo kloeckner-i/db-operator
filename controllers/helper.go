@@ -20,7 +20,7 @@ import (
 	"context"
 
 	corev1 "k8s.io/api/core/v1"
-	
+
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 	crdv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -40,7 +40,7 @@ func addDBSpecChecksum(dbcr *kciv1alpha1.Database, databaseSecret *corev1.Secret
 	}
 
 	annotations["checksum/spec"] = kci.GenerateChecksum(dbcr.Spec)
-	annotations["checksum/secret"] = kci.GenerateChecksum(databaseSecret)
+	annotations["checksum/secret"] = kci.GenerateChecksum(databaseSecret.Data)
 	dbcr.ObjectMeta.SetAnnotations(annotations)
 }
 
