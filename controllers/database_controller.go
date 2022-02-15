@@ -154,7 +154,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 	
 	databaseSecret, err := r.getDatabaseSecret(ctx, dbcr)
-	if err != nil {
+	if err != nil && !k8serrors.IsNotFound(err) {
 		logrus.Errorf("could not get database secret - %s", err)
 		return r.manageError(ctx, dbcr, err, true)
 	}
