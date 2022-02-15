@@ -17,10 +17,10 @@
 package controllers
 
 import (
-	"bytes"
+
 	"errors"
 	"strconv"
-
+	
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
 	"github.com/kloeckner-i/db-operator/pkg/utils/database"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
@@ -150,25 +150,7 @@ func parseDatabaseSecretData(dbcr *kciv1alpha1.Database, data map[string][]byte)
 	default:
 		return cred, errors.New("not supported engine type")
 	}
-}
 
-
-func isFieldUpdated(dataOld map[string][]byte, dataNew map[string][]byte, keyName string) (bool) {
-	
-	// read old and new value
-	oldValue, oldValueOk := dataOld[keyName]
-	newValue, newValueOk := dataNew[keyName]
-	
-	if !oldValueOk || !newValueOk {
-		return false // values empty or do not exist
-	}
-	
-	result := bytes.Compare(oldValue, newValue)
-	if result == 0 {
-		return false // values are equal
-	}
-	
-	return true // values are not empty and updated
 }
 
 
