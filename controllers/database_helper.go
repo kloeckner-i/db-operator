@@ -26,6 +26,7 @@ import (
 	"github.com/kloeckner-i/db-operator/pkg/utils/database"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 	"github.com/sirupsen/logrus"
+	v1 "k8s.io/api/core/v1"
 )
 
 func determinDatabaseType(dbcr *kciv1alpha1.Database, dbCred database.Credentials) (database.Database, error) {
@@ -107,24 +108,31 @@ func parseDatabaseSecretData(dbcr *kciv1alpha1.Database, data map[string][]byte)
 		return cred, err
 	}
 
+	// Connection string can be empty
+	if connectionString, ok := data["CONNECTION_STRING"]; ok {
+		cred.ConnectionString = string(connectionString)
+	} else {
+		logrus.Warn("CONNECTION_STRING key does not exist in secret data")
+	}
+
 	switch engine {
 	case "postgres":
 		if name, ok := data["POSTGRES_DB"]; ok {
 			cred.Name = string(name)
 		} else {
-			return cred, errors.New("POSTGRES_DB key does not exists in secret data")
+			return cred, errors.New("POSTGRES_DB key does not exist in secret data")
 		}
 
 		if user, ok := data["POSTGRES_USER"]; ok {
 			cred.Username = string(user)
 		} else {
-			return cred, errors.New("POSTGRES_USER key does not exists in secret data")
+			return cred, errors.New("POSTGRES_USER key does not exist in secret data")
 		}
 
 		if pass, ok := data["POSTGRES_PASSWORD"]; ok {
 			cred.Password = string(pass)
 		} else {
-			return cred, errors.New("POSTGRES_PASSWORD key does not exists in secret data")
+			return cred, errors.New("POSTGRES_PASSWORD key does not exist in secret data")
 		}
 
 		return cred, nil
@@ -132,19 +140,19 @@ func parseDatabaseSecretData(dbcr *kciv1alpha1.Database, data map[string][]byte)
 		if name, ok := data["DB"]; ok {
 			cred.Name = string(name)
 		} else {
-			return cred, errors.New("DB key does not exists in secret data")
+			return cred, errors.New("DB key does not exist in secret data")
 		}
 
 		if user, ok := data["USER"]; ok {
 			cred.Username = string(user)
 		} else {
-			return cred, errors.New("USER key does not exists in secret data")
+			return cred, errors.New("USER key does not exist in secret data")
 		}
 
 		if pass, ok := data["PASSWORD"]; ok {
 			cred.Password = string(pass)
 		} else {
-			return cred, errors.New("PASSWORD key does not exists in secret data")
+			return cred, errors.New("PASSWORD key does not exist in secret data")
 		}
 
 		return cred, nil
@@ -190,41 +198,54 @@ func generateDatabaseSecretData(dbcr *kciv1alpha1.Database) (map[string][]byte, 
 	}
 }
 
-// There is a default db_url format but in case the DB_URL_TEMPLATE variable is set, this
-// function will try to use it as a template for generating the url
-// Example
-
-type DBUrl struct {
-	Engine   string
-	Host     string
-	Port     int32
-	User     string
-	Password string
-	Database string
+//ConnectionStringFields defines default fields that can be used to generate a connection string
+type ConnectionStringFields struct {
+	Protocol     string
+	DatabaseHost string
+	DatabasePort int32
+	UserName     string
+	Password     string
+	DatabaseName string
 }
 
-func generateDbUrl(dbcr *kciv1alpha1.Database, dbData DBUrl) (dbUrl string, err error) {
+func generateConnectionString(dbcr *kciv1alpha1.Database, dbData ConnectionStringFields) (connString string, err error) {
+	// The string that's going to be generated if the default template is used:
+	// "postgresql://user:password@host:port/database"
+	const defaultTemplate = "{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}"
+
+	// If engine is 'postgres', the protocol should be postgresql
+	if dbcr.Status.InstanceRef.Spec.Engine == "postgres" {
+		dbData.Protocol = "postgresql"
+	} else {
+		dbData.Protocol = dbcr.Status.InstanceRef.Spec.Engine
+	}
+
+	// If dbcr.Spec.ConnectionString is not specified, use the defalt template
 	var tmpl string
-	const defaultTemplate = "{{ .Engine }}::/{{ .User }}:{{ .Password }}@{{ .Host}}:{{ .Port }}/{{ .Database }}"
-	if dbcr.Spec.ConnectionString.CustomTemplate != "" {
-		tmpl = dbcr.Spec.ConnectionString.CustomTemplate
+	if dbcr.Spec.ConnectionString != "" {
+		tmpl = dbcr.Spec.ConnectionString
 	} else {
 		tmpl = defaultTemplate
 	}
 
-	t, err := template.New("database_url").Parse(tmpl)
+	t, err := template.New("connection_string").Parse(tmpl)
 	if err != nil {
 		logrus.Error(err)
 		return
 	}
 
-	var tpl bytes.Buffer
-	err = t.Execute(&tpl, dbData)
+	var connStringBytes bytes.Buffer
+	err = t.Execute(&connStringBytes, dbData)
 	if err != nil {
 		logrus.Error(err)
 		return
 	}
 
-	dbUrl = tpl.String()
+	connString = connStringBytes.String()
 	return
+}
+
+func addConnectionStringToSecret(dbcr *kciv1alpha1.Database, secretData map[string][]byte, connectionString string) *v1.Secret {
+	secretData["CONNECTION_STRING"] = []byte(connectionString)
+	return (kci.SecretBuilder(dbcr.Spec.SecretName, dbcr.GetNamespace(), secretData))
 }

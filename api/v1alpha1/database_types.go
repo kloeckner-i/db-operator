@@ -26,17 +26,12 @@ import (
 
 // DatabaseSpec defines the desired state of Database
 type DatabaseSpec struct {
-	SecretName        string                   `json:"secretName"`
-	Instance          string                   `json:"instance"`
-	DeletionProtected bool                     `json:"deletionProtected"`
-	Backup            DatabaseBackup           `json:"backup"`
-	Extensions        []string                 `json:"extensions,omitempty"`
-	ConnectionString  DatabaseConnectionString `json:"connectionString"`
-}
-// DatabaseConnectionString defines the database connection string template
-type DatabaseConnectionString struct {
-	Enabled        bool   `json:"enabled"`
-	CustomTemplate string `json:"customTemplate"`
+	SecretName        string         `json:"secretName"`
+	Instance          string         `json:"instance"`
+	DeletionProtected bool           `json:"deletionProtected"`
+	Backup            DatabaseBackup `json:"backup"`
+	Extensions        []string       `json:"extensions,omitempty"`
+	ConnectionString  string         `json:"connectionString,omitempty"`
 }
 
 // DatabaseStatus defines the observed state of Database

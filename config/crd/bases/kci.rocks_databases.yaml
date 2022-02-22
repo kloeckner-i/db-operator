@@ -71,6 +71,8 @@ spec:
                 - cron
                 - enable
                 type: object
+              connectionString:
+                type: string
               deletionProtected:
                 type: boolean
               extensions:
