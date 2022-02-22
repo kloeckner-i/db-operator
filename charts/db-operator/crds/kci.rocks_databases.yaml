@@ -81,6 +81,14 @@ spec:
                 type: string
               secretName:
                 type: string
+              connectionString: 
+                description: Use ConnectionString if you need to add a database connection string to database creds secret
+                properties:
+                  enabled: 
+                    type: boolean
+                  customTemplate: 
+                    type: string
+                type: object
             required:
             - backup
             - deletionProtected

@@ -17,8 +17,10 @@
 package controllers
 
 import (
+	"bytes"
 	"errors"
 	"strconv"
+	"text/template"
 
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
 	"github.com/kloeckner-i/db-operator/pkg/utils/database"
@@ -163,7 +165,7 @@ func generateDatabaseSecretData(dbcr *kciv1alpha1.Database) (map[string][]byte, 
 	if err != nil {
 		return nil, err
 	}
-
+	// At this step we only need name, user and password
 	dbName := dbcr.Namespace + "-" + dbcr.Name
 	dbUser := dbcr.Namespace + "-" + dbcr.Name
 	dbPassword := kci.GeneratePass()
@@ -186,4 +188,43 @@ func generateDatabaseSecretData(dbcr *kciv1alpha1.Database) (map[string][]byte, 
 	default:
 		return nil, errors.New("not supported engine type")
 	}
+}
+
+// There is a default db_url format but in case the DB_URL_TEMPLATE variable is set, this
+// function will try to use it as a template for generating the url
+// Example
+
+type DBUrl struct {
+	Engine   string
+	Host     string
+	Port     int32
+	User     string
+	Password string
+	Database string
+}
+
+func generateDbUrl(dbcr *kciv1alpha1.Database, dbData DBUrl) (dbUrl string, err error) {
+	var tmpl string
+	const defaultTemplate = "{{ .Engine }}::/{{ .User }}:{{ .Password }}@{{ .Host}}:{{ .Port }}/{{ .Database }}"
+	if dbcr.Spec.ConnectionString.CustomTemplate != "" {
+		tmpl = dbcr.Spec.ConnectionString.CustomTemplate
+	} else {
+		tmpl = defaultTemplate
+	}
+
+	t, err := template.New("database_url").Parse(tmpl)
+	if err != nil {
+		logrus.Error(err)
+		return
+	}
+
+	var tpl bytes.Buffer
+	err = t.Execute(&tpl, dbData)
+	if err != nil {
+		logrus.Error(err)
+		return
+	}
+
+	dbUrl = tpl.String()
+	return
 }

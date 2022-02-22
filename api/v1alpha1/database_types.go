@@ -26,11 +26,17 @@ import (
 
 // DatabaseSpec defines the desired state of Database
 type DatabaseSpec struct {
-	SecretName        string         `json:"secretName"`
-	Instance          string         `json:"instance"`
-	DeletionProtected bool           `json:"deletionProtected"`
-	Backup            DatabaseBackup `json:"backup"`
-	Extensions        []string       `json:"extensions,omitempty"`
+	SecretName        string                   `json:"secretName"`
+	Instance          string                   `json:"instance"`
+	DeletionProtected bool                     `json:"deletionProtected"`
+	Backup            DatabaseBackup           `json:"backup"`
+	Extensions        []string                 `json:"extensions,omitempty"`
+	ConnectionString  DatabaseConnectionString `json:"connectionString"`
+}
+// DatabaseConnectionString defines the database connection string template
+type DatabaseConnectionString struct {
+	Enabled        bool   `json:"enabled"`
+	CustomTemplate string `json:"customTemplate"`
 }
 
 // DatabaseStatus defines the observed state of Database
@@ -68,7 +74,6 @@ type DatabaseBackup struct {
 //+kubebuilder:printcolumn:name="Protected",type=boolean,JSONPath=`.spec.deletionProtected`,description="If database is protected to not get deleted."
 //+kubebuilder:printcolumn:name="DBInstance",type=string,JSONPath=`.status.instanceRef.metadata.name`,description="instance reference"
 //+kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`,description="time since creation of resource"
-
 // Database is the Schema for the databases API
 type Database struct {
 	metav1.TypeMeta   `json:",inline"`
