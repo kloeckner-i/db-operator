@@ -29,6 +29,16 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
+//ConnectionStringFields defines default fields that can be used to generate a connection string
+type ConnectionStringFields struct {
+	Protocol     string
+	DatabaseHost string
+	DatabasePort int32
+	UserName     string
+	Password     string
+	DatabaseName string
+}
+
 func determinDatabaseType(dbcr *kciv1alpha1.Database, dbCred database.Credentials) (database.Database, error) {
 	instance, err := dbcr.GetInstanceRef()
 	if err != nil {
@@ -173,7 +183,6 @@ func generateDatabaseSecretData(dbcr *kciv1alpha1.Database) (map[string][]byte, 
 	if err != nil {
 		return nil, err
 	}
-	// At this step we only need name, user and password
 	dbName := dbcr.Namespace + "-" + dbcr.Name
 	dbUser := dbcr.Namespace + "-" + dbcr.Name
 	dbPassword := kci.GeneratePass()
@@ -196,16 +205,6 @@ func generateDatabaseSecretData(dbcr *kciv1alpha1.Database) (map[string][]byte, 
 	default:
 		return nil, errors.New("not supported engine type")
 	}
-}
-
-//ConnectionStringFields defines default fields that can be used to generate a connection string
-type ConnectionStringFields struct {
-	Protocol     string
-	DatabaseHost string
-	DatabasePort int32
-	UserName     string
-	Password     string
-	DatabaseName string
 }
 
 func generateConnectionString(dbcr *kciv1alpha1.Database, dbData ConnectionStringFields) (connString string, err error) {
