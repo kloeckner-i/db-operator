@@ -177,7 +177,7 @@ func TestAddingConnectionsStringToSecret(t *testing.T) {
 	secret := addConnectionStringToSecret(postgresDbCr, secretData, connectionString)
 	secretData["CONNECTION_STRING"] = []byte(connectionString)
 	if val, ok := secret.Data["CONNECTION_STRING"]; ok {
-		assert.Equal(t, string(val), connectionString, "Connections string in a secret contains unexpected values")
+		assert.Equal(t, string(val), connectionString, "connections string in a secret contains unexpected values")
 		return
 	}
 }
@@ -202,7 +202,7 @@ func TestPsqlCustomConnectionStringGeneratation(t *testing.T) {
 
 	connString, err := generateConnectionString(postgresDbCr, c)
 	if err != nil {
-		t.Logf("Unexpected error: %s", err)
+		t.Logf("unexpected error: %s", err)
 		t.Fail()
 	}
 	assert.Equal(t, connString, expectedString, "generated connections string is wrong")
@@ -225,5 +225,5 @@ func TestWrongTemplateConnectionStringGeneratation(t *testing.T) {
 	_, err := generateConnectionString(postgresDbCr, c)
 	errSubstr := "can't evaluate field User in type controllers.ConnectionStringFields"
 
-	assert.Contains(t, err.Error(), errSubstr, "The error doesn't contain expected substring")
+	assert.Contains(t, err.Error(), errSubstr, "the error doesn't contain expected substring")
 }
