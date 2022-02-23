@@ -71,7 +71,13 @@ spec:
                 - cron
                 - enable
                 type: object
-              connectionString:
+              connectionStringTemplate:
+                description: 'ConnectionStringTemplate field can be used to pass a
+                  custom template for generating a db connection string. These keywords
+                  can be used: Protocol, DatabaseHost, DatabasePort, UserName, Password,
+                  DatabaseName. Default template looks like this: "{{ .Protocol }}://{{
+                  .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort
+                  }}/{{ .DatabaseName }}"'
                 type: string
               deletionProtected:
                 type: boolean

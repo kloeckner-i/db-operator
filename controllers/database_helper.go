@@ -221,8 +221,8 @@ func generateConnectionString(dbcr *kciv1alpha1.Database, dbData ConnectionStrin
 
 	// If dbcr.Spec.ConnectionString is not specified, use the defalt template
 	var tmpl string
-	if dbcr.Spec.ConnectionString != "" {
-		tmpl = dbcr.Spec.ConnectionString
+	if dbcr.Spec.ConnectionStringTemplate != "" {
+		tmpl = dbcr.Spec.ConnectionStringTemplate
 	} else {
 		tmpl = defaultTemplate
 	}
@@ -246,5 +246,5 @@ func generateConnectionString(dbcr *kciv1alpha1.Database, dbData ConnectionStrin
 
 func addConnectionStringToSecret(dbcr *kciv1alpha1.Database, secretData map[string][]byte, connectionString string) *v1.Secret {
 	secretData["CONNECTION_STRING"] = []byte(connectionString)
-	return (kci.SecretBuilder(dbcr.Spec.SecretName, dbcr.GetNamespace(), secretData))
+	return kci.SecretBuilder(dbcr.Spec.SecretName, dbcr.GetNamespace(), secretData)
 }

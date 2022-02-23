@@ -188,7 +188,7 @@ func TestPsqlCustomConnectionStringGeneratation(t *testing.T) {
 
 	prefix := "custom->"
 	postfix := "<-for_storing_data_you_know"
-	postgresDbCr.Spec.ConnectionString = fmt.Sprintf("%s{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}%s", prefix, postfix)
+	postgresDbCr.Spec.ConnectionStringTemplate = fmt.Sprintf("%s{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}%s", prefix, postfix)
 
 	c := ConnectionStringFields{
 		DatabaseHost: "postgres",
@@ -212,7 +212,7 @@ func TestWrongTemplateConnectionStringGeneratation(t *testing.T) {
 	instance := newPostgresTestDbInstanceCr()
 	postgresDbCr := newPostgresTestDbCr(instance)
 
-	postgresDbCr.Spec.ConnectionString = "{{ .Protocol }}://{{ .User }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}"
+	postgresDbCr.Spec.ConnectionStringTemplate = "{{ .Protocol }}://{{ .User }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}"
 
 	c := ConnectionStringFields{
 		DatabaseHost: "localhost",

@@ -31,7 +31,11 @@ type DatabaseSpec struct {
 	DeletionProtected bool           `json:"deletionProtected"`
 	Backup            DatabaseBackup `json:"backup"`
 	Extensions        []string       `json:"extensions,omitempty"`
-	ConnectionString  string         `json:"connectionString,omitempty"`
+	// ConnectionStringTemplate field can be used to pass a custom template for generating a db connection string.
+	// These keywords can be used: Protocol, DatabaseHost, DatabasePort, UserName, Password, DatabaseName.
+	// Default template looks like this: 
+	// "{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}"
+	ConnectionStringTemplate string `json:"connectionStringTemplate,omitempty"`
 }
 
 // DatabaseStatus defines the observed state of Database

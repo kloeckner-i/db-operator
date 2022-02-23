@@ -52,22 +52,24 @@ lint: $(SRC)
 vet: $(SRC)
 	@go vet ./...
 
-minisetup: miniup miniimage helm
+k3s_mac_lima_create: 
+	limactl start --tty=false ./resources/lima/k3s.yaml
 
-miniup: ## start minikube
-	@minikube start --kubernetes-version=$(K8S_VERSION) --cpus 2 --memory 4096
+k3s_mac_lima_start:
+	limactl start k3s
 
-minidown: ## stop minikube
-	@minikube stop
+k3s_mac_lima_helm:
+	mkdir -p "$${HOME}/.lima/k3s/conf"
+	limactl shell k3s sudo cat /etc/rancher/k3s/k3s.yaml >$${HOME}/.lima/k3s/conf/kubeconfig.yaml
+	@helm upgrade --install --namespace operator --create-namespace my-dboperator charts/db-operator -f charts/db-operator/values.yaml -f charts/db-operator/values-local.yaml --kubeconfig /Users/$${USER}/.lima/k3s/conf/kubeconfig.yaml
+	echo "Don't forget to use k3s docker coonfig \nexport KUBECONFIG=$${HOME}/.lima/k3s/conf/kubeconfig.yaml"
 
-minidelete: ## delete minikube
-	@minikube delete
+k3s_mac_deploy: build k3s_mac_image k3s_mac_lima_helm
 
-minidashboard: ## open minikube dashboard
-	@minikube dashboard
-
-miniimage: build
-	@minikube image load my-image.tar
+k3s_mac_image:
+	limactl copy my-image.tar k3s:/tmp/db.tar
+	limactl shell k3s sudo k3s ctr images import /tmp/db.tar
+	limactl shell k3s rm -f /tmp/db.tar
 
 k3d_setup: k3d_install k3d_image helm ## create a k3d cluster locally and install db-operator
 
