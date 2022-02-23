@@ -47,11 +47,11 @@ spec:
   connectionStringTemplate: |
     "jdbc:{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}" # provide a custom template to generate a database connection string
 ```
-If your application needs connections string in another format, you can provide your own template via the connectionStringTemplate field. When the `connectionStringTemplate` the default template is being used:
+If your application needs a connections string in another format, you can provide your own template via the connectionStringTemplate field. When the `connectionStringTemplate` is empty, the default template is being used:
 ```
 {{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}
 ```
-There fields can be used to generate a custom template: 
+These fields can be used to generate a custom template: 
 ```YAML
 - Protocol: Depending on db engine. Possible values are mysql/postgresql
 - UserName: The same value as for database user in the creds secret
