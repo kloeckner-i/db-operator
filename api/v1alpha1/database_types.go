@@ -73,6 +73,7 @@ type DatabaseBackup struct {
 //+kubebuilder:printcolumn:name="Protected",type=boolean,JSONPath=`.spec.deletionProtected`,description="If database is protected to not get deleted."
 //+kubebuilder:printcolumn:name="DBInstance",type=string,JSONPath=`.status.instanceRef.metadata.name`,description="instance reference"
 //+kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`,description="time since creation of resource"
+
 // Database is the Schema for the databases API
 type Database struct {
 	metav1.TypeMeta   `json:",inline"`
