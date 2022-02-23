@@ -112,7 +112,7 @@ func parseDatabaseSecretData(dbcr *kciv1alpha1.Database, data map[string][]byte)
 	if connectionString, ok := data["CONNECTION_STRING"]; ok {
 		cred.ConnectionString = string(connectionString)
 	} else {
-		logrus.Warn("CONNECTION_STRING key does not exist in secret data")
+		logrus.Info("CONNECTION_STRING key does not exist in secret data")
 	}
 
 	switch engine {
