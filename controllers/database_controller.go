@@ -569,7 +569,7 @@ func (r *DatabaseReconciler) createConnectionString(ctx context.Context, dbcr *k
 		return err
 	}
 	// Update database-credentials secret.
-	if connectionString := databaseCred.ConnectionString; connectionString != "" && connectionString == dbConnectionString {
+	if connectionString := databaseCred.ConnectionString; connectionString == dbConnectionString {
 		return nil
 	}
 	logrus.Debugf("DB: namespace=%s, name=%s updating credentials secret", dbcr.Namespace, dbcr.Name)
