@@ -61,7 +61,7 @@ k3s_mac_lima_start:
 k3s_mac_lima_helm:
 	mkdir -p "$${HOME}/.lima/k3s/conf"
 	limactl shell k3s sudo cat /etc/rancher/k3s/k3s.yaml >$${HOME}/.lima/k3s/conf/kubeconfig.yaml
-	@helm upgrade --install --namespace operator --create-namespace my-dboperator charts/db-operator -f charts/db-operator/values.yaml -f charts/db-operator/values-local.yaml --kubeconfig /Users/$${USER}/.lima/k3s/conf/kubeconfig.yaml
+	@helm upgrade --install --namespace operator --create-namespace my-dboperator charts/db-operator -f charts/db-operator/values.yaml -f charts/db-operator/values-local.yaml --kubeconfig $${HOME}/.lima/k3s/conf/kubeconfig.yaml
 	echo "Don't forget to use k3s docker coonfig \nexport KUBECONFIG=$${HOME}/.lima/k3s/conf/kubeconfig.yaml"
 
 k3s_mac_deploy: build k3s_mac_image k3s_mac_lima_helm
