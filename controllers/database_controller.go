@@ -574,9 +574,10 @@ func (r *DatabaseReconciler) createConnectionString(ctx context.Context, dbcr *k
 	}
 	logrus.Debugf("DB: namespace=%s, name=%s updating credentials secret", dbcr.Namespace, dbcr.Name)
 	newSecret := addConnectionStringToSecret(dbcr, databaseSecret.Data, dbConnectionString)
-	r.Update(ctx, newSecret, &client.UpdateOptions{})
-	logrus.Debugf("DB: namespace=%s, name=%s credentials secret is updated", dbcr.Namespace, dbcr.Name)
-
+	err = r.Update(ctx, newSecret, &client.UpdateOptions{})
+	if err != nil {
+		return err
+	}
 	logrus.Infof("DB: namespace=%s, name=%s connection string is added to credentials secret", dbcr.Namespace, dbcr.Name)
 	return nil
 }
