@@ -17,6 +17,7 @@
 package controllers
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/kloeckner-i/db-operator/pkg/utils/database"
@@ -117,4 +118,112 @@ func TestMonitoringEnabled(t *testing.T) {
 		}
 	}
 	assert.Equal(t, found, true, "expected pg_stat_statement is included in extension list")
+}
+
+func TestPsqlDefaultConnectionStringGeneratation(t *testing.T) {
+	instance := newPostgresTestDbInstanceCr()
+	postgresDbCr := newPostgresTestDbCr(instance)
+
+	c := ConnectionStringFields{
+		DatabaseHost: "postgres",
+		DatabasePort: 5432,
+		UserName:     "root",
+		Password:     "qwertyu9",
+		DatabaseName: "postgres",
+	}
+	protocol := "postgresql"
+	expectedString := fmt.Sprintf("%s://%s:%s@%s:%d/%s", protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName)
+
+	connString, err := generateConnectionString(postgresDbCr, c)
+	if err != nil {
+		t.Logf("Unexpected error: %s", err)
+		t.Fail()
+	}
+	assert.Equal(t, connString, expectedString, "generated connections string is wrong")
+}
+
+func TestMysqlDefaultConnectionStringGeneratation(t *testing.T) {
+	mysqlDbCr := newMysqlTestDbCr()
+
+	c := ConnectionStringFields{
+		DatabaseHost: "mysql",
+		DatabasePort: 5432,
+		UserName:     "root",
+		Password:     "qwertyu9",
+		DatabaseName: "mysql",
+	}
+	protocol := "mysql"
+	expectedString := fmt.Sprintf("%s://%s:%s@%s:%d/%s", protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName)
+
+	connString, err := generateConnectionString(mysqlDbCr, c)
+	if err != nil {
+		t.Logf("Unexpected error: %s", err)
+		t.Fail()
+	}
+	assert.Equal(t, connString, expectedString, "generated connections string is wrong")
+}
+
+func TestAddingConnectionsStringToSecret(t *testing.T) {
+	instance := newPostgresTestDbInstanceCr()
+	postgresDbCr := newPostgresTestDbCr(instance)
+	secretData := map[string][]byte{
+		"POSTGRES_DB":       []byte("postgres"),
+		"POSTGRES_USER":     []byte("root"),
+		"POSTGRES_PASSWORD": []byte("qwertyu9"),
+	}
+
+	connectionString := "it's a dummy connection string"
+
+	secret := addConnectionStringToSecret(postgresDbCr, secretData, connectionString)
+	secretData["CONNECTION_STRING"] = []byte(connectionString)
+	if val, ok := secret.Data["CONNECTION_STRING"]; ok {
+		assert.Equal(t, string(val), connectionString, "connections string in a secret contains unexpected values")
+		return
+	}
+}
+
+func TestPsqlCustomConnectionStringGeneratation(t *testing.T) {
+	instance := newPostgresTestDbInstanceCr()
+	postgresDbCr := newPostgresTestDbCr(instance)
+
+	prefix := "custom->"
+	postfix := "<-for_storing_data_you_know"
+	postgresDbCr.Spec.ConnectionStringTemplate = fmt.Sprintf("%s{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}%s", prefix, postfix)
+
+	c := ConnectionStringFields{
+		DatabaseHost: "postgres",
+		DatabasePort: 5432,
+		UserName:     "root",
+		Password:     "qwertyu9",
+		DatabaseName: "postgres",
+	}
+	protocol := "postgresql"
+	expectedString := fmt.Sprintf("%s%s://%s:%s@%s:%d/%s%s", prefix, protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName, postfix)
+
+	connString, err := generateConnectionString(postgresDbCr, c)
+	if err != nil {
+		t.Logf("unexpected error: %s", err)
+		t.Fail()
+	}
+	assert.Equal(t, connString, expectedString, "generated connections string is wrong")
+}
+
+func TestWrongTemplateConnectionStringGeneratation(t *testing.T) {
+	instance := newPostgresTestDbInstanceCr()
+	postgresDbCr := newPostgresTestDbCr(instance)
+
+	postgresDbCr.Spec.ConnectionStringTemplate = "{{ .Protocol }}://{{ .User }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}"
+
+	c := ConnectionStringFields{
+		DatabaseHost: "localhost",
+		DatabasePort: 5432,
+		UserName:     "root",
+		Password:     "qwertyu9",
+		DatabaseName: "postgres",
+	}
+
+	_, err := generateConnectionString(postgresDbCr, c)
+	errSubstr := "can't evaluate field User in type controllers.ConnectionStringFields"
+
+	assert.Contains(t, err.Error(), errSubstr, "the error doesn't contain expected substring")
 }
