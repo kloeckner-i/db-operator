@@ -160,7 +160,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		return r.manageError(ctx, dbcr, err, true)
 	}
 
-	if isDBSpecChanged(dbcr, databaseSecret) {
+	if isDBChanged(dbcr, databaseSecret) {
 		logrus.Infof("DB: namespace=%s, name=%s spec changed", dbcr.Namespace, dbcr.Name)
 		err := r.initialize(ctx, dbcr)
 		if err != nil {
@@ -172,7 +172,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			return r.manageError(ctx, dbcr, err, true)
 		}
 
-		addDBSpecChecksum(dbcr, databaseSecret)
+		addDBChecksum(dbcr, databaseSecret)
 		err = r.Update(ctx, dbcr)
 		if err != nil {
 			logrus.Errorf("error resource updating - %s", err)

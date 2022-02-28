@@ -26,14 +26,14 @@ import (
 	crdv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
-func isDBSpecChanged(dbcr *kciv1alpha1.Database, databaseSecret *corev1.Secret) bool {
+func isDBChanged(dbcr *kciv1alpha1.Database, databaseSecret *corev1.Secret) bool {
 	annotations := dbcr.ObjectMeta.GetAnnotations()
 
 	return annotations["checksum/spec"] != kci.GenerateChecksum(dbcr.Spec) ||
-		     annotations["checksum/secret"] != kci.GenerateChecksum(databaseSecret.Data)
+		annotations["checksum/secret"] != kci.GenerateChecksum(databaseSecret.Data)
 }
 
-func addDBSpecChecksum(dbcr *kciv1alpha1.Database, databaseSecret *corev1.Secret) {
+func addDBChecksum(dbcr *kciv1alpha1.Database, databaseSecret *corev1.Secret) {
 	annotations := dbcr.ObjectMeta.GetAnnotations()
 	if len(annotations) == 0 {
 		annotations = make(map[string]string)
