@@ -18,9 +18,10 @@ package database
 
 // Credentials contains credentials to connect database
 type Credentials struct {
-	Name     string
-	Username string
-	Password string
+	Name             string
+	Username         string
+	Password         string
+	ConnectionString string
 }
 
 // AdminCredentials contains admin username and password of database server

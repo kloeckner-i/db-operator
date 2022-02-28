@@ -63,6 +63,7 @@ var (
 	dbPhaseCreate               = "Creating"
 	dbPhaseInstanceAccessSecret = "InstanceAccessSecretCreating"
 	dbPhaseProxy                = "ProxyCreating"
+	dbPhaseConnectionString     = "ConnectionStringCreating"
 	dbPhaseConfigMap            = "InfoConfigMapCreating"
 	dbPhaseMonitoring           = "MonitoringCreating"
 	dbPhaseBackupJob            = "BackupJobCreating"
@@ -208,6 +209,12 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			if err != nil {
 				return r.manageError(ctx, dbcr, err, true)
 			}
+			dbcr.Status.Phase = dbPhaseConnectionString
+		case dbPhaseConnectionString:
+			err := r.createConnectionString(ctx, dbcr)
+			if err != nil {
+				return r.manageError(ctx, dbcr, err, true)
+			}
 			dbcr.Status.Phase = dbPhaseConfigMap
 		case dbPhaseConfigMap:
 			err := r.createInfoConfigMap(ctx, dbcr)
@@ -302,18 +309,7 @@ func (r *DatabaseReconciler) createDatabase(ctx context.Context, dbcr *kciv1alph
 				logrus.Errorf("can not generate credentials for database - %s", err)
 				return err
 			}
-			newDatabaseSecret := &corev1.Secret{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Secret",
-					APIVersion: "v1",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      dbcr.Spec.SecretName,
-					Namespace: dbcr.Namespace,
-					Labels:    kci.BaseLabelBuilder(),
-				},
-				Data: secretData,
-			}
+			newDatabaseSecret := kci.SecretBuilder(dbcr.Spec.SecretName, dbcr.Namespace, secretData)
 			err = r.Create(ctx, newDatabaseSecret)
 			if err != nil {
 				// failed to create secret
@@ -325,7 +321,6 @@ func (r *DatabaseReconciler) createDatabase(ctx context.Context, dbcr *kciv1alph
 			return err
 		}
 	}
-
 	databaseCred, err := parseDatabaseSecretData(dbcr, databaseSecret.Data)
 	if err != nil {
 		// failed to parse database credential from secret
@@ -566,6 +561,44 @@ func (r *DatabaseReconciler) createProxy(ctx context.Context, dbcr *kciv1alpha1.
 	dbcr.Status.ProxyStatus.Status = true
 
 	logrus.Infof("DB: namespace=%s, name=%s proxy created", dbcr.Namespace, dbcr.Name)
+	return nil
+}
+
+func (r *DatabaseReconciler) createConnectionString(ctx context.Context, dbcr *kciv1alpha1.Database) error {
+	// First of all the password should be taken from secret because it's not stored anywhere else
+	databaseSecret, err := r.getDatabaseSecret(ctx, dbcr)
+	if err != nil {
+		return err
+	}
+	// Then parse the secret to get the password
+	databaseCred, err := parseDatabaseSecretData(dbcr, databaseSecret.Data)
+	if err != nil {
+		return err
+	}
+	// Fill ConnectionStringFields struct
+	dbUrl := ConnectionStringFields{
+		DatabaseHost: dbcr.Status.ProxyStatus.ServiceName,
+		DatabasePort: dbcr.Status.ProxyStatus.SQLPort,
+		UserName:     dbcr.Status.UserName,
+		Password:     databaseCred.Password,
+		DatabaseName: dbcr.Status.DatabaseName,
+	}
+	// Generate the connection string
+	dbConnectionString, err := generateConnectionString(dbcr, dbUrl)
+	if err != nil {
+		return err
+	}
+	// Update database-credentials secret.
+	if databaseCred.ConnectionString == dbConnectionString {
+		return nil
+	}
+	logrus.Debugf("DB: namespace=%s, name=%s updating credentials secret", dbcr.Namespace, dbcr.Name)
+	newSecret := addConnectionStringToSecret(dbcr, databaseSecret.Data, dbConnectionString)
+	err = r.Update(ctx, newSecret, &client.UpdateOptions{})
+	if err != nil {
+		return err
+	}
+	logrus.Infof("DB: namespace=%s, name=%s connection string is added to credentials secret", dbcr.Namespace, dbcr.Name)
 	return nil
 }
 
