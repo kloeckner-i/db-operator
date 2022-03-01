@@ -69,7 +69,6 @@ func (e *secretEventHandler) Update(evt event.UpdateEvent, q workqueue.RateLimit
 		if numDatabases > 1 {
 			// We do not allow using the same Secret resource for several Database resources!
 			logrus.Warning("Secret Update Event error! Multiple Database resources related to the same Secret: secret=", secretNew.Namespace, "/", secretNew.Name, ", dbNames=", dbNames)
-			return
 		}
 
 		database := databases[0]
@@ -86,7 +85,6 @@ func (e *secretEventHandler) Update(evt event.UpdateEvent, q workqueue.RateLimit
 			Namespace: database.GetNamespace(),
 			Name:      database.GetName(),
 		}})
-
 	}
 
 	logrus.Info("Secret Update Event successfully processed")
