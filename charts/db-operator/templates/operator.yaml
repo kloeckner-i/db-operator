@@ -41,7 +41,7 @@ spec:
             - name: OPERATOR_NAME
               value: "db-operator"
             - name: WATCH_NAMESPACE
-              value: "" # it's necessary to set "" to watch cluster wide 
+              value: {{ .Values.watchNamespace | quote }}
             - name: RECONCILE_INTERVAL
               value: {{ .Values.reconcileInterval | quote }}
             - name: POD_NAME

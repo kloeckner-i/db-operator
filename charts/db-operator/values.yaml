@@ -8,6 +8,7 @@ image:
 #   - name: myRegistrySecret
 
 reconcileInterval: "60"
+watchNamespace: "" # it's necessary to set "" to watch cluster wide
 
 rbac:
   create: true
