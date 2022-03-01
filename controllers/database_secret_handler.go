@@ -72,7 +72,7 @@ func (e *secretEventHandler) Update(evt event.UpdateEvent, q workqueue.RateLimit
 			return
 		}
 
-		database := databases[:0]
+		database := databases[0]
 
 		// make sure that new credentials are valid
 		_, err := parseDatabaseSecretData(&database, secretNew.Data)
