@@ -17,9 +17,7 @@
 package controllers
 
 import (
-	"bytes"
 	"context"
-	"fmt"
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -32,10 +30,7 @@ import (
 )
 
 const (
-	PgPasswordKey    = "POSTGRES_PASSWORD"
-	MysqlPasswordKey = "PASSWORD"
-	PgEngine         = "postgres"
-	MysqlEngine      = "mysql"
+	DbSecretAnnotation = "db-operator/database"
 )
 
 /* ------ Secret Event Handler ------ */
@@ -56,39 +51,22 @@ func (e *secretEventHandler) Update(evt event.UpdateEvent, q workqueue.RateLimit
 	case *corev1.Secret:
 		secretNew := evt.ObjectNew.(*corev1.Secret)
 		// find database object
-		databases, dbNames, _ := getDatabasesBySecret(e.Client, types.NamespacedName{
-			Name:      evt.ObjectNew.GetName(),
-			Namespace: evt.ObjectNew.GetNamespace(),
-		})
 
-		numDatabases := len(databases)
-		if numDatabases == 0 {
-			logrus.Error("Secret Update Event error! Could not find Database resource related to the Secret: secret=", secretNew.Namespace, "/", secretNew.Name)
+		// only annotated secrets are watched
+		annotations := secretNew.ObjectMeta.GetAnnotations()
+		dbcrName := annotations[DbSecretAnnotation]
+
+		if len(dbcrName) == 0 {
+			logrus.Error("Secret Update Event error! Annotation '", DbSecretAnnotation, "' value is empty.")
 			return
 		}
-		if numDatabases > 1 {
-			// We do not allow using the same Secret resource for several Database resources!
-			logrus.Warning("Multiple Database resources related to the same Secret: secret=", secretNew.Namespace, "/", secretNew.Name, ", dbNames=", dbNames)
-		}
-
-		// reconcile all related Database resources
-		for _, database := range databases {
-			// make sure that new credentials are valid
-			_, err := parseDatabaseSecretData(&database, secretNew.Data)
-			if err != nil {
-				logrus.Error("Secret Update Event error! New Secret Data contains incorrect credentials: secret=", secretNew.Namespace, "/", secretNew.Name)
-				return
-			}
-			// send Database reconcile event
-			logrus.Info("Database Secret Data has been changed and related Database resource will be reconciled: database=", database.Namespace, "/", database.Name, ", secret=", secretNew.Namespace, "/", secretNew.Name)
-			q.Add(reconcile.Request{NamespacedName: types.NamespacedName{
-				Namespace: database.GetNamespace(),
-				Name:      database.GetName(),
-			}})
-		}
+		// send Database reconcile event
+		logrus.Info("Database Secret Data has been changed and related Database resource will be reconciled: secret=", secretNew.Namespace, "/", secretNew.Name, ", database=", dbcrName)
+		q.Add(reconcile.Request{NamespacedName: types.NamespacedName{
+			Namespace: secretNew.GetNamespace(),
+			Name:      dbcrName,
+		}})
 	}
-
-	logrus.Info("Secret Update Event successfully processed")
 }
 
 func (e *secretEventHandler) Delete(event.DeleteEvent, workqueue.RateLimitingInterface) {
@@ -117,20 +95,6 @@ func getDatabasesBySecret(c client.Client, secret types.NamespacedName) ([]kciv1
 		}
 	}
 	return matchedDbs, matchedDbNames, nil
-}
-
-func isFieldUpdated(dataOld map[string][]byte, dataNew map[string][]byte, keyName string) bool {
-
-	// read old and new value
-	oldValue, oldValueOk := dataOld[keyName]
-	newValue, newValueOk := dataNew[keyName]
-
-	if !oldValueOk || !newValueOk {
-		return false // values empty or do not exist
-	}
-
-	result := bytes.Compare(oldValue, newValue)
-	return result != 0 // true if values are not empty and updated
 }
 
 func isWatchedNamespace(watchNamespaces []string, ro runtime.Object) bool {
@@ -184,35 +148,13 @@ func isObjectUpdated(e event.UpdateEvent) bool {
 	// if object kind is a Secret check that password value has changed
 	secretNew, isSecret := e.ObjectNew.(*corev1.Secret)
 	if isSecret {
-		// if object kind is a Secret let's check that DB password inside has been updated
-		secretOld, secretOldOk := e.ObjectOld.(*corev1.Secret)
-		if !secretOldOk {
-			logrus.Error(nil, "Update Event error! ObjectOld is NOT a Secret: e.ObjectOld.GetName=", e.ObjectOld.GetName())
-			return false
+		// only annotated secrets are watched
+		annotations := secretNew.ObjectMeta.GetAnnotations()
+		dbcrName := annotations[DbSecretAnnotation]
+		if len(dbcrName) > 0 {
+			logrus.Info("Secret Update Event Detected: secret=", secretNew.Namespace, "/", secretNew.Name, ", database=", dbcrName)
+			return true
 		}
-
-		engine, passwordKey, err := resolveEngine(secretNew)
-		if err != nil {
-			return false // cannot resolve DB engine, ignore Update Event
-		}
-
-		isPasswordUpdated := isFieldUpdated(secretOld.Data, secretNew.Data, passwordKey)
-		logrus.Info("Secret Update Event Detected: engine=", engine, ", secret=", secretNew.Namespace, "/", secretNew.Name, ", isPasswordUpdated=", isPasswordUpdated)
-		return isPasswordUpdated
 	}
 	return false // unknown object, ignore Update Event
-}
-
-func resolveEngine(secret *corev1.Secret) (string, string, error) {
-
-	// Resolve engine by presence of corresponding secret key
-	if _, valueOk := secret.Data[PgPasswordKey]; valueOk {
-		return PgEngine, PgPasswordKey, nil
-	}
-
-	if _, valueOk := secret.Data[MysqlPasswordKey]; valueOk {
-		return MysqlEngine, MysqlPasswordKey, nil
-	}
-
-	return "", "", fmt.Errorf("could not resolve DB engine by password key: secret='%v/%v'", secret.Namespace, secret.Name)
 }
