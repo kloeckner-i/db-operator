@@ -8,7 +8,8 @@ image:
 #   - name: myRegistrySecret
 
 reconcileInterval: "60"
-watchNamespace: "" # it's necessary to set "" to watch cluster wide
+# watchNamespace value is comma-separated list of namespace names. It's necessary to set "" to watch cluster wide.
+watchNamespace: ""
 
 rbac:
   create: true
