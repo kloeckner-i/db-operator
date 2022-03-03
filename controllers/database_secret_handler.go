@@ -68,23 +68,24 @@ func (e *secretEventHandler) Update(evt event.UpdateEvent, q workqueue.RateLimit
 		}
 		if numDatabases > 1 {
 			// We do not allow using the same Secret resource for several Database resources!
-			logrus.Warning("Secret Update Event error! Multiple Database resources related to the same Secret: secret=", secretNew.Namespace, "/", secretNew.Name, ", dbNames=", dbNames)
+			logrus.Warning("Multiple Database resources related to the same Secret: secret=", secretNew.Namespace, "/", secretNew.Name, ", dbNames=", dbNames)
 		}
 
-		database := databases[0]
-
-		// make sure that new credentials are valid
-		_, err := parseDatabaseSecretData(&database, secretNew.Data)
-		if err != nil {
-			logrus.Error("Secret Update Event error! New Secret Data contains incorrect credentials: secret=", secretNew.Namespace, "/", secretNew.Name)
-			return
+		// reconcile all related Database resources
+		for _, database := range databases {
+			// make sure that new credentials are valid
+			_, err := parseDatabaseSecretData(&database, secretNew.Data)
+			if err != nil {
+				logrus.Error("Secret Update Event error! New Secret Data contains incorrect credentials: secret=", secretNew.Namespace, "/", secretNew.Name)
+				return
+			}
+			// send Database reconcile event
+			logrus.Info("Database Secret Data has been changed and related Database resource will be reconciled: database=", database.Namespace, "/", database.Name, ", secret=", secretNew.Namespace, "/", secretNew.Name)
+			q.Add(reconcile.Request{NamespacedName: types.NamespacedName{
+				Namespace: database.GetNamespace(),
+				Name:      database.GetName(),
+			}})
 		}
-
-		logrus.Info("Database Secret Data has been changed and related Database resource will be reconciled: database=", database.Namespace, "/", database.Name, ", secret=", secretNew.Namespace, "/", secretNew.Name)
-		q.Add(reconcile.Request{NamespacedName: types.NamespacedName{
-			Namespace: database.GetNamespace(),
-			Name:      database.GetName(),
-		}})
 	}
 
 	logrus.Info("Secret Update Event successfully processed")
