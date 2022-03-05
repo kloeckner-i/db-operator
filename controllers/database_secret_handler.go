@@ -17,7 +17,6 @@
 package controllers
 
 import (
-	"context"
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -57,7 +56,7 @@ func (e *secretEventHandler) Update(evt event.UpdateEvent, q workqueue.RateLimit
 			logrus.Error("Secret Update Event error! Annotation '", DbSecretAnnotation, "' value is empty or not exist.")
 			return
 		}
-		
+
 		// send Database reconcile event
 		logrus.Info("Database Secret Data has been changed and related Database resource will be reconciled: secret=", secretNew.Namespace, "/", secretNew.Name, ", database=", dbcrName)
 		q.Add(reconcile.Request{NamespacedName: types.NamespacedName{
@@ -78,22 +77,6 @@ func (e *secretEventHandler) Create(evt event.CreateEvent, q workqueue.RateLimit
 }
 
 /* ------ Event Filter Functions ------ */
-
-func getDatabasesBySecret(c client.Client, secret types.NamespacedName) ([]kciv1alpha1.Database, []string, error) {
-	databaseList := kciv1alpha1.DatabaseList{}
-	if err := c.List(context.Background(), &databaseList, &client.ListOptions{Namespace: secret.Namespace}); err != nil {
-		return nil, nil, err
-	}
-	var matchedDbs []kciv1alpha1.Database
-	var matchedDbNames []string
-	for _, database := range databaseList.Items {
-		if database.Spec.SecretName == secret.Name {
-			matchedDbs = append(matchedDbs, database)
-			matchedDbNames = append(matchedDbNames, database.Name)
-		}
-	}
-	return matchedDbs, matchedDbNames, nil
-}
 
 func isWatchedNamespace(watchNamespaces []string, ro runtime.Object) bool {
 	if watchNamespaces[0] == "" { // # it's necessary to set "" to watch cluster wide
