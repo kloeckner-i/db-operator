@@ -49,17 +49,15 @@ func (e *secretEventHandler) Update(evt event.UpdateEvent, q workqueue.RateLimit
 		return
 
 	case *corev1.Secret:
-		secretNew := evt.ObjectNew.(*corev1.Secret)
-		// find database object
-
 		// only annotated secrets are watched
+		secretNew := evt.ObjectNew.(*corev1.Secret)
 		annotations := secretNew.ObjectMeta.GetAnnotations()
-		dbcrName := annotations[DbSecretAnnotation]
-
-		if len(dbcrName) == 0 {
-			logrus.Error("Secret Update Event error! Annotation '", DbSecretAnnotation, "' value is empty.")
+		dbcrName, ok := annotations[DbSecretAnnotation]
+		if !ok {
+			logrus.Error("Secret Update Event error! Annotation '", DbSecretAnnotation, "' value is empty or not exist.")
 			return
 		}
+		
 		// send Database reconcile event
 		logrus.Info("Database Secret Data has been changed and related Database resource will be reconciled: secret=", secretNew.Namespace, "/", secretNew.Name, ", database=", dbcrName)
 		q.Add(reconcile.Request{NamespacedName: types.NamespacedName{
@@ -150,11 +148,12 @@ func isObjectUpdated(e event.UpdateEvent) bool {
 	if isSecret {
 		// only annotated secrets are watched
 		annotations := secretNew.ObjectMeta.GetAnnotations()
-		dbcrName := annotations[DbSecretAnnotation]
-		if len(dbcrName) > 0 {
-			logrus.Info("Secret Update Event Detected: secret=", secretNew.Namespace, "/", secretNew.Name, ", database=", dbcrName)
-			return true
+		dbcrName, ok := annotations[DbSecretAnnotation]
+		if !ok {
+			return false // no annotation found
 		}
+		logrus.Info("Secret Update Event detected: secret=", secretNew.Namespace, "/", secretNew.Name, ", database=", dbcrName)
+		return true
 	}
 	return false // unknown object, ignore Update Event
 }
