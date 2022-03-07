@@ -26,6 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"strings"
 )
 
 const (
@@ -39,30 +40,35 @@ type secretEventHandler struct {
 
 func (e *secretEventHandler) Update(evt event.UpdateEvent, q workqueue.RateLimitingInterface) {
 
-	logrus.Info("Secret Update Event processing started")
+	logrus.Info("Start processing Database Secret Update Event")
 
 	switch v := evt.ObjectNew.(type) {
 
 	default:
-		logrus.Error("Secret Update Event error! Unknown object: type=", v.GetObjectKind(), ", name=", evt.ObjectNew.GetNamespace(), "/", evt.ObjectNew.GetName())
+		logrus.Error("Database Secret Update Event error! Unknown object: type=", v.GetObjectKind(), ", name=", evt.ObjectNew.GetNamespace(), "/", evt.ObjectNew.GetName())
 		return
 
 	case *corev1.Secret:
 		// only annotated secrets are watched
 		secretNew := evt.ObjectNew.(*corev1.Secret)
 		annotations := secretNew.ObjectMeta.GetAnnotations()
-		dbcrName, ok := annotations[DbSecretAnnotation]
+		dbSecretAnnotation, ok := annotations[DbSecretAnnotation]
 		if !ok {
-			logrus.Error("Secret Update Event error! Annotation '", DbSecretAnnotation, "' value is empty or not exist.")
+			logrus.Error("Database Secret Update Event error! Annotation '", DbSecretAnnotation, "' value is empty or not exist.")
 			return
 		}
 
-		// send Database reconcile event
-		logrus.Info("Database Secret Data has been changed and related Database resource will be reconciled: secret=", secretNew.Namespace, "/", secretNew.Name, ", database=", dbcrName)
-		q.Add(reconcile.Request{NamespacedName: types.NamespacedName{
-			Namespace: secretNew.GetNamespace(),
-			Name:      dbcrName,
-		}})
+		logrus.Info("Processing Database Secret annotation: name=", DbSecretAnnotation, ", value=", dbSecretAnnotation)
+
+		dbcrNames := strings.Split(dbSecretAnnotation, ",")
+		for _, dbcrName := range dbcrNames {
+			// send Database Reconcile Request
+			logrus.Info("Database Secret has been changed and related Database resource will be reconciled: secret=", secretNew.Namespace, "/", secretNew.Name, ", database=", dbcrName)
+			q.Add(reconcile.Request{NamespacedName: types.NamespacedName{
+				Namespace: secretNew.GetNamespace(),
+				Name:      dbcrName,
+			}})
+		}
 	}
 }
 
