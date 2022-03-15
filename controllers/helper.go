@@ -30,7 +30,7 @@ func isDBChanged(dbcr *kciv1alpha1.Database, databaseSecret *corev1.Secret) bool
 	annotations := dbcr.ObjectMeta.GetAnnotations()
 
 	return annotations["checksum/spec"] != kci.GenerateChecksum(dbcr.Spec) ||
-		annotations["checksum/secret"] != kci.GenerateChecksum(databaseSecret.Data)
+		annotations["checksum/secret"] != generateChecksumSecretValue(databaseSecret)
 }
 
 func addDBChecksum(dbcr *kciv1alpha1.Database, databaseSecret *corev1.Secret) {
@@ -40,8 +40,15 @@ func addDBChecksum(dbcr *kciv1alpha1.Database, databaseSecret *corev1.Secret) {
 	}
 
 	annotations["checksum/spec"] = kci.GenerateChecksum(dbcr.Spec)
-	annotations["checksum/secret"] = kci.GenerateChecksum(databaseSecret.Data)
+	annotations["checksum/secret"] = generateChecksumSecretValue(databaseSecret)
 	dbcr.ObjectMeta.SetAnnotations(annotations)
+}
+
+func generateChecksumSecretValue(databaseSecret *corev1.Secret) string {
+	if databaseSecret == nil || databaseSecret.Data == nil {
+		return  ""
+	}
+	return kci.GenerateChecksum(databaseSecret.Data)
 }
 
 func isDBInstanceSpecChanged(ctx context.Context, dbin *kciv1alpha1.DbInstance) bool {
