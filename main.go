@@ -20,6 +20,7 @@ import (
 	"flag"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	kcirocksv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
@@ -101,6 +102,12 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "DbInstance")
 		os.Exit(1)
 	}
+	
+
+	watchNamespaces := os.Getenv("WATCH_NAMESPACE")
+	namespaces := strings.Split(watchNamespaces, ",")
+	setupLog.Info("Database resources will be served in the next namespaces", "namespaces", namespaces)
+	
 	if err = (&controllers.DatabaseReconciler{
 		Client:   mgr.GetClient(),
 		Log:      ctrl.Log.WithName("controllers").WithName("Database"),
@@ -108,6 +115,7 @@ func main() {
 		Recorder: mgr.GetEventRecorderFor("database-controller"),
 		Interval: time.Duration(i),
 		Conf:     &conf,
+		WatchNamespaces: namespaces,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Database")
 		os.Exit(1)

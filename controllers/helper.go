@@ -19,25 +19,36 @@ package controllers
 import (
 	"context"
 
+	corev1 "k8s.io/api/core/v1"
+
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 	crdv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
-func isDBSpecChanged(dbcr *kciv1alpha1.Database) bool {
+func isDBChanged(dbcr *kciv1alpha1.Database, databaseSecret *corev1.Secret) bool {
 	annotations := dbcr.ObjectMeta.GetAnnotations()
 
-	return annotations["checksum/spec"] != kci.GenerateChecksum(dbcr.Spec)
+	return annotations["checksum/spec"] != kci.GenerateChecksum(dbcr.Spec) ||
+		annotations["checksum/secret"] != generateChecksumSecretValue(databaseSecret)
 }
 
-func addDBSpecChecksum(dbcr *kciv1alpha1.Database) {
+func addDBChecksum(dbcr *kciv1alpha1.Database, databaseSecret *corev1.Secret) {
 	annotations := dbcr.ObjectMeta.GetAnnotations()
 	if len(annotations) == 0 {
 		annotations = make(map[string]string)
 	}
 
 	annotations["checksum/spec"] = kci.GenerateChecksum(dbcr.Spec)
+	annotations["checksum/secret"] = generateChecksumSecretValue(databaseSecret)
 	dbcr.ObjectMeta.SetAnnotations(annotations)
+}
+
+func generateChecksumSecretValue(databaseSecret *corev1.Secret) string {
+	if databaseSecret == nil || databaseSecret.Data == nil {
+		return  ""
+	}
+	return kci.GenerateChecksum(databaseSecret.Data)
 }
 
 func isDBInstanceSpecChanged(ctx context.Context, dbin *kciv1alpha1.DbInstance) bool {

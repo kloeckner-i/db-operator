@@ -31,6 +31,11 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+const (
+	TestSecretName = "TestSec"
+	TestNamespace  = "TestNS"
+)
+
 func newPostgresTestDbInstanceCr() kciv1alpha1.DbInstance {
 	info := make(map[string]string)
 	info["DB_PORT"] = "5432"
@@ -50,8 +55,8 @@ func newPostgresTestDbInstanceCr() kciv1alpha1.DbInstance {
 }
 
 func newPostgresTestDbCr(instanceRef kciv1alpha1.DbInstance) *kciv1alpha1.Database {
-	o := metav1.ObjectMeta{Namespace: "TestNS"}
-	s := kciv1alpha1.DatabaseSpec{SecretName: "TestSec"}
+	o := metav1.ObjectMeta{Namespace: TestNamespace}
+	s := kciv1alpha1.DatabaseSpec{SecretName: TestSecretName}
 
 	db := kciv1alpha1.Database{
 		ObjectMeta: o,
@@ -94,13 +99,25 @@ func newMysqlTestDbCr() *kciv1alpha1.Database {
 }
 
 func TestIsSpecChanged(t *testing.T) {
+
 	db := newPostgresTestDbCr(newPostgresTestDbInstanceCr())
-	addDBSpecChecksum(db)
-	nochange := isDBSpecChanged(db)
+
+	testDbSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Namespace: TestNamespace, Name: TestSecretName},
+		Data: map[string][]byte{
+			"POSTGRES_DB":       []byte("testdb"),
+			"POSTGRES_USER":     []byte("testuser"),
+			"POSTGRES_PASSWORD": []byte("testpassword"),
+		},
+	}
+
+	addDBChecksum(db, testDbSecret)
+	nochange := isDBChanged(db, testDbSecret)
 	assert.Equal(t, nochange, false, "expected false")
 
-	db.Spec.SecretName = "NewSec"
-	change := isDBSpecChanged(db)
+	testDbSecret.Data["POSTGRES_PASSWORD"] = []byte("testpasswordNEW")
+
+	change := isDBChanged(db, testDbSecret)
 	assert.Equal(t, change, true, "expected true")
 }
 

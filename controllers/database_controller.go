@@ -21,6 +21,9 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 	"strconv"
 	"time"
 
@@ -48,11 +51,12 @@ import (
 // DatabaseReconciler reconciles a Database object
 type DatabaseReconciler struct {
 	client.Client
-	Log      logr.Logger
-	Scheme   *runtime.Scheme
-	Recorder record.EventRecorder
-	Interval time.Duration
-	Conf     *config.Config
+	Log             logr.Logger
+	Scheme          *runtime.Scheme
+	Recorder        record.EventRecorder
+	Interval        time.Duration
+	Conf            *config.Config
+	WatchNamespaces []string
 }
 
 var (
@@ -150,7 +154,13 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		return reconcileResult, nil
 	}
 
-	if isDBSpecChanged(dbcr) {
+	databaseSecret, err := r.getDatabaseSecret(ctx, dbcr)
+	if err != nil && !k8serrors.IsNotFound(err) {
+		logrus.Errorf("could not get database secret - %s", err)
+		return r.manageError(ctx, dbcr, err, true)
+	}
+
+	if isDBChanged(dbcr, databaseSecret) {
 		logrus.Infof("DB: namespace=%s, name=%s spec changed", dbcr.Namespace, dbcr.Name)
 		err := r.initialize(ctx, dbcr)
 		if err != nil {
@@ -162,7 +172,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			return r.manageError(ctx, dbcr, err, true)
 		}
 
-		addDBSpecChecksum(dbcr)
+		addDBChecksum(dbcr, databaseSecret)
 		err = r.Update(ctx, dbcr)
 		if err != nil {
 			logrus.Errorf("error resource updating - %s", err)
@@ -248,8 +258,24 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
+
+	eventFilter := predicate.Funcs{
+		CreateFunc: func(e event.CreateEvent) bool {
+			return isWatchedNamespace(r.WatchNamespaces, e.Object) && isDatabase(e.Object)
+		}, // Reconcile only Database Create Event
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			return isWatchedNamespace(r.WatchNamespaces, e.Object) && isDatabase(e.Object)
+		}, // Reconcile only Database Delete Event
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			return isWatchedNamespace(r.WatchNamespaces, e.ObjectNew) && isObjectUpdated(e)
+		}, // Reconcile Database and Secret Update Events
+		GenericFunc: func(e event.GenericEvent) bool { return true }, // Reconcile any Generic Events (operator POD or cluster restarted)
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&kciv1alpha1.Database{}).
+		WithEventFilter(eventFilter).
+		Watches(&source.Kind{Type: &corev1.Secret{}}, &secretEventHandler{r.Client}).
 		Complete(r)
 }
 
@@ -339,6 +365,12 @@ func (r *DatabaseReconciler) createDatabase(ctx context.Context, dbcr *kciv1alph
 	err = r.Update(ctx, dbcr)
 	if err != nil {
 		logrus.Errorf("error resource updating - %s", err)
+		return err
+	}
+
+	err = r.annotateDatabaseSecret(ctx, dbcr, databaseSecret)
+	if err != nil {
+		logrus.Errorf("could not annotate database secret - %s", err)
 		return err
 	}
 
@@ -675,6 +707,17 @@ func (r *DatabaseReconciler) getDatabaseSecret(ctx context.Context, dbcr *kciv1a
 	}
 
 	return secret, nil
+}
+
+func (r *DatabaseReconciler) annotateDatabaseSecret(ctx context.Context, dbcr *kciv1alpha1.Database, secret *corev1.Secret) error {
+	annotations := secret.ObjectMeta.GetAnnotations()
+	if len(annotations) == 0 {
+		annotations = make(map[string]string)
+	}
+	annotations[DbSecretAnnotation] = dbcr.Name
+	secret.ObjectMeta.SetAnnotations(annotations)
+
+	return r.Update(ctx, secret)
 }
 
 func (r *DatabaseReconciler) getAdminSecret(ctx context.Context, dbcr *kciv1alpha1.Database) (*corev1.Secret, error) {
