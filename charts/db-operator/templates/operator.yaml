@@ -26,6 +26,13 @@ spec:
       {{- if .Values.serviceAccount.create }}
       serviceAccountName: {{ template "db-operator.name" . }}-sa
       {{- end }}
+
+     {{- if .Values.security }}
+      securityContext:
+        runAsUser: {{ .Values.security.runAsUser }}
+        fsGroup: {{ .Values.security.fsGroup }}
+     {{- end }}
+
       containers:
         - name: operator
           image: "{{ .Values.image.repository }}:{{ template "db-operator.github_packages_image_version" . }}"
@@ -37,7 +44,7 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             - name: LOG_LEVEL
-              value: info
+              value: {{ .Values.image.logLevel }}
             - name: OPERATOR_NAME
               value: "db-operator"
             - name: WATCH_NAMESPACE
