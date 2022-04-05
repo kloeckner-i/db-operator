@@ -32,7 +32,7 @@ jobs:
       - name: Run chart-testing (lint)
         run: ct lint --validate-maintainers=false
 
-  lint:
+  lint: ## https://github.com/golangci/golangci-lint-action#how-to-use
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -40,7 +40,7 @@ jobs:
       - name: Check Code Style
         uses: golangci/golangci-lint-action@v2
         with:
-          version: v1.43.0
+          version: v1.45.2 ## https://github.com/golangci/golangci-lint/releases
           args: --timeout 3m0s
 
   unit-test:
