@@ -26,7 +26,6 @@ spec:
       {{- if .Values.serviceAccount.create }}
       serviceAccountName: {{ template "db-operator.name" . }}-sa
       {{- end }}
-
      {{- if .Values.security }}
       securityContext:
         runAsUser: {{ .Values.security.runAsUser }}
