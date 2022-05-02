@@ -84,6 +84,35 @@ func TestPostgresAddExtensions(t *testing.T) {
 	assert.NoError(t, p.checkExtensions())
 }
 
+func TestPostgresNoSchemas(t *testing.T) {
+	admin := getPostgresAdmin()
+	p := testPostgres()
+
+	assert.NoError(t, p.createSchemas(admin))
+	assert.NoError(t, p.checkSchemas())
+}
+
+func TestPostgresAddSchemas(t *testing.T) {
+	admin := getPostgresAdmin()
+	p := testPostgres()
+	p.Schemas = []string{"schema_1", "schema_2"}
+
+	assert.Error(t, p.checkSchemas())
+	assert.NoError(t, p.createSchemas(admin))
+	assert.NoError(t, p.checkSchemas())
+}
+
+func TestPosgresDropPublicSchema(t *testing.T) {
+	p := testPostgres()
+	p.DropPublicSchema = true
+	p.Schemas = []string{"public"}
+
+	assert.Error(t, p.checkSchemas())
+
+	p.Schemas = []string{}
+	assert.NoError(t, p.checkSchemas())
+}
+
 func TestPostgresDeleteDatabase(t *testing.T) {
 	admin := getPostgresAdmin()
 	p := testPostgres()
@@ -145,32 +174,3 @@ func TestPostgresParseAdminCredentials(t *testing.T) {
 	assert.Equal(t, string(validData3["postgresql-postgres-password"]), cred.Password, "expect same values")
 }
 
-
-func TestPostgresNoSchemas(t *testing.T) {
-	admin := getPostgresAdmin()
-	p := testPostgres()
-
-	assert.NoError(t, p.createSchemas(admin))
-	assert.NoError(t, p.checkSchemas())
-}
-
-func TestPostgresAddSchemas(t *testing.T) {
-	admin := getPostgresAdmin()
-	p := testPostgres()
-	p.Schemas = []string{"schema_1", "schema_2"}
-
-	assert.Error(t, p.checkSchemas())
-	assert.NoError(t, p.createSchemas(admin))
-	assert.NoError(t, p.checkSchemas())
-}
-
-func TestPosgresDropPublicSchema(t *testing.T) {
-	p := testPostgres()
-	p.DropPublicSchema = true
-	p.Schemas = []string{"public"}
-
-	assert.Error(t, p.checkSchemas())
-
-	p.Schemas = []string{}
-	assert.NoError(t, p.checkSchemas())
-}
