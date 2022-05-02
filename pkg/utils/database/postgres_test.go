@@ -24,7 +24,7 @@ import (
 )
 
 func testPostgres() *Postgres {
-	return &Postgres{"local", test.GetPostgresHost(), test.GetPostgresPort(), "testdb", "testuser", "testpassword", []string{}, false, false}
+	return &Postgres{"local", test.GetPostgresHost(), test.GetPostgresPort(), "testdb", "testuser", "testpassword", []string{}, false, false, false, []string{}}
 }
 
 func getPostgresAdmin() AdminCredentials {
@@ -143,4 +143,34 @@ func TestPostgresParseAdminCredentials(t *testing.T) {
 	assert.NoErrorf(t, err, "expected no error %v", err)
 	assert.Equal(t, "postgres", cred.Username, "expect same values")
 	assert.Equal(t, string(validData3["postgresql-postgres-password"]), cred.Password, "expect same values")
+}
+
+
+func TestPostgresNoSchemas(t *testing.T) {
+	admin := getPostgresAdmin()
+	p := testPostgres()
+
+	assert.NoError(t, p.createSchemas(admin))
+	assert.NoError(t, p.checkSchemas())
+}
+
+func TestPostgresAddSchemas(t *testing.T) {
+	admin := getPostgresAdmin()
+	p := testPostgres()
+	p.Schemas = []string{"schema_1", "schema_2"}
+
+	assert.Error(t, p.checkSchemas())
+	assert.NoError(t, p.createSchemas(admin))
+	assert.NoError(t, p.checkSchemas())
+}
+
+func TestPosgresDropPublicSchema(t *testing.T) {
+	p := testPostgres()
+	p.DropPublicSchema = true
+	p.Schemas = []string{"public"}
+
+	assert.Error(t, p.checkSchemas())
+
+	p.Schemas = []string{}
+	assert.NoError(t, p.checkSchemas())
 }
