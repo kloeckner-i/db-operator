@@ -102,19 +102,6 @@ func TestPostgresAddSchemas(t *testing.T) {
 	assert.NoError(t, p.checkSchemas())
 }
 
-func TestPosgresDropPublicSchema(t *testing.T) {
-	admin := getPostgresAdmin()
-	p := testPostgres()
-	
-	p.DropPublicSchema = true
-	p.Schemas = []string{"public"}
-	
-	p.dropPublicSchema(admin)
-	assert.Error(t, p.checkSchemas())
-	p.Schemas = []string{}
-	assert.NoError(t, p.checkSchemas())
-}
-
 func TestPostgresDeleteDatabase(t *testing.T) {
 	admin := getPostgresAdmin()
 	p := testPostgres()
@@ -132,6 +119,19 @@ func TestPostgresDeleteUser(t *testing.T) {
 
 	err := p.deleteUser(admin)
 	assert.NoErrorf(t, err, "Unexpected error %v", err)
+}
+
+func TestPosgresDropPublicSchema(t *testing.T) {
+	admin := getPostgresAdmin()
+	p := testPostgres()
+	
+	p.DropPublicSchema = true
+	p.Schemas = []string{"public"}
+	
+	p.dropPublicSchema(admin)
+	assert.Error(t, p.checkSchemas())
+	p.Schemas = []string{}
+	assert.NoError(t, p.checkSchemas())
 }
 
 func TestPostgresGetCredentials(t *testing.T) {
