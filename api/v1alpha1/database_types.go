@@ -41,7 +41,9 @@ type DatabaseSpec struct {
 
 // Postgres struct should be used to provide resource that only applicable to postgres
 type Postgres struct {
+	// If set to true, the public schema will be dropped after the database creation
 	DropPublicSchema bool     `json:"dropPublicSchema,omitempty"`
+	// Specify schemas to be created. The user created by db-operator will have all access on them.
 	Schemas          []string `json:"schemas,omitempty"`
 }
 

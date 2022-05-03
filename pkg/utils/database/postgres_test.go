@@ -103,12 +103,14 @@ func TestPostgresAddSchemas(t *testing.T) {
 }
 
 func TestPosgresDropPublicSchema(t *testing.T) {
+	admin := getPostgresAdmin()
 	p := testPostgres()
+	
 	p.DropPublicSchema = true
 	p.Schemas = []string{"public"}
-
+	
+	p.dropPublicSchema(admin)
 	assert.Error(t, p.checkSchemas())
-
 	p.Schemas = []string{}
 	assert.NoError(t, p.checkSchemas())
 }

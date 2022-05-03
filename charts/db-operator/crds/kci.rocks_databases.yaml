@@ -92,8 +92,12 @@ spec:
                   only applicable to postgres
                 properties:
                   dropPublicSchema:
+                    description: If set to true, the public schema will be dropped
+                      after the database creation
                     type: boolean
                   schemas:
+                    description: Specify schemas to be created. The user created by
+                      db-operator will have all access on them.
                     items:
                       type: string
                     type: array
