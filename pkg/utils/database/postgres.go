@@ -221,7 +221,6 @@ func (p Postgres) createUser(admin AdminCredentials) error {
 		return err
 	}
 
-	logrus.Info("Granting access")
 	for _, s := range p.Schemas {
 		grantUserAccess := fmt.Sprintf("GRANT ALL ON SCHEMA \"%s\" TO \"%s\"", s, p.User)
 		if err := p.executeQuery(p.Database, grantUserAccess, admin); err != nil {

@@ -47,7 +47,7 @@ spec:
   connectionStringTemplate: |
     "jdbc:{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}" # provide a custom template to generate a database connection string
 ```
-If your application needs a connections string in another format, you can provide your own template via the connectionStringTemplate field. When the `connectionStringTemplate` is empty, the default template is being used:
+If your application needs a connections string in another format, you can provide your own template via the connectionStringTemplate field. When the `connectionStringTemplate` is empty, the default template is used:
 ```
 {{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}
 ```
@@ -59,6 +59,15 @@ These fields can be used to generate a custom template:
 - DatabaseHost: The same value as for db host in the connection configmap 
 - DatabasePort: The same value as for db port in the connection configmap 
 - DatabaseName: The same value as for db host in the creds secret
+```
+
+For `postgres` it's also possible to drop the `Public` schema after the database creation, or to create additional schemas. To do that, you need to provide these fields: 
+```YAML
+postgres:
+  dropPublicSchema: true # Do not set it, or set to false if you don't want to drop the public schema
+  schemas: # The user that's is going to be created by db-operator, will be granted all privileges on these schemas
+    - schema_1
+    - schema_2
 ```
 
 After successful `Database` creation, you must be able to get a secret named like `example-db-credentials`.
