@@ -88,30 +88,8 @@ func TestPostgresNoSchemas(t *testing.T) {
 	admin := getPostgresAdmin()
 	p := testPostgres()
 
-	assert.NoError(t, p.createSchemas(admin))
 	assert.NoError(t, p.checkSchemas())
-}
-
-// func TestPostgresAddSchemas(t *testing.T) {
-// 	admin := getPostgresAdmin()
-// 	p := testPostgres()
-// 	p.Schemas = []string{"schema_1", "schema_2"}
-// 
-// 	assert.Error(t, p.checkSchemas())
-// 	assert.NoError(t, p.createSchemas(admin))
-// 	assert.NoError(t, p.checkSchemas())
-// }
-
-func TestPosgresDropPublicSchema(t *testing.T) {
-	admin := getPostgresAdmin()
-	p := testPostgres()
-	
-	p.DropPublicSchema = true
-	p.Schemas = []string{"public"}
-	
-	p.dropPublicSchema(admin)
-	assert.Error(t, p.checkSchemas())
-	p.Schemas = []string{}
+	assert.NoError(t, p.createSchemas(admin))
 	assert.NoError(t, p.checkSchemas())
 }
 
