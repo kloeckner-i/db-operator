@@ -67,6 +67,7 @@ func TestPostgresCreateUser(t *testing.T) {
 }
 func TestPublicSchema(t *testing.T) {
 	p := testPostgres()
+	p.DropPublicSchema = false
 	assert.NoError(t, p.checkSchemas())
 }
 
