@@ -65,6 +65,22 @@ func TestPostgresCreateUser(t *testing.T) {
 	err = p.createUser(admin)
 	assert.Error(t, err, "Should get error")
 }
+func TestPublicSchema(t *testing.T) {
+	p := testPostgres()
+	assert.NoError(t, p.checkSchemas())
+}
+
+func TestDropPublicSchema(t *testing.T) {
+	p := testPostgres()
+	admin := getPostgresAdmin()
+	p.DropPublicSchema = true
+	p.dropPublicSchema(admin)
+	assert.NoError(t, p.checkSchemas())
+	
+	// Schemas is recreated here not to breaks tests for extensions
+	p.Schemas = []string{"public"}
+	assert.NoError(t, p.createSchemas(admin))
+}
 
 func TestPostgresNoExtensions(t *testing.T) {
 	admin := getPostgresAdmin()
@@ -103,19 +119,6 @@ func TestPostgresSchemas(t *testing.T) {
 	assert.NoError(t, p.checkSchemas())
 }
 
-func TestPublicSchema(t *testing.T) {
-	p := testPostgres()
-	assert.NoError(t, p.checkSchemas())
-}
-
-func TestDropPublicSchema(t *testing.T) {
-	p := testPostgres()
-	admin := getPostgresAdmin()
-	p.DropPublicSchema = true
-	p.dropPublicSchema(admin)
-	assert.NoError(t, p.checkSchemas())
-}
-
 func TestPostgresDeleteDatabase(t *testing.T) {
 	admin := getPostgresAdmin()
 	p := testPostgres()
@@ -134,7 +137,6 @@ func TestPostgresDeleteUser(t *testing.T) {
 	err := p.deleteUser(admin)
 	assert.NoErrorf(t, err, "Unexpected error %v", err)
 }
-
 
 func TestPostgresGetCredentials(t *testing.T) {
 	p := testPostgres()
@@ -177,4 +179,3 @@ func TestPostgresParseAdminCredentials(t *testing.T) {
 	assert.Equal(t, "postgres", cred.Username, "expect same values")
 	assert.Equal(t, string(validData3["postgresql-postgres-password"]), cred.Password, "expect same values")
 }
-
