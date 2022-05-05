@@ -54,7 +54,6 @@ type DatabaseStatus struct {
 	Phase                 string              `json:"phase"`
 	Status                bool                `json:"status"`
 	InstanceRef           *DbInstance         `json:"instanceRef"`
-	InstanceName          string              `json:"instanceName"`
 	MonitorUserSecretName string              `json:"monitorUserSecret,omitempty"`
 	ProxyStatus           DatabaseProxyStatus `json:"proxyStatus,omitempty"`
 	DatabaseName          string              `json:"database"`
@@ -112,14 +111,6 @@ func (db *Database) GetInstanceRef() (*DbInstance, error) {
 		return nil, errors.New("can not find instance ref")
 	}
 	return db.Status.InstanceRef, nil
-}
-
-// GetInstanceName returns DbInstance name which used by Database
-func (db *Database) GetInstanceName() (string, error) {
-	if db.Status.InstanceName == "" {
-		return "", errors.New("can not find instance name")
-	}
-	return db.Status.InstanceName, nil
 }
 
 // GetEngineType returns type of database engine ex) postgres or mysql

@@ -1,4 +1,4 @@
-gga.PHONY: all deploy build helm
+.PHONY: all deploy build helm
 .ONESHELL: test
 
 SRC = $(shell find . -type f -name '*.go')

@@ -297,7 +297,6 @@ func (r *DatabaseReconciler) initialize(ctx context.Context, dbcr *kciv1alpha1.D
 			return errors.New("instance status not true")
 		}
 		dbcr.Status.InstanceRef = instance
-		dbcr.Status.InstanceName = instance.Name
 		dbcr.Status.Phase = dbPhaseCreate
 		return nil
 	}
