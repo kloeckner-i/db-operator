@@ -178,6 +178,9 @@ func (p Postgres) createDatabase(admin AdminCredentials) error {
 			logrus.Errorf("failed dropping the public schema %s", err)
 			return err
 		}
+		if len(p.Schemas) == 0 {
+			logrus.Info("the public schema is dropped, but no additional schemas are created, schema creation must be handled on the application side now")
+		}
 	}
 
 	if len(p.Schemas) > 0 {
@@ -273,7 +276,7 @@ func (p Postgres) deleteDatabase(admin AdminCredentials) error {
 	delete := fmt.Sprintf("DROP DATABASE \"%s\";", p.Database)
 
 	if p.isDbExist(admin) {
-		err := p.executeExec("postgres", revoke, admin)
+		err := p.executeQuery("postgres", revoke, admin)
 		if err != nil {
 			logrus.Errorf("failed revoking connection on database %s - %s", revoke, err)
 			return err
@@ -299,14 +302,9 @@ func (p Postgres) deleteDatabase(admin AdminCredentials) error {
 
 func (p Postgres) deleteUser(admin AdminCredentials) error {
 	delete := fmt.Sprintf("DROP USER \"%s\";", p.User)
-	dropOwned := fmt.Sprintf("DROP OWNED BY \"%s\";", p.User)
 
 	if p.isUserExist(admin) {
-		logrus.Info("DROPPING OWNED")
-		if err := p.executeQuery("postgres", dropOwned, admin); err != nil {
-			logrus.Errorf("Can't drop owned by user \"%s\" %s", p.User, err)
-			return err
-		}
+		logrus.Debugf("deleting user %s", p.User)
 		err := p.executeQuery("postgres", delete, admin)
 		if err != nil {
 			pqErr := err.(*pq.Error)
