@@ -70,6 +70,8 @@ postgres:
     - schema_2
 ```
 
+If you initialize a database with `dropPublicSchema: false` and then later change it to `true`, or add schemas with the `schemas` field and later try to remove them with just updating the manifest, you may be unable to do that. Because `db-operator` won't use `DROP CASCADE` for removing schemas, and if there are objects depending on a schema, someone with admin access will have to remove these objects manually. 
+
 After successful `Database` creation, you must be able to get a secret named like `example-db-credentials`.
 
 ```
