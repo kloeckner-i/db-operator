@@ -57,6 +57,7 @@ type GoogleInstance struct {
 	InstanceName  string         `json:"instance"`
 	ConfigmapName NamespacedName `json:"configmapRef"`
 	APIEndpoint   string         `json:"apiEndpoint,omitempty"`
+	ClientSecret  NamespacedName `json:"clientSecretRef,omitempty"`
 }
 
 // BackendServer defines backend database server

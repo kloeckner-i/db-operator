@@ -54,6 +54,7 @@ type DatabaseStatus struct {
 	Phase                 string              `json:"phase"`
 	Status                bool                `json:"status"`
 	InstanceRef           *DbInstance         `json:"instanceRef"`
+	InstanceName          string              `json:"instanceName"`
 	MonitorUserSecretName string              `json:"monitorUserSecret,omitempty"`
 	ProxyStatus           DatabaseProxyStatus `json:"proxyStatus,omitempty"`
 	DatabaseName          string              `json:"database"`
@@ -113,6 +114,14 @@ func (db *Database) GetInstanceRef() (*DbInstance, error) {
 	return db.Status.InstanceRef, nil
 }
 
+// GetInstanceName returns DbInstance name which used by Database
+func (db *Database) GetInstanceName() (string, error) {
+	if db.Status.InstanceName == "" {
+		return "", errors.New("can not find instance name")
+	}
+	return db.Status.InstanceName, nil
+}
+
 // GetEngineType returns type of database engine ex) postgres or mysql
 func (db *Database) GetEngineType() (string, error) {
 	instance, err := db.GetInstanceRef()
@@ -142,4 +151,9 @@ func (db *Database) IsMonitoringEnabled() (bool, error) {
 	}
 
 	return instance.IsMonitoringEnabled(), nil
+}
+
+// AccessSecretName returns string value to define name of the secret resource for accessing instance
+func (db *Database) InstanceAccessSecretName() string {
+	return "dbin-" + db.Spec.Instance + "-access-secret"
 }

@@ -236,11 +236,11 @@ func (r *DbInstanceReconciler) broadcast(ctx context.Context, dbin *kciv1alpha1.
 	}
 
 	for _, db := range dbList.Items {
-		ref, err := db.GetInstanceRef()
+		name, err := db.GetInstanceName()
 		if err != nil {
 			continue
 		}
-		if ref.Name == dbin.Name {
+		if name == dbin.Name {
 			annotations := db.ObjectMeta.GetAnnotations()
 			if _, found := annotations["checksum/spec"]; found {
 				annotations["checksum/spec"] = ""

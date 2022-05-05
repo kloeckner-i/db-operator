@@ -21,11 +21,12 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+	"strconv"
+	"time"
+
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"strconv"
-	"time"
 
 	"github.com/go-logr/logr"
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
@@ -71,9 +72,6 @@ var (
 	dbPhaseReady                = "Ready"
 	dbPhaseDelete               = "Deleting"
 )
-
-// GCSQLClientSecretName used as secret name containing service account json key with Cloud SQL Client role
-var GCSQLClientSecretName = "cloudsql-instance-credentials"
 
 //+kubebuilder:rbac:groups=kci.rocks,resources=databases,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=kci.rocks,resources=databases/status,verbs=get;update;patch
@@ -299,6 +297,7 @@ func (r *DatabaseReconciler) initialize(ctx context.Context, dbcr *kciv1alpha1.D
 			return errors.New("instance status not true")
 		}
 		dbcr.Status.InstanceRef = instance
+		dbcr.Status.InstanceName = instance.Name
 		dbcr.Status.Phase = dbPhaseCreate
 		return nil
 	}
@@ -423,14 +422,32 @@ func (r *DatabaseReconciler) createInstanceAccessSecret(ctx context.Context, dbc
 		return nil
 	}
 
-	data, err := ioutil.ReadFile(os.Getenv("GCSQL_CLIENT_CREDENTIALS"))
+	var data []byte
+
+	instance, err := dbcr.GetInstanceRef()
 	if err != nil {
 		return err
 	}
 
-	newName := GCSQLClientSecretName
+	if instance.Spec.Google.ClientSecret.Name != "" {
+		key := instance.Spec.Google.ClientSecret.ToKubernetesType()
+		secret := &corev1.Secret{}
+		err := r.Get(ctx, key, secret)
+		if err != nil {
+			logrus.Errorf("DB: namespace=%s, name=%s can not get instance access secret", dbcr.Namespace, dbcr.Name)
+			return err
+		}
+		data = secret.Data["credentials.json"]
+	} else {
+		data, err = ioutil.ReadFile(os.Getenv("GCSQL_CLIENT_CREDENTIALS"))
+		if err != nil {
+			return err
+		}
+	}
 	secretData := make(map[string][]byte)
 	secretData["credentials.json"] = data
+
+	newName := dbcr.InstanceAccessSecretName()
 	newSecret := kci.SecretBuilder(newName, dbcr.GetNamespace(), secretData)
 
 	err = r.Create(ctx, newSecret)

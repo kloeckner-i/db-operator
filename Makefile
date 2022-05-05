@@ -1,4 +1,4 @@
-.PHONY: all deploy build helm
+gga.PHONY: all deploy build helm
 .ONESHELL: test
 
 SRC = $(shell find . -type f -name '*.go')
@@ -62,7 +62,7 @@ k3s_mac_lima_helm:
 	mkdir -p "$${HOME}/.lima/k3s/conf"
 	limactl shell k3s sudo cat /etc/rancher/k3s/k3s.yaml >$${HOME}/.lima/k3s/conf/kubeconfig.yaml
 	@helm upgrade --install --namespace operator --create-namespace my-dboperator charts/db-operator -f charts/db-operator/values.yaml -f charts/db-operator/values-local.yaml --kubeconfig $${HOME}/.lima/k3s/conf/kubeconfig.yaml
-	echo "Don't forget to use k3s docker coonfig \nexport KUBECONFIG=$${HOME}/.lima/k3s/conf/kubeconfig.yaml"
+	echo "Don't forget to use k3s docker config \nexport KUBECONFIG=$${HOME}/.lima/k3s/conf/kubeconfig.yaml"
 
 k3s_mac_deploy: build k3s_mac_image k3s_mac_lima_helm
 
@@ -74,7 +74,7 @@ k3s_mac_image:
 k3d_setup: k3d_install k3d_image helm ## create a k3d cluster locally and install db-operator
 
 k3d_install:
-	@wget -q -O - https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
+	@curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
 	@k3d cluster create myk3s -i rancher/k3s:$(K8S_VERSION)-k3s1
 	@kubectl get pod
 
