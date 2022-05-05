@@ -24,7 +24,7 @@ import (
 )
 
 func testPostgres() *Postgres {
-	return &Postgres{"local", test.GetPostgresHost(), test.GetPostgresPort(), "testdb", "testuser", "testpassword", []string{}, false, false}
+	return &Postgres{"local", test.GetPostgresHost(), test.GetPostgresPort(), "testdb", "testuser", "testpassword", []string{}, false, false, false, []string{}}
 }
 
 func getPostgresAdmin() AdminCredentials {
@@ -65,6 +65,29 @@ func TestPostgresCreateUser(t *testing.T) {
 	err = p.createUser(admin)
 	assert.Error(t, err, "Should get error")
 }
+func TestPublicSchema(t *testing.T) {
+	p := testPostgres()
+	p.DropPublicSchema = false
+	assert.NoError(t, p.checkSchemas())
+}
+
+func TestDropPublicSchemaFail(t *testing.T) {
+	p := testPostgres()
+	p.DropPublicSchema = true
+	assert.Error(t, p.checkSchemas())
+}
+
+func TestDropPublicSchema(t *testing.T) {
+	p := testPostgres()
+	admin := getPostgresAdmin()
+	p.DropPublicSchema = true
+	p.dropPublicSchema(admin)
+	assert.NoError(t, p.checkSchemas())
+	
+	// Schemas is recreated here not to breaks tests for extensions
+	p.Schemas = []string{"public"}
+	assert.NoError(t, p.createSchemas(admin))
+}
 
 func TestPostgresNoExtensions(t *testing.T) {
 	admin := getPostgresAdmin()
@@ -82,6 +105,25 @@ func TestPostgresAddExtensions(t *testing.T) {
 	assert.Error(t, p.checkExtensions())
 	assert.NoError(t, p.addExtensions(admin))
 	assert.NoError(t, p.checkExtensions())
+}
+
+func TestPostgresNoSchemas(t *testing.T) {
+	admin := getPostgresAdmin()
+	p := testPostgres()
+
+	assert.NoError(t, p.checkSchemas())
+	assert.NoError(t, p.createSchemas(admin))
+	assert.NoError(t, p.checkSchemas())
+}
+
+func TestPostgresSchemas(t *testing.T) {
+	admin := getPostgresAdmin()
+	p := testPostgres()
+	p.Schemas = []string{"schema_1", "schema_2"}
+
+	assert.Error(t, p.checkSchemas())
+	assert.NoError(t, p.createSchemas(admin))
+	assert.NoError(t, p.checkSchemas())
 }
 
 func TestPostgresDeleteDatabase(t *testing.T) {

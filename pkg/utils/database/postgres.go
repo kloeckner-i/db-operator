@@ -35,15 +35,17 @@ import (
 // represents a database on postgres instance
 // can be used to execute query to postgres database
 type Postgres struct {
-	Backend      string
-	Host         string
-	Port         uint16
-	Database     string
-	User         string
-	Password     string
-	Extensions   []string
-	SSLEnabled   bool
-	SkipCAVerify bool
+	Backend          string
+	Host             string
+	Port             uint16
+	Database         string
+	User             string
+	Password         string
+	Extensions       []string
+	SSLEnabled       bool
+	SkipCAVerify     bool
+	DropPublicSchema bool
+	Schemas          []string
 }
 
 const postgresDefaultSSLMode = "disable"
@@ -133,8 +135,11 @@ func (p Postgres) CheckStatus() error {
 		return fmt.Errorf("db conn test failed - failed to execute query: %s", err)
 	}
 
-	err = p.checkExtensions()
-	if err != nil {
+	if err := p.checkSchemas(); err != nil {
+		return err
+	}
+
+	if err := p.checkExtensions(); err != nil {
 		return err
 	}
 
@@ -164,6 +169,23 @@ func (p Postgres) createDatabase(admin AdminCredentials) error {
 		err := p.executeQuery("postgres", create, admin)
 		if err != nil {
 			logrus.Errorf("failed creating postgres database %s", err)
+			return err
+		}
+	}
+
+	if p.DropPublicSchema {
+		if err := p.dropPublicSchema(admin); err != nil {
+			logrus.Errorf("failed dropping the public schema %s", err)
+			return err
+		}
+		if len(p.Schemas) == 0 {
+			logrus.Info("the public schema is dropped, but no additional schemas are created, schema creation must be handled on the application side now")
+		}
+	}
+
+	if len(p.Schemas) > 0 {
+		if err := p.createSchemas(admin); err != nil {
+			logrus.Errorf("failed creating additional schemas %s", err)
 			return err
 		}
 	}
@@ -202,6 +224,50 @@ func (p Postgres) createUser(admin AdminCredentials) error {
 		return err
 	}
 
+	for _, s := range p.Schemas {
+		grantUserAccess := fmt.Sprintf("GRANT ALL ON SCHEMA \"%s\" TO \"%s\"", s, p.User)
+		if err := p.executeExec(p.Database, grantUserAccess, admin); err != nil {
+			logrus.Errorf("failed to grant usage access to %s on schema %s: %s", p.User, s, err)
+			return err
+		}
+	}
+	return nil
+}
+
+func (p Postgres) dropPublicSchema(admin AdminCredentials) error {
+	drop := "DROP SCHEMA IF EXISTS public;"
+	if err := p.executeExec(p.Database, drop, admin); err != nil {
+		logrus.Errorf("failed to drop the schema Public: %s", err)
+		return err
+	}
+	return nil
+}
+
+func (p Postgres) createSchemas(admin AdminCredentials) error {
+	for _, s := range p.Schemas {
+		createSchema := fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", s)
+		if err := p.executeExec(p.Database, createSchema, admin); err != nil {
+			logrus.Errorf("failed to create schema %s, %s", s, err)
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (p Postgres) checkSchemas() error {
+	if p.DropPublicSchema {
+		query := "SELECT 1 FROM pg_catalog.pg_namespace WHERE nspname = 'public';"
+		if p.isRowExist(p.Database, query, p.User, p.Password) {
+			return fmt.Errorf("schema public still exists")
+		}
+	}
+	for _, s := range p.Schemas {
+		query := fmt.Sprintf("SELECT 1 FROM pg_catalog.pg_namespace WHERE nspname = '%s';", s)
+		if !p.isRowExist(p.Database, query, p.User, p.Password) {
+			return fmt.Errorf("couldn't find schema %s in database %s", s, p.Database)
+		}
+	}
 	return nil
 }
 
@@ -238,6 +304,7 @@ func (p Postgres) deleteUser(admin AdminCredentials) error {
 	delete := fmt.Sprintf("DROP USER \"%s\";", p.User)
 
 	if p.isUserExist(admin) {
+		logrus.Debugf("deleting user %s", p.User)
 		err := p.executeQuery("postgres", delete, admin)
 		if err != nil {
 			pqErr := err.(*pq.Error)

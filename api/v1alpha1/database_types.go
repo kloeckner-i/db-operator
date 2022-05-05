@@ -33,9 +33,18 @@ type DatabaseSpec struct {
 	Extensions        []string       `json:"extensions,omitempty"`
 	// ConnectionStringTemplate field can be used to pass a custom template for generating a db connection string.
 	// These keywords can be used: Protocol, DatabaseHost, DatabasePort, UserName, Password, DatabaseName.
-	// Default template looks like this: 
+	// Default template looks like this:
 	// "{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}"
-	ConnectionStringTemplate string `json:"connectionStringTemplate,omitempty"`
+	ConnectionStringTemplate string   `json:"connectionStringTemplate,omitempty"`
+	Postgres                 Postgres `json:"postgres,omitempty"`
+}
+
+// Postgres struct should be used to provide resource that only applicable to postgres
+type Postgres struct {
+	// If set to true, the public schema will be dropped after the database creation
+	DropPublicSchema bool     `json:"dropPublicSchema,omitempty"`
+	// Specify schemas to be created. The user created by db-operator will have all access on them.
+	Schemas          []string `json:"schemas,omitempty"`
 }
 
 // DatabaseStatus defines the observed state of Database
