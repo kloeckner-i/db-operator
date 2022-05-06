@@ -66,6 +66,34 @@ Upgrade db-operator helm release with service account
 $ helm upgrade my-release helm/db-operator --set secrets.gsql.admin="<< Service Account Cloud SQL Admin >>" --set secrets.gsql.readonly="<< Service Account Cloud SQL Client >>"
 ```
 
+Client secret which will be used by `Database` can be configured per `DbInstance`.
+Firstly, create a `Secret` containing Service Account Cloud SQL Client.
+
+```YAML
+apiVersion: v1
+kind: Secret
+metadata:
+  name: database-client-secret
+data:
+  credentials.json: |-
+    << Service Account Cloud SQL Client >>
+```
+Configure `DbInstance` like below. 
+```YAML
+apiVersion: kci.rocks/v1alpha1
+kind: DbInstance
+metadata:
+  name: example-gsql
+spec:
+...
+  google:
+    instance: dboperator-example-gsql # Cloud SQL Instance resource name in google project
+    clientSecretRef:
+      Namespace: # namespace of database-client-secret
+      Name: database-client-secret
+```
+This enable automatic update of cloud proxy for database access to use newly configured secret.
+
 Create a configmap containing a Google Cloud SQL configuration, according to its [API specification](https://cloud.google.com/sql/docs/mysql/admin-api/rest/v1beta4/instances#DatabaseInstance)
 
 ```YAML
