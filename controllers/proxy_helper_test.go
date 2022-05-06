@@ -44,11 +44,28 @@ func makeGsqlInstance() kciv1alpha1.DbInstance {
 	return dbInstance
 }
 
+func makeGenericInstance() kciv1alpha1.DbInstance {
+	info := make(map[string]string)
+	info["DB_CONN"] = "test-conn"
+	info["DB_PORT"] = "1234"
+	dbInstance := kciv1alpha1.DbInstance{
+		Spec: kciv1alpha1.DbInstanceSpec{
+			DbInstanceSource: kciv1alpha1.DbInstanceSource{
+				Generic: &kciv1alpha1.GenericInstance{},
+			},
+		},
+		Status: kciv1alpha1.DbInstanceStatus{
+			Info: info,
+		},
+	}
+	return dbInstance
+}
+
 func mockOperatorNamespace() (string, error) {
 	return "operator", nil
 }
 
-func TestDetermineProxyTypeForDB(t *testing.T) {
+func TestDetermineProxyTypeForDBGoogleBackend(t *testing.T) {
 	config := &config.Config{}
 	dbin := makeGsqlInstance()
 	db := newPostgresTestDbCr(dbin)
@@ -57,6 +74,14 @@ func TestDetermineProxyTypeForDB(t *testing.T) {
 	cloudProxy, ok := dbProxy.(*proxy.CloudProxy)
 	assert.Equal(t, ok, true, "expected true")
 	assert.Equal(t, cloudProxy.AccessSecretName, db.InstanceAccessSecretName())
+}
+
+func TestDetermineProxyTypeForDBGenericBackend(t *testing.T) {
+	config := &config.Config{}
+	dbin := makeGenericInstance()
+	db := newPostgresTestDbCr(dbin)
+	_, err := determineProxyTypeForDB(config, db)
+	assert.Error(t, err)
 }
 
 func TestDetermineProxyTypeForGoogleInstance(t *testing.T) {
@@ -77,4 +102,11 @@ func TestDetermineProxyTypeForGoogleInstance(t *testing.T) {
 	cloudProxy, ok = dbProxy.(*proxy.CloudProxy)
 	assert.Equal(t, ok, true, "expected true")
 	assert.Equal(t, cloudProxy.AccessSecretName, "test-client-secret")
+}
+
+func TestDetermineProxyTypeForGenericInstance(t *testing.T) {
+	config := &config.Config{}
+	dbin := makeGenericInstance()
+	_, err := determineProxyTypeForInstance(config, &dbin)
+	assert.Error(t, err)
 }
