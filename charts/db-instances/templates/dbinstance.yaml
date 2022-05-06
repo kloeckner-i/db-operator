@@ -40,7 +40,12 @@ spec:
     instance: {{ $value.google.instanceName }}
     configmapRef:
       Namespace: {{ $operatorNs }}
-      Name: {{ $value.google.configMap.name }}
+      Name: {{ $name }}-config
+  {{- if $value.google.clientSecret }}
+    clientSecretRef:
+      Namespace: {{ $operatorNs }}
+      Name: {{ $name }}-client-secret
+  {{- end }}
   {{- end }}
   {{- if $value.generic }}
   generic:
@@ -72,13 +77,26 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ $value.google.configMap.name }}
+  name: {{ $name }}-config
   namespace: {{ $operatorNs }}
   labels:
     {{- include "db-instances.labels" $ | nindent 4 }}
 data:
   config: |
 {{ $value.google.configMap.data | indent 4 }}
+{{- if $value.google.clientSecret }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $name }}-client-secret
+  namespace: {{ $operatorNs }}
+  labels:
+    {{- include "db-instances.labels" $ | nindent 4 }}
+data:
+  credentials.json: |-
+{{ $value.google.clientSecret | b64enc | indent 4 }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
