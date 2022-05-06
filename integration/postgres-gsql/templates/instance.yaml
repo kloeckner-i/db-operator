@@ -11,6 +11,9 @@ spec:
     configmapRef:
       Name: pg-gsql-instance-config
       Namespace: {{ .Release.Namespace }}
+    clientSecretRef:
+      Name: pg-gsql-instance-client-secret
+      Namespace: {{ .Release.Namespace }}
     instance: gsql-local-postgres
     apiEndpoint: {{ .Values.googleApiEndpoint }}
   monitoring:
