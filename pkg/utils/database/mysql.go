@@ -229,6 +229,13 @@ func (m Mysql) GetCredentials() Credentials {
 	}
 }
 
+func (m Mysql) GetDatabaseAddress() DatabaseAddress {
+	return DatabaseAddress{
+		Host: m.Host,
+		Port: int(m.Port),
+	}
+}
+
 // ParseAdminCredentials parse admin username and password of mysql database from secret data
 // If "user" key is not defined, take "root" as admin user by default
 func (m Mysql) ParseAdminCredentials(data map[string][]byte) (AdminCredentials, error) {

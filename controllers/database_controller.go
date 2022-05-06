@@ -605,6 +605,7 @@ func (r *DatabaseReconciler) createConnectionString(ctx context.Context, dbcr *k
 	if err != nil {
 		return err
 	}
+
 	// Fill ConnectionStringFields struct
 	dbUrl := ConnectionStringFields{
 		DatabaseHost: dbcr.Status.ProxyStatus.ServiceName,
@@ -613,6 +614,19 @@ func (r *DatabaseReconciler) createConnectionString(ctx context.Context, dbcr *k
 		Password:     databaseCred.Password,
 		DatabaseName: dbcr.Status.DatabaseName,
 	}
+	
+	if !dbcr.Status.ProxyStatus.Status {
+		db, err := determinDatabaseType(dbcr, databaseCred)
+		if err != nil {
+			// failed to determine database type
+			return err
+		}
+		da := db.GetDatabaseAddress()
+		dbUrl.DatabaseHost = da.Host
+		dbUrl.DatabasePort = int32(da.Port)
+	}
+	
+
 	// Generate the connection string
 	dbConnectionString, err := generateConnectionString(dbcr, dbUrl)
 	if err != nil {
