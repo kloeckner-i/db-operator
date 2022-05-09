@@ -143,3 +143,8 @@ func (db *Database) IsMonitoringEnabled() (bool, error) {
 
 	return instance.IsMonitoringEnabled(), nil
 }
+
+// AccessSecretName returns string value to define name of the secret resource for accessing instance
+func (db *Database) InstanceAccessSecretName() string {
+	return "dbin-" + db.Spec.Instance + "-access-secret"
+}

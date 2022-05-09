@@ -121,3 +121,5 @@ my-image.tar
 
 /bin
 /testbin
+
+secrets.yaml

@@ -82,7 +82,7 @@ func determineProxyTypeForDB(conf *config.Config, dbcr *kciv1alpha1.Database) (p
 			NamePrefix:             "db-" + dbcr.Name,
 			Namespace:              dbcr.Namespace,
 			InstanceConnectionName: instance.Status.Info["DB_CONN"],
-			AccessSecretName:       GCSQLClientSecretName,
+			AccessSecretName:       dbcr.InstanceAccessSecretName(),
 			Engine:                 engine,
 			Port:                   int32(port),
 			Labels:                 kci.LabelBuilder(labels),
@@ -125,11 +125,18 @@ func determineProxyTypeForInstance(conf *config.Config, dbin *kciv1alpha1.DbInst
 
 		monitoringEnabled := dbin.IsMonitoringEnabled()
 
+		var accessSecretName string
+		if dbin.Spec.Google.ClientSecret.Name != "" {
+			accessSecretName = dbin.Spec.Google.ClientSecret.Name
+		} else {
+			accessSecretName = conf.Instances.Google.ClientSecretName
+		}
+
 		return &proxy.CloudProxy{
 			NamePrefix:             "dbinstance-" + dbin.Name,
 			Namespace:              operatorNamespace,
 			InstanceConnectionName: dbin.Status.Info["DB_CONN"],
-			AccessSecretName:       conf.Instances.Google.ClientSecretName,
+			AccessSecretName:       accessSecretName,
 			Engine:                 dbin.Spec.Engine,
 			Port:                   int32(port),
 			Labels:                 kci.LabelBuilder(labels),

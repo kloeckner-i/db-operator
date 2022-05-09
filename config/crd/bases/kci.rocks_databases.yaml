@@ -192,6 +192,20 @@ spec:
                         properties:
                           apiEndpoint:
                             type: string
+                          clientSecretRef:
+                            description: NamespacedName is a fork of the kubernetes
+                              api type of the same name. Sadly this is required because
+                              CRD structs must have all fields json tagged and the
+                              kubernetes type is not tagged.
+                            properties:
+                              Name:
+                                type: string
+                              Namespace:
+                                type: string
+                            required:
+                            - Name
+                            - Namespace
+                            type: object
                           configmapRef:
                             description: NamespacedName is a fork of the kubernetes
                               api type of the same name. Sadly this is required because

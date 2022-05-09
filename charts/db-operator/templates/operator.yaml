@@ -58,8 +58,10 @@ spec:
             {{- if .Values.secrets.gsql }}
             - name: GOOGLE_APPLICATION_CREDENTIALS
               value: "/run/secrets/gcloudsqladmin/credentials.json"
+            {{- if .Values.secrets.gsql.readonly }}
             - name: GCSQL_CLIENT_CREDENTIALS
               value: "/run/secrets/gcloudsqlclient/credentials.json"
+            {{- end }}
             {{- end }}
             - name: CONFIG_PATH
               value: "/run/config/config.yaml"
