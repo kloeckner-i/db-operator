@@ -217,11 +217,11 @@ func generateConnectionString(dbcr *kciv1alpha1.Database, databaseCred database.
 	dbData := ConnectionStringFields{
 		DatabaseHost: dbcr.Status.ProxyStatus.ServiceName,
 		DatabasePort: dbcr.Status.ProxyStatus.SQLPort,
-		UserName:     dbcr.Status.UserName,
+		UserName:     databaseCred.Username,
 		Password:     databaseCred.Password,
-		DatabaseName: dbcr.Status.DatabaseName,
+		DatabaseName: databaseCred.Name,
 	}
-
+	
 	if !dbcr.Status.ProxyStatus.Status {
 		db, err := determinDatabaseType(dbcr, databaseCred)
 		if err != nil {

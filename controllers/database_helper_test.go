@@ -120,42 +120,69 @@ func TestMonitoringEnabled(t *testing.T) {
 	assert.Equal(t, found, true, "expected pg_stat_statement is included in extension list")
 }
 
-func TestPsqlDefaultConnectionStringGeneratation(t *testing.T) {
+func TestPsqlDefaultConnectionStringGeneratationWithProxy(t *testing.T) {
+	instance := newPostgresTestDbInstanceCr()
+	postgresDbCr := newPostgresTestDbCr(instance)
+	postgresDbCr.Status.ProxyStatus.Status = true
+
+	c := ConnectionStringFields{
+		DatabaseHost: "postgres",
+		DatabasePort: 5432,
+		UserName:     testDbcred.Username,
+		Password:     testDbcred.Password,
+		DatabaseName: testDbcred.Name,
+	}
+
+	postgresDbCr.Status.ProxyStatus.SQLPort = c.DatabasePort
+	postgresDbCr.Status.ProxyStatus.ServiceName = c.DatabaseHost
+
+	protocol := "postgresql"
+	expectedString := fmt.Sprintf("%s://%s:%s@%s:%d/%s", protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName)
+
+	connString, err := generateConnectionString(postgresDbCr, testDbcred)
+	if err != nil {
+		t.Logf("Unexpected error: %s", err)
+		t.Fail()
+	}
+	assert.Equal(t, expectedString, connString, "generated connections string is wrong")
+}
+
+func TestPsqlDefaultConnectionStringGeneratationWithoutProxy(t *testing.T) {
 	instance := newPostgresTestDbInstanceCr()
 	postgresDbCr := newPostgresTestDbCr(instance)
 
 	c := ConnectionStringFields{
 		DatabaseHost: "postgres",
 		DatabasePort: 5432,
-		UserName:     "root",
-		Password:     "qwertyu9",
-		DatabaseName: "postgres",
+		UserName:     testDbcred.Username,
+		Password:     testDbcred.Password,
+		DatabaseName: testDbcred.Name,
 	}
+
 	protocol := "postgresql"
 	expectedString := fmt.Sprintf("%s://%s:%s@%s:%d/%s", protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName)
 
-	connString, err := generateConnectionString(postgresDbCr, c)
+	connString, err := generateConnectionString(postgresDbCr, testDbcred)
 	if err != nil {
 		t.Logf("Unexpected error: %s", err)
 		t.Fail()
 	}
-	assert.Equal(t, connString, expectedString, "generated connections string is wrong")
+	assert.Equal(t, expectedString, connString, "generated connections string is wrong")
 }
 
-func TestMysqlDefaultConnectionStringGeneratation(t *testing.T) {
+func TestMysqlDefaultConnectionStringGeneratationWithoutProxy(t *testing.T) {
 	mysqlDbCr := newMysqlTestDbCr()
-
 	c := ConnectionStringFields{
 		DatabaseHost: "mysql",
-		DatabasePort: 5432,
-		UserName:     "root",
-		Password:     "qwertyu9",
-		DatabaseName: "mysql",
+		DatabasePort: 3306,
+		UserName:     testDbcred.Username,
+		Password:     testDbcred.Password,
+		DatabaseName: testDbcred.Name,
 	}
 	protocol := "mysql"
 	expectedString := fmt.Sprintf("%s://%s:%s@%s:%d/%s", protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName)
 
-	connString, err := generateConnectionString(mysqlDbCr, c)
+	connString, err := generateConnectionString(mysqlDbCr, testDbcred)
 	if err != nil {
 		t.Logf("Unexpected error: %s", err)
 		t.Fail()
@@ -193,14 +220,14 @@ func TestPsqlCustomConnectionStringGeneratation(t *testing.T) {
 	c := ConnectionStringFields{
 		DatabaseHost: "postgres",
 		DatabasePort: 5432,
-		UserName:     "root",
-		Password:     "qwertyu9",
-		DatabaseName: "postgres",
+		UserName:     testDbcred.Username,
+		Password:     testDbcred.Password,
+		DatabaseName: testDbcred.Name,
 	}
 	protocol := "postgresql"
 	expectedString := fmt.Sprintf("%s%s://%s:%s@%s:%d/%s%s", prefix, protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName, postfix)
 
-	connString, err := generateConnectionString(postgresDbCr, c)
+	connString, err := generateConnectionString(postgresDbCr, testDbcred)
 	if err != nil {
 		t.Logf("unexpected error: %s", err)
 		t.Fail()
@@ -214,37 +241,8 @@ func TestWrongTemplateConnectionStringGeneratation(t *testing.T) {
 
 	postgresDbCr.Spec.ConnectionStringTemplate = "{{ .Protocol }}://{{ .User }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}"
 
-	c := ConnectionStringFields{
-		DatabaseHost: "localhost",
-		DatabasePort: 5432,
-		UserName:     "root",
-		Password:     "qwertyu9",
-		DatabaseName: "postgres",
-	}
-
-	_, err := generateConnectionString(postgresDbCr, c)
+	_, err := generateConnectionString(postgresDbCr, testDbcred)
 	errSubstr := "can't evaluate field User in type controllers.ConnectionStringFields"
-
-	assert.Contains(t, err.Error(), errSubstr, "the error doesn't contain expected substring")
-}
-
-
-func TestGenericConnectionStringGeneratation(t *testing.T) {
-	instance := newPostgresTestDbInstanceCr()
-	postgresDbCr := newPostgresTestDbCr(instance)
-	
-	postgresDbCr.Spec.ConnectionStringTemplate = "{{ .Protocol }}://{{ .User }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}"
-
-	c := ConnectionStringFields{
-		DatabaseHost: "localhost",
-		DatabasePort: 5432,
-		UserName:     "root",
-		Password:     "qwertyu9",
-		DatabaseName: "postgres",
-	}
-
-	_, err := generateConnectionString(postgresDbCr, c)
-	errSubstr := "can't evaluate field User in type controllers.ConnectionStringFields"
-
+	//
 	assert.Contains(t, err.Error(), errSubstr, "the error doesn't contain expected substring")
 }

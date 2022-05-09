@@ -39,7 +39,7 @@ const (
 func newPostgresTestDbInstanceCr() kciv1alpha1.DbInstance {
 	info := make(map[string]string)
 	info["DB_PORT"] = "5432"
-
+	info["DB_CONN"] = "postgres"
 	return kciv1alpha1.DbInstance{
 		Spec: kciv1alpha1.DbInstanceSpec{
 			Engine: "postgres",
@@ -75,6 +75,7 @@ func newMysqlTestDbCr() *kciv1alpha1.Database {
 
 	info := make(map[string]string)
 	info["DB_PORT"] = "3306"
+	info["DB_CONN"] = "mysql"
 
 	db := kciv1alpha1.Database{
 		ObjectMeta: o,
