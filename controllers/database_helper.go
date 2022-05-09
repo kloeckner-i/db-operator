@@ -225,12 +225,11 @@ func generateConnectionString(dbcr *kciv1alpha1.Database, databaseCred database.
 	if !dbcr.Status.ProxyStatus.Status {
 		db, err := determinDatabaseType(dbcr, databaseCred)
 		if err != nil {
-			// failed to determine database type
 			return "", err
 		}
-		da := db.GetDatabaseAddress()
-		dbData.DatabaseHost = da.Host
-		dbData.DatabasePort = int32(da.Port)
+		dbAddress := db.GetDatabaseAddress()
+		dbData.DatabaseHost = dbAddress.Host
+		dbData.DatabasePort = int32(dbAddress.Port)
 	}
 
 	// If engine is 'postgres', the protocol should be postgresql

@@ -243,6 +243,6 @@ func TestWrongTemplateConnectionStringGeneratation(t *testing.T) {
 
 	_, err := generateConnectionString(postgresDbCr, testDbcred)
 	errSubstr := "can't evaluate field User in type controllers.ConnectionStringFields"
-	//
+
 	assert.Contains(t, err.Error(), errSubstr, "the error doesn't contain expected substring")
 }
