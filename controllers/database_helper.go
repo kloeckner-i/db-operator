@@ -222,7 +222,7 @@ func generateConnectionString(dbcr *kciv1alpha1.Database, databaseCred database.
 		DatabaseName: databaseCred.Name,
 	}
 	
-	// If proxy is not used, use real database host and port
+	// If proxy is not used, set a real database address
 	if !dbcr.Status.ProxyStatus.Status {
 		db, err := determinDatabaseType(dbcr, databaseCred)
 		if err != nil {
