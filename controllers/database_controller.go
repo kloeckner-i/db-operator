@@ -428,6 +428,8 @@ func (r *DatabaseReconciler) createInstanceAccessSecret(ctx context.Context, dbc
 		return err
 	}
 
+	credFile := "credentials.json"
+
 	if instance.Spec.Google.ClientSecret.Name != "" {
 		key := instance.Spec.Google.ClientSecret.ToKubernetesType()
 		secret := &corev1.Secret{}
@@ -436,7 +438,7 @@ func (r *DatabaseReconciler) createInstanceAccessSecret(ctx context.Context, dbc
 			logrus.Errorf("DB: namespace=%s, name=%s can not get instance access secret", dbcr.Namespace, dbcr.Name)
 			return err
 		}
-		data = secret.Data["credentials.json"]
+		data = secret.Data[credFile]
 	} else {
 		data, err = ioutil.ReadFile(os.Getenv("GCSQL_CLIENT_CREDENTIALS"))
 		if err != nil {
@@ -444,7 +446,7 @@ func (r *DatabaseReconciler) createInstanceAccessSecret(ctx context.Context, dbc
 		}
 	}
 	secretData := make(map[string][]byte)
-	secretData["credentials.json"] = data
+	secretData[credFile] = data
 
 	newName := dbcr.InstanceAccessSecretName()
 	newSecret := kci.SecretBuilder(newName, dbcr.GetNamespace(), secretData)

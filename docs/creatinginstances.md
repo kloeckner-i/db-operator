@@ -92,7 +92,7 @@ spec:
       Namespace: # namespace of database-client-secret
       Name: database-client-secret
 ```
-This enable automatic update of cloud proxy for database access to use newly configured secret.
+This enables automatic update of cloud proxy for database access to use newly configured secret.
 
 Create a configmap containing a Google Cloud SQL configuration, according to its [API specification](https://cloud.google.com/sql/docs/mysql/admin-api/rest/v1beta4/instances#DatabaseInstance)
 
