@@ -227,3 +227,24 @@ func TestWrongTemplateConnectionStringGeneratation(t *testing.T) {
 
 	assert.Contains(t, err.Error(), errSubstr, "the error doesn't contain expected substring")
 }
+
+
+func TestGenericConnectionStringGeneratation(t *testing.T) {
+	instance := newPostgresTestDbInstanceCr()
+	postgresDbCr := newPostgresTestDbCr(instance)
+	
+	postgresDbCr.Spec.ConnectionStringTemplate = "{{ .Protocol }}://{{ .User }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}"
+
+	c := ConnectionStringFields{
+		DatabaseHost: "localhost",
+		DatabasePort: 5432,
+		UserName:     "root",
+		Password:     "qwertyu9",
+		DatabaseName: "postgres",
+	}
+
+	_, err := generateConnectionString(postgresDbCr, c)
+	errSubstr := "can't evaluate field User in type controllers.ConnectionStringFields"
+
+	assert.Contains(t, err.Error(), errSubstr, "the error doesn't contain expected substring")
+}

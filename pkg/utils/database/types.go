@@ -27,7 +27,7 @@ type Credentials struct {
 // DatabaseAddress contains host and port of a database instance
 type DatabaseAddress struct {
 	Host string
-	Port int
+	Port uint16
 }
 
 // AdminCredentials contains admin username and password of database server

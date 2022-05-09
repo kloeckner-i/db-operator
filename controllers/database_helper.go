@@ -79,17 +79,17 @@ func determinDatabaseType(dbcr *kciv1alpha1.Database, dbCred database.Credential
 		}
 
 		db := database.Postgres{
-			Backend:      backend,
-			Host:         host,
-			Port:         uint16(port),
-			Database:     dbCred.Name,
-			User:         dbCred.Username,
-			Password:     dbCred.Password,
-			Extensions:   extList,
-			SSLEnabled:   instance.Spec.SSLConnection.Enabled,
-			SkipCAVerify: instance.Spec.SSLConnection.SkipVerify,
+			Backend:          backend,
+			Host:             host,
+			Port:             uint16(port),
+			Database:         dbCred.Name,
+			User:             dbCred.Username,
+			Password:         dbCred.Password,
+			Extensions:       extList,
+			SSLEnabled:       instance.Spec.SSLConnection.Enabled,
+			SkipCAVerify:     instance.Spec.SSLConnection.SkipVerify,
 			DropPublicSchema: dbcr.Spec.Postgres.DropPublicSchema,
-			Schemas: dbcr.Spec.Postgres.Schemas,
+			Schemas:          dbcr.Spec.Postgres.Schemas,
 		}
 
 		return db, nil
@@ -209,10 +209,29 @@ func generateDatabaseSecretData(dbcr *kciv1alpha1.Database) (map[string][]byte, 
 	}
 }
 
-func generateConnectionString(dbcr *kciv1alpha1.Database, dbData ConnectionStringFields) (connString string, err error) {
+func generateConnectionString(dbcr *kciv1alpha1.Database, databaseCred database.Credentials) (connString string, err error) {
 	// The string that's going to be generated if the default template is used:
 	// "postgresql://user:password@host:port/database"
 	const defaultTemplate = "{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}"
+
+	dbData := ConnectionStringFields{
+		DatabaseHost: dbcr.Status.ProxyStatus.ServiceName,
+		DatabasePort: dbcr.Status.ProxyStatus.SQLPort,
+		UserName:     dbcr.Status.UserName,
+		Password:     databaseCred.Password,
+		DatabaseName: dbcr.Status.DatabaseName,
+	}
+
+	if !dbcr.Status.ProxyStatus.Status {
+		db, err := determinDatabaseType(dbcr, databaseCred)
+		if err != nil {
+			// failed to determine database type
+			return "", err
+		}
+		da := db.GetDatabaseAddress()
+		dbData.DatabaseHost = da.Host
+		dbData.DatabasePort = int32(da.Port)
+	}
 
 	// If engine is 'postgres', the protocol should be postgresql
 	if dbcr.Status.InstanceRef.Spec.Engine == "postgres" {

@@ -232,7 +232,7 @@ func (m Mysql) GetCredentials() Credentials {
 func (m Mysql) GetDatabaseAddress() DatabaseAddress {
 	return DatabaseAddress{
 		Host: m.Host,
-		Port: int(m.Port),
+		Port: m.Port,
 	}
 }
 
