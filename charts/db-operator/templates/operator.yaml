@@ -70,9 +70,11 @@ spec:
           - mountPath: /run/secrets/gcloudsqladmin
             name: serviceaccount-cloudsql-admin
             readOnly: true
+          {{- if .Values.secrets.gsql.readonly }}
           - mountPath: /run/secrets/gcloudsqlclient
             name: serviceaccount-cloudsql-client
             readOnly: true
+          {{- end }}
           {{- end }}
           - mountPath: /run/config/
             name: config-volume
@@ -98,10 +100,12 @@ spec:
           secret:
             defaultMode: 420
             secretName: cloudsql-admin-serviceaccount
+      {{- if .Values.secrets.gsql.readonly }}
         - name: serviceaccount-cloudsql-client
           secret:
             defaultMode: 420
             secretName: cloudsql-readonly-serviceaccount
+      {{- end }}
       {{- end }}
         - name: config-volume
           configMap: 
