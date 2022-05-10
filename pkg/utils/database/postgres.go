@@ -86,18 +86,6 @@ func (p Postgres) getDbConn(dbname, user, password string) (*sql.DB, error) {
 	return db, err
 }
 
-func (p Postgres) executeQuery(database, query string, admin AdminCredentials) error {
-	db, err := p.getDbConn(database, admin.Username, admin.Password)
-	if err != nil {
-		logrus.Fatalf("failed to open db connection: %s", err)
-	}
-
-	defer db.Close()
-	_, err = db.Query(query)
-
-	return err
-}
-
 func (p Postgres) executeExec(database, query string, admin AdminCredentials) error {
 	db, err := p.getDbConn(database, admin.Username, admin.Password)
 	if err != nil {
@@ -166,7 +154,7 @@ func (p Postgres) createDatabase(admin AdminCredentials) error {
 	create := fmt.Sprintf("CREATE DATABASE \"%s\";", p.Database)
 
 	if !p.isDbExist(admin) {
-		err := p.executeQuery("postgres", create, admin)
+		err := p.executeExec("postgres", create, admin)
 		if err != nil {
 			logrus.Errorf("failed creating postgres database %s", err)
 			return err
@@ -205,20 +193,20 @@ func (p Postgres) createUser(admin AdminCredentials) error {
 	update := fmt.Sprintf("ALTER ROLE \"%s\" WITH ENCRYPTED PASSWORD '%s';", p.User, p.Password)
 
 	if !p.isUserExist(admin) {
-		err := p.executeQuery("postgres", create, admin)
+		err := p.executeExec("postgres", create, admin)
 		if err != nil {
 			logrus.Errorf("failed creating postgres user - %s", err)
 			return err
 		}
 	} else {
-		err := p.executeQuery("postgres", update, admin)
+		err := p.executeExec("postgres", update, admin)
 		if err != nil {
 			logrus.Errorf("failed updating postgres user %s - %s", update, err)
 			return err
 		}
 	}
 
-	err := p.executeQuery("postgres", grant, admin)
+	err := p.executeExec("postgres", grant, admin)
 	if err != nil {
 		logrus.Errorf("failed granting postgres user %s - %s", grant, err)
 		return err
@@ -276,14 +264,14 @@ func (p Postgres) deleteDatabase(admin AdminCredentials) error {
 	delete := fmt.Sprintf("DROP DATABASE \"%s\";", p.Database)
 
 	if p.isDbExist(admin) {
-		err := p.executeQuery("postgres", revoke, admin)
+		err := p.executeExec("postgres", revoke, admin)
 		if err != nil {
 			logrus.Errorf("failed revoking connection on database %s - %s", revoke, err)
 			return err
 		}
 
 		err = kci.Retry(3, 5*time.Second, func() error {
-			err := p.executeQuery("postgres", delete, admin)
+			err := p.executeExec("postgres", delete, admin)
 			if err != nil {
 				// This error will result in a retry
 				logrus.Debugf("failed error: %s...retry...", err)
@@ -305,7 +293,7 @@ func (p Postgres) deleteUser(admin AdminCredentials) error {
 
 	if p.isUserExist(admin) {
 		logrus.Debugf("deleting user %s", p.User)
-		err := p.executeQuery("postgres", delete, admin)
+		err := p.executeExec("postgres", delete, admin)
 		if err != nil {
 			pqErr := err.(*pq.Error)
 			if pqErr.Code == "2BP01" {
