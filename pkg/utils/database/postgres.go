@@ -351,6 +351,13 @@ func (p Postgres) checkExtensions() error {
 	return nil
 }
 
+
+func (p Postgres) GetDatabaseAddress() DatabaseAddress {
+	return DatabaseAddress {
+		Host: p.Host,
+		Port: p.Port,
+	}
+}
 // ParseAdminCredentials parse admin username and password of postgres database from secret data
 // If "user" key is not defined, take "postgres" as admin user by default
 func (p Postgres) ParseAdminCredentials(data map[string][]byte) (AdminCredentials, error) {

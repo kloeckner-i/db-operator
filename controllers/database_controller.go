@@ -605,16 +605,9 @@ func (r *DatabaseReconciler) createConnectionString(ctx context.Context, dbcr *k
 	if err != nil {
 		return err
 	}
-	// Fill ConnectionStringFields struct
-	dbUrl := ConnectionStringFields{
-		DatabaseHost: dbcr.Status.ProxyStatus.ServiceName,
-		DatabasePort: dbcr.Status.ProxyStatus.SQLPort,
-		UserName:     dbcr.Status.UserName,
-		Password:     databaseCred.Password,
-		DatabaseName: dbcr.Status.DatabaseName,
-	}
+
 	// Generate the connection string
-	dbConnectionString, err := generateConnectionString(dbcr, dbUrl)
+	dbConnectionString, err := generateConnectionString(dbcr, databaseCred)
 	if err != nil {
 		return err
 	}

@@ -24,6 +24,12 @@ type Credentials struct {
 	ConnectionString string
 }
 
+// DatabaseAddress contains host and port of a database instance
+type DatabaseAddress struct {
+	Host string
+	Port uint16
+}
+
 // AdminCredentials contains admin username and password of database server
 type AdminCredentials struct {
 	Username string `yaml:"user"`
@@ -39,4 +45,5 @@ type Database interface {
 	CheckStatus() error
 	GetCredentials() Credentials
 	ParseAdminCredentials(data map[string][]byte) (AdminCredentials, error)
+	GetDatabaseAddress() DatabaseAddress
 }
