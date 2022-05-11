@@ -36,7 +36,7 @@ func TestPostgresExecuteQuery(t *testing.T) {
 	p := testPostgres()
 	admin := getPostgresAdmin()
 
-	assert.NoError(t, p.executeQuery("postgres", testquery, admin))
+	assert.NoError(t, p.executeExec("postgres", testquery, admin))
 }
 
 func TestPostgresCreateDatabase(t *testing.T) {
