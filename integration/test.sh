@@ -5,7 +5,7 @@ OPERATOR_NAMESPACE="operator"
 TEST_NAMESPACE="test"
 
 retry=30
-interval=15
+interval=10
 
 case $TEST_K8S in
     "microk8s")
