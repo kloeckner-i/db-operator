@@ -1,0 +1,8 @@
+FROM alpine:3.15
+ARG var_name
+COPY ./db-operator /usr/local/bin/db-operator
+COPY ./build/bin /usr/local/bin
+RUN /usr/local/bin/user_setup
+
+ENTRYPOINT ["/usr/local/bin/entrypoint"]
+USER ${USER_UID}
