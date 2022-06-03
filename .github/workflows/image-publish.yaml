@@ -26,10 +26,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+
       - name: Setup go
         uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go }}
+      
       - name: Compile Binary
         env:
           GOOS: ${{ matrix.goos }}
