@@ -95,7 +95,7 @@ jobs:
             --amend ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:${{ github.event.release.tag_name }}-amd64 \
             --amend ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:${{ github.event.release.tag_name }}-arm64
 
-      - name: Create a manifest for a latest container
+      - name: Create a manifest for the latest container
         run: |
           docker manifest create ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:latest \
             --amend ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:latest-amd64 \
@@ -125,7 +125,7 @@ jobs:
             --amend ${{ env.dockerhub_user }}/${{ env.product_name }}:${{ github.event.release.tag_name }}-amd64 \
             --amend ${{ env.dockerhub_user }}/${{ env.product_name }}:${{ github.event.release.tag_name }}-arm64
 
-      - name: Create a manifest for a latest container
+      - name: Create a manifest for the latest container
         run: |
           docker manifest create ${{ env.dockerhub_user }}/${{ env.product_name }}:latest \
             --amend ${{ env.dockerhub_user }}/${{ env.product_name }}:latest-amd64 \
