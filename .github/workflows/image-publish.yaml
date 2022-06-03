@@ -8,7 +8,7 @@ env:
   dockerhub_user: kloeckneri
   manufacturer: kloeckner-i
   product_name: db-operator
-  main_go_path: ./cmd
+  main_go_path: .
 
 jobs:
   build:
