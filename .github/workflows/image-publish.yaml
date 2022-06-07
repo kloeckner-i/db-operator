@@ -5,7 +5,7 @@ on:
     types: [published, edited]
 
 env:
-  dockerhub_user: kloeckneri
+  dockerhub_namespace: kloeckneri
   manufacturer: kloeckner-i
   product_name: db-operator
   go_version: "1.17"
@@ -52,7 +52,7 @@ jobs:
       - name: Login to Dockerhub
         uses: docker/login-action@v1
         with:
-          username: ${{ env.dockerhub_user }}
+          username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set action link variable
@@ -66,8 +66,8 @@ jobs:
           file: Dockerfile-ci
           platforms: ${{ env.go_os }}/${{ matrix.docker_arch }}
           tags: |
-            ${{ env.dockerhub_user }}/${{ env.product_name }}:latest-${{ matrix.go_arch }}
-            ${{ env.dockerhub_user }}/${{ env.product_name }}:${{ github.event.release.tag_name }}-${{ matrix.go_arch }}
+            ${{ env.dockerhub_namespace }}/${{ env.product_name }}:latest-${{ matrix.go_arch }}
+            ${{ env.dockerhub_namespace }}/${{ env.product_name }}:${{ github.event.release.tag_name }}-${{ matrix.go_arch }}
             ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:latest-${{ matrix.go_arch }}
             ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:${{ github.event.release.tag_name }}-${{ matrix.go_arch }}
           labels: |
@@ -117,23 +117,23 @@ jobs:
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
-          username: ${{ env.dockerhub_user }}
+          username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Create a docker manifest for a versioned container
         run: |
-          docker manifest create ${{ env.dockerhub_user }}/${{ env.product_name }}:${{ github.event.release.tag_name }} \
-            --amend ${{ env.dockerhub_user }}/${{ env.product_name }}:${{ github.event.release.tag_name }}-amd64 \
-            --amend ${{ env.dockerhub_user }}/${{ env.product_name }}:${{ github.event.release.tag_name }}-arm64
+          docker manifest create ${{ env.dockerhub_namespace }}/${{ env.product_name }}:${{ github.event.release.tag_name }} \
+            --amend ${{ env.dockerhub_namespace }}/${{ env.product_name }}:${{ github.event.release.tag_name }}-amd64 \
+            --amend ${{ env.dockerhub_namespace }}/${{ env.product_name }}:${{ github.event.release.tag_name }}-arm64
 
       - name: Create a manifest for the latest container
         run: |
-          docker manifest create ${{ env.dockerhub_user }}/${{ env.product_name }}:latest \
-            --amend ${{ env.dockerhub_user }}/${{ env.product_name }}:latest-amd64 \
-            --amend ${{ env.dockerhub_user }}/${{ env.product_name }}:latest-arm64
+          docker manifest create ${{ env.dockerhub_namespace }}/${{ env.product_name }}:latest \
+            --amend ${{ env.dockerhub_namespace }}/${{ env.product_name }}:latest-amd64 \
+            --amend ${{ env.dockerhub_namespace }}/${{ env.product_name }}:latest-arm64
 
       - name: Push the manifest
         run: |
-          docker manifest push ${{ env.dockerhub_user }}/${{ env.product_name }}:${{ github.event.release.tag_name }}
-          docker manifest push ${{ env.dockerhub_user }}/${{ env.product_name }}:latest 
+          docker manifest push ${{ env.dockerhub_namespace }}/${{ env.product_name }}:${{ github.event.release.tag_name }}
+          docker manifest push ${{ env.dockerhub_namespace }}/${{ env.product_name }}:latest 
 
