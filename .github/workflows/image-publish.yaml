@@ -4,25 +4,136 @@ on:
   release:
     types: [published, edited]
 
+env:
+  dockerhub_user: kloeckneri
+  manufacturer: kloeckner-i
+  product_name: db-operator
+  go_version: "1.17"
+  go_os: linux
+  main_go_path: .
+
 jobs:
-  image-publish:
+  build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - go_arch: "amd64"
+            docker_arch: "amd64"
+          - go_arch: "arm64"
+            docker_arch: "arm64/v8"
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+
+      - name: Setup go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.go_version }}
+      
+      - name: Compile Binary
+        env:
+          GOOS: ${{ env.go_os }}
+          GOARCH: ${{ matrix.go_arch }}
+          CGO_ENABLED: "0"
+        run: |
+          go build -tags build -o ${{ env.product_name }} ${{ env.main_go_path }}
+
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v1
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push
-        id: docker_build
-        uses: docker/build-push-action@v2
+
+      - name: Login to Dockerhub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ env.dockerhub_user }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set action link variable
+        run: echo "LINK=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >> $GITHUB_ENV
+
+      - name: Build and export
+        uses: docker/build-push-action@v3
         with:
           push: true
-          tags: ghcr.io/kloeckner-i/db-operator:${{ github.event.release.tag_name }}
+          context: .
+          file: Dockerfile-ci
+          platforms: ${{ env.go_os }}/${{ matrix.docker_arch }}
+          tags: |
+            ${{ env.dockerhub_user }}/${{ env.product_name }}:latest-${{ matrix.go_arch }}
+            ${{ env.dockerhub_user }}/${{ env.product_name }}:${{ github.event.release.tag_name }}-${{ matrix.go_arch }}
+            ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:latest-${{ matrix.go_arch }}
+            ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:${{ github.event.release.tag_name }}-${{ matrix.go_arch }}
+          labels: |
+            action_link=${{ env.LINK }}
+            actor=${{ github.actor }}
+            sha=${{ github.sha }}
+            ref=${{ github.ref }}
+
+  push_to_ghcr:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create a docker manifest for a versioned container
+        run: |
+          docker manifest create ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:${{ github.event.release.tag_name }} \
+            --amend ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:${{ github.event.release.tag_name }}-amd64 \
+            --amend ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:${{ github.event.release.tag_name }}-arm64
+
+      - name: Create a manifest for the latest container
+        run: |
+          docker manifest create ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:latest \
+            --amend ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:latest-amd64 \
+            --amend ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:latest-arm64
+
+      - name: Push the manifest
+        run: |
+          docker manifest push ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:${{ github.event.release.tag_name }}
+          docker manifest push ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:latest 
+
+  push_to_dockerhub:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{ env.dockerhub_user }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Create a docker manifest for a versioned container
+        run: |
+          docker manifest create ${{ env.dockerhub_user }}/${{ env.product_name }}:${{ github.event.release.tag_name }} \
+            --amend ${{ env.dockerhub_user }}/${{ env.product_name }}:${{ github.event.release.tag_name }}-amd64 \
+            --amend ${{ env.dockerhub_user }}/${{ env.product_name }}:${{ github.event.release.tag_name }}-arm64
+
+      - name: Create a manifest for the latest container
+        run: |
+          docker manifest create ${{ env.dockerhub_user }}/${{ env.product_name }}:latest \
+            --amend ${{ env.dockerhub_user }}/${{ env.product_name }}:latest-amd64 \
+            --amend ${{ env.dockerhub_user }}/${{ env.product_name }}:latest-arm64
+
+      - name: Push the manifest
+        run: |
+          docker manifest push ${{ env.dockerhub_user }}/${{ env.product_name }}:${{ github.event.release.tag_name }}
+          docker manifest push ${{ env.dockerhub_user }}/${{ env.product_name }}:latest 
+

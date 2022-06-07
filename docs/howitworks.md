@@ -49,3 +49,17 @@ The naming convention for database names is `< namespace >-< name of the Databas
 Just like shown on the picture above, the `Database` `mydb` is created in the namespace `aaa` and it uses the `DbInstance` `yyy`. The Operator will create database `aaa-mydb` in `yyy` instance which points to the server `remote.myserver`.
 
 Afterwards, the operator creates a `Secret` and a `Configmap` which contains necessary information for connecting to the database such as connection string, generated username and password.
+
+## ARM support
+
+At this moment, db-operator can run on arm nodes, but currently we're not providing arm images for backup jobs. So if you have an ARM db-operator installation and you want to have the backup functionality enabled, you will need to create your own docker image for that and update configuration via values:
+
+```YAML
+  backup:
+    activeDeadlineSeconds: 600  # 10m
+    nodeSelector: {}
+    postgres:
+      image: "${{ image_name }}:${{image_tag}}"
+    mysql:
+      image: "${{ image_name }}:${{image_tag}}"
+```
