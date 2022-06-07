@@ -8,6 +8,8 @@ env:
   dockerhub_user: kloeckneri
   manufacturer: kloeckner-i
   product_name: db-operator
+  go_version: "1.17"
+  go_os: linux
   main_go_path: .
 
 jobs:
@@ -16,13 +18,10 @@ jobs:
     strategy:
       matrix:
         include:
-          - { go: "1.17", goos: "linux", goarch: "amd64", dockerArch: "amd64" }
-          - {
-              go: "1.17",
-              goos: "linux",
-              goarch: "arm64",
-              dockerArch: "arm64/v8",
-            }
+          - go_arch: "amd64"
+            docker_arch: "amd64"
+          - go_arch: "arm64"
+            docker_arch: "arm64/v8"
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -30,12 +29,12 @@ jobs:
       - name: Setup go
         uses: actions/setup-go@v2
         with:
-          go-version: ${{ matrix.go }}
+          go-version: ${{ env.go_version }}
       
       - name: Compile Binary
         env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
+          GOOS: ${{ env.go_os }}
+          GOARCH: ${{ matrix.go_arch }}
           CGO_ENABLED: "0"
         run: |
           go build -tags build -o ${{ env.product_name }} ${{ env.main_go_path }}
@@ -65,12 +64,12 @@ jobs:
           push: true
           context: .
           file: Dockerfile-ci
-          platforms: ${{ matrix.goos }}/${{ matrix.dockerArch }}
+          platforms: ${{ env.go_os }}/${{ matrix.docker_arch }}
           tags: |
-            ${{ env.dockerhub_user }}/${{ env.product_name }}:latest-${{ matrix.goarch }}
-            ${{ env.dockerhub_user }}/${{ env.product_name }}:${{ github.event.release.tag_name }}-${{ matrix.goarch }}
-            ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:latest-${{ matrix.goarch }}
-            ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:${{ github.event.release.tag_name }}-${{ matrix.goarch }}
+            ${{ env.dockerhub_user }}/${{ env.product_name }}:latest-${{ matrix.go_arch }}
+            ${{ env.dockerhub_user }}/${{ env.product_name }}:${{ github.event.release.tag_name }}-${{ matrix.go_arch }}
+            ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:latest-${{ matrix.go_arch }}
+            ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:${{ github.event.release.tag_name }}-${{ matrix.go_arch }}
           labels: |
             action_link=${{ env.LINK }}
             actor=${{ github.actor }}

@@ -8,6 +8,13 @@ on:
     branches:
       - master
 
+env:
+  product_name: db-operator
+  go_version: "1.17"
+  go_os: linux
+  go_arch: amd64
+  main_go_path: .
+
 jobs:
   helm-lint: 
     runs-on: ubuntu-latest
@@ -37,6 +44,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+
       - name: Check Code Style
         uses: golangci/golangci-lint-action@v2
         with:
@@ -49,20 +57,25 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
+      
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
+      
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v1
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
           go-version: 1.17
+      
       # The existing apparmor profile for mysql needs to be removed.
       # https://github.com/actions/virtual-environments/issues/181
       # https://github.com/moby/moby/issues/7512#issuecomment-51845976
@@ -72,8 +85,10 @@ jobs:
           sudo apt-get remove mysql-server --purge
           sudo apt-get install apparmor-profiles
           sudo apparmor_parser -R /etc/apparmor.d/usr.sbin.mysqld
+      
       - name: Start dependencies using docker-compose
         run: docker-compose up -d
+      
       - name: Run the unit tests
         run: go test -tags tests ./... -v -cover
 
@@ -86,20 +101,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+ 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
+      
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
+      
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v1
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.17
+      
       # The existing apparmor profile for mysql needs to be removed.
       # https://github.com/actions/virtual-environments/issues/181
       # https://github.com/moby/moby/issues/7512#issuecomment-51845976
@@ -109,15 +124,32 @@ jobs:
           sudo apt-get remove mysql-server --purge
           sudo apt-get install apparmor-profiles
           sudo apparmor_parser -R /etc/apparmor.d/usr.sbin.mysqld
+      
       - name: Create k3d cluster
         env:
           K8S_VERSION: ${{ matrix.k8s_version }}
         run: make k3d_install
+      
+      - name: Setup go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.go_version }}
+      
+      - name: Compile Binary
+        env:
+          GOOS: ${{ env.go_os }}
+          GOARCH: ${{ env.go_arch }}
+          CGO_ENABLED: "0"
+        run: |
+          go build -tags build -o ${{ env.product_name }} ${{ env.main_go_path }}
+
       - name: Build and import docker images
         run: |
-          docker build -t my-db-operator:v1.0.0-dev .
+          docker build -t my-db-operator:v1.0.0-dev -f Dockerfile-ci . 
           k3d image import my-db-operator:v1.0.0-dev -c myk3s
+      
       - name: Install Helm chart
         run: make helm
+      
       - name: Integration test
         run: ./integration/test.sh
