@@ -247,7 +247,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		}
 
 		logrus.Infof("DB: namespace=%s, name=%s finish %s", dbcr.Namespace, dbcr.Name, phase)
-		return reconcileResult, nil // success phase
+		return reconcile.Result{Requeue: true}, nil // success phase, but not done ... requeue for next step
 	}
 
 	// status true do nothing and don't requeue
