@@ -32,7 +32,7 @@ spec:
       name: Protected
       type: boolean
     - description: instance reference
-      jsonPath: .status.instanceRef.metadata.name
+      jsonPath: .status.instanceName
       name: DBInstance
       type: string
     - description: time since creation of resource
@@ -114,6 +114,8 @@ spec:
             description: DatabaseStatus defines the observed state of Database
             properties:
               database:
+                type: string
+              instanceName:
                 type: string
               instanceRef:
                 description: DbInstance is the Schema for the dbinstances API
@@ -303,6 +305,7 @@ spec:
                 type: string
             required:
             - database
+            - instanceName
             - instanceRef
             - phase
             - status
