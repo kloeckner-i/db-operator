@@ -1,7 +1,7 @@
 apiVersion: v2
 type: application
 kubeVersion: ">= 1.19-prerelease <= 1.23-prerelease"
-appVersion: "1.6.1"
+appVersion: "1.6.4"
 description: A Database Operator
 name: db-operator
-version: 1.2.3
+version: 1.2.4
