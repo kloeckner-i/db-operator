@@ -42,9 +42,9 @@ type DatabaseSpec struct {
 // Postgres struct should be used to provide resource that only applicable to postgres
 type Postgres struct {
 	// If set to true, the public schema will be dropped after the database creation
-	DropPublicSchema bool     `json:"dropPublicSchema,omitempty"`
+	DropPublicSchema bool `json:"dropPublicSchema,omitempty"`
 	// Specify schemas to be created. The user created by db-operator will have all access on them.
-	Schemas          []string `json:"schemas,omitempty"`
+	Schemas []string `json:"schemas,omitempty"`
 }
 
 // DatabaseStatus defines the observed state of Database
@@ -58,6 +58,7 @@ type DatabaseStatus struct {
 	ProxyStatus           DatabaseProxyStatus `json:"proxyStatus,omitempty"`
 	DatabaseName          string              `json:"database"`
 	UserName              string              `json:"user"`
+	InstanceName          string              `json:"instanceName"`
 }
 
 // DatabaseProxyStatus defines whether proxy for database is enabled or not
@@ -80,7 +81,7 @@ type DatabaseBackup struct {
 //+kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`,description="current db phase"
 //+kubebuilder:printcolumn:name="Status",type=boolean,JSONPath=`.status.status`,description="current db status"
 //+kubebuilder:printcolumn:name="Protected",type=boolean,JSONPath=`.spec.deletionProtected`,description="If database is protected to not get deleted."
-//+kubebuilder:printcolumn:name="DBInstance",type=string,JSONPath=`.status.instanceRef.metadata.name`,description="instance reference"
+//+kubebuilder:printcolumn:name="DBInstance",type=string,JSONPath=`.status.instanceName`,description="instance reference"
 //+kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`,description="time since creation of resource"
 
 // Database is the Schema for the databases API
