@@ -58,7 +58,6 @@ type DatabaseStatus struct {
 	ProxyStatus           DatabaseProxyStatus `json:"proxyStatus,omitempty"`
 	DatabaseName          string              `json:"database"`
 	UserName              string              `json:"user"`
-	InstanceName          string              `json:"instanceName"`
 }
 
 // DatabaseProxyStatus defines whether proxy for database is enabled or not
@@ -81,7 +80,7 @@ type DatabaseBackup struct {
 //+kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`,description="current db phase"
 //+kubebuilder:printcolumn:name="Status",type=boolean,JSONPath=`.status.status`,description="current db status"
 //+kubebuilder:printcolumn:name="Protected",type=boolean,JSONPath=`.spec.deletionProtected`,description="If database is protected to not get deleted."
-//+kubebuilder:printcolumn:name="DBInstance",type=string,JSONPath=`.status.instanceName`,description="instance reference"
+//+kubebuilder:printcolumn:name="DBInstance",type=string,JSONPath=`.spec.instance`,description="instance reference"
 //+kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`,description="time since creation of resource"
 
 // Database is the Schema for the databases API
