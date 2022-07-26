@@ -32,11 +32,11 @@ spec:
       containers:
       - env:
         - name: DATA_SOURCE_URI
-          value: dbinstance-{{ $name }}-svc:5432/postgres?sslmode=disable
+          value: {{ $value.monitoring.uri | default (printf "dbinstance-%s-svc:5432/postgres?sslmode=disable" $name) }}
         - name: DATA_SOURCE_PASS_FILE
-          value: /run/secrets/db-secrets/password
+          value: /run/secrets/db-secrets/{{ $value.monitoring.passwordKey | default "password" }}
         - name: DATA_SOURCE_USER_FILE
-          value: /run/secrets/db-secrets/user
+          value: /run/secrets/db-secrets/{{ $value.monitoring.usernameKey | default "user" }}
         - name: PG_EXPORTER_WEB_LISTEN_ADDRESS
           value: :60000
         - name: PG_EXPORTER_EXTEND_QUERY_PATH
