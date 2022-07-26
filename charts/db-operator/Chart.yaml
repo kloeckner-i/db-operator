@@ -1,7 +1,7 @@
 apiVersion: v2
 type: application
-kubeVersion: ">= 1.19-prerelease <= 1.23-prerelease"
+kubeVersion: ">= 1.21" ## see all supported versions in the test: https://github.com/kloeckner-i/db-operator/blob/master/.github/workflows/build-and-test.yaml
 appVersion: "1.6.5"
 description: A Database Operator
 name: db-operator
-version: 1.2.6
+version: 1.2.7
