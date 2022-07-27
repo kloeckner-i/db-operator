@@ -1,7 +1,7 @@
 apiVersion: v2
 type: application
 ## All supported k8s versions are in the test: https://github.com/kloeckner-i/db-operator/blob/master/.github/workflows/build-and-test.yaml
-kubeVersion: ">= 1.21"
+kubeVersion: ">= 1.21-prerelease"
 appVersion: "1.6.5"
 description: A Database Operator
 name: db-operator
