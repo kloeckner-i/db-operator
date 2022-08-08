@@ -97,7 +97,7 @@ jobs:
     needs: lint
     strategy:
       matrix:
-        k8s_version: ['v1.21.6', 'v1.22.3', 'v1.23.1']
+        k8s_version: ['v1.21.6', 'v1.22.3', 'v1.23.1', 'v1.24.3']
     steps:
       - name: Checkout
         uses: actions/checkout@v2
