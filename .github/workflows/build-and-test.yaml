@@ -25,7 +25,7 @@ jobs:
       - name: Check Code Style
         uses: golangci/golangci-lint-action@v2
         with:
-          version: v1.45.2 ## https://github.com/golangci/golangci-lint/releases
+          version: v1.49.0 ## https://github.com/golangci/golangci-lint/releases
           args: --timeout 3m0s
 
   unit-test:
