@@ -16,29 +16,6 @@ env:
   main_go_path: .
 
 jobs:
-  helm-lint: 
-    runs-on: ubuntu-latest
-    steps: 
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.7
-
-      - name: Install Helm
-        uses: azure/setup-helm@v1
-        with:
-          version: v3.4.1
-
-      - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.2.0
-
-      - name: Run chart-testing (lint)
-        run: ct lint --validate-maintainers=false
-
   lint: ## https://github.com/golangci/golangci-lint-action#how-to-use
     runs-on: ubuntu-latest
     steps:
@@ -91,65 +68,3 @@ jobs:
       
       - name: Run the unit tests
         run: go test -tags tests ./... -v -cover
-
-  test:
-    runs-on: ubuntu-latest
-    needs: lint
-    strategy:
-      matrix:
-        k8s_version: ['v1.21.6', 'v1.22.3', 'v1.23.1', 'v1.24.3']
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
- 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
-      
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-      
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      
-      # The existing apparmor profile for mysql needs to be removed.
-      # https://github.com/actions/virtual-environments/issues/181
-      # https://github.com/moby/moby/issues/7512#issuecomment-51845976
-      - name: Remove MySQL App Armour Configuration
-        run: |
-          set -x
-          sudo apt-get remove mysql-server --purge
-          sudo apt-get install apparmor-profiles
-          sudo apparmor_parser -R /etc/apparmor.d/usr.sbin.mysqld
-      
-      - name: Create k3d cluster
-        env:
-          K8S_VERSION: ${{ matrix.k8s_version }}
-        run: make k3d_install
-      
-      - name: Setup go
-        uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.go_version }}
-      
-      - name: Compile Binary
-        env:
-          GOOS: ${{ env.go_os }}
-          GOARCH: ${{ env.go_arch }}
-          CGO_ENABLED: "0"
-        run: |
-          go build -tags build -o ${{ env.product_name }} ${{ env.main_go_path }}
-
-      - name: Build and import docker images
-        run: |
-          docker build -t my-db-operator:v1.0.0-dev -f Dockerfile-ci . 
-          k3d image import my-db-operator:v1.0.0-dev -c myk3s
-      
-      - name: Install Helm chart
-        run: make helm
-      
-      - name: Integration test
-        run: ./integration/test.sh
