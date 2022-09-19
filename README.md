@@ -17,16 +17,30 @@ DB Operator provides following features:
 * [Enabling regular Backup](docs/enablingbackup.md) - and schedule cronjob
 * [Upgrade guide](docs/upgradeguide.md) - breaking changes and guide for the upgrade
 
+## Helm Chart is migrated!
+The repository contains helm charts for db-operator is moved to https://github.com/kloeckner-i/charts
+New chart after db-operator > 1.2.7, db-instances > 1.3.0 will be only available in new repository.
+
+### Downloading old charts
+
+Installing older version of charts is still possible.
+Check available versions by following command.
+
+```
+$ helm repo add kloeckneri-old https://kloeckner-i.github.io/db-operator/
+$ helm search repo kloeckneri-old/ --versions
+```
+
 ## Quickstart
 
 ### To install DB Operator with helm:
 
 ```
-$ helm repo add db-operator https://kloeckner-i.github.io/db-operator/
-$ helm install --name my-release db-operator/db-operator
+$ helm repo add kloeckneri https://kloeckner-i.github.io/charts/
+$ helm install --name my-release kloeckneri/db-operator
 ```
 
-To see more options of helm values [here](helm/README.md)
+To see more options of helm values, [see chart repo]([https://github.com/kloeckner-i/charts/tree/main/charts/db-operator])
 
 To see which version is working together check out our [version matrix](https://github.com/kloeckner-i/db-operator/wiki/Version-Matrix).
 
