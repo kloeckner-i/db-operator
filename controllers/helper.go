@@ -46,7 +46,7 @@ func addDBChecksum(dbcr *kciv1alpha1.Database, databaseSecret *corev1.Secret) {
 
 func generateChecksumSecretValue(databaseSecret *corev1.Secret) string {
 	if databaseSecret == nil || databaseSecret.Data == nil {
-		return  ""
+		return ""
 	}
 	return kci.GenerateChecksum(databaseSecret.Data)
 }

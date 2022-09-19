@@ -27,7 +27,6 @@ jobs:
         with:
           version: v1.49.0 ## https://github.com/golangci/golangci-lint/releases
           args: --timeout 3m0s
-          only-new-issues: true
 
   unit-test:
     runs-on: ubuntu-latest

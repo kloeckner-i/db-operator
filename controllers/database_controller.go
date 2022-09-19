@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 	"errors"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"time"
@@ -256,7 +255,6 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
-
 	eventFilter := predicate.Funcs{
 		CreateFunc: func(e event.CreateEvent) bool {
 			return isWatchedNamespace(r.WatchNamespaces, e.Object) && isDatabase(e.Object)
@@ -440,7 +438,7 @@ func (r *DatabaseReconciler) createInstanceAccessSecret(ctx context.Context, dbc
 		}
 		data = secret.Data[credFile]
 	} else {
-		data, err = ioutil.ReadFile(os.Getenv("GCSQL_CLIENT_CREDENTIALS"))
+		data, err = os.ReadFile(os.Getenv("GCSQL_CLIENT_CREDENTIALS"))
 		if err != nil {
 			return err
 		}
