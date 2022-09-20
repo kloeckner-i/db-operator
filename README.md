@@ -52,40 +52,33 @@ To see which version is working together check out our [version matrix](https://
 * make
 * kubectl v1.14+ (< v1.21)
 * helm v3.0.2+
-* [minikube](https://kubernetes.io/docs/tasks/tools/install-minikube/) or [k3d](https://github.com/rancher/k3d)
+* [k3d](https://github.com/rancher/k3d)
 
-To have kubernetes environment locally, you need to install [minikube](https://kubernetes.io/docs/tasks/tools/install-minikube/) or [microk8s](https://microk8s.io/).
+To have kubernetes environment locally, you need to install [k3d](https://github.com/rancher/k3d).
 
 
 #### makefile help
 
 ```
-addexamples      add examples via kubectl create -f examples/
-build            build db-operator docker image
-controller-gen   Download controller-gen locally if necessary.
-generate         generate supporting code for custom resource types
-helm             install helm if not exist and install local chart using helm upgrade --install command
-helm-lint        lint helm manifests
-help             show this help
-k3d_setup        install microk8s locally and deploy db-operator (only for linux and mac)
-manifests        generate custom resource definitions
-minidashboard    open minikube dashboard
-minidelete       delete minikube
-minidown         stop minikube
-miniup           start minikube
-setup            build db-operator image, install helm
-test             spin up mysql, postgres containers and run go unit test
-update           build db-operator image again and delete running pod
+addexamples           add examples via kubectl create -f examples/
+build                 build db-operator docker image
+controller-gen        Download controller-gen locally if necessary.
+generate              generate supporting code for custom resource types
+help                  show this help
+k3d_image             rebuild the docker images and upload into your k3d cluster
+k3d_install           install k3d cluster locally
+k3d_setup             install k3d and import image to your k3d cluster
+k3s_mac_deploy        build image and import image to local lima k8s
+k3s_mac_image         import built image to local lima k8s
+k3s_mac_lima_create   create local k8s using lima
+k3s_mac_lima_start    start local lima k8s
+lint                  lint go code
+manifests             generate custom resource definitions
+test                  run go unit test
+vet                   go vet to find issues
 ```
 
-### Developing with Minikube
-
-#### How to run db-operator
-
-```
-$ make miniup
-$ make setup
-```
+### Developing locally
 
 #### After code changes
 
@@ -99,54 +92,33 @@ rebuild local docker image
 $ make build
 ```
 
-delete running db-operator and apply new image
-```
-$ make deploy
-```
-
-or both at once
-```
-$ make update
-```
-
-#### After helm template changes
-
-```
-$ make helm
-```
-### Developing with k3d
-#### How to run db-operator
+#### Run local kubernetes
 ```
 $ make k3d_setup
 ```
-#### After code changes
 
-rebuild local docker image
+or 
+
+```
+$ make k3s_mac_lima_create
+```
+
+#### Import local docker image
+
 ```
 $ make k3d_build
 ```
 
-delete running db-operator and apply new image
+or
 ```
-$ make deploy
-```
-#### After helm template changes
-
-```
-$ make helm
+$ make k3s_mac_image
 ```
 
-### Developing with microk8s
-
-* Microk8s supports only linux environment. Non linux user can use microk8s using vm for example multipass. Please find details [here](https://microk8s.io/)
-
-#### How to run db-operator
+### Deploy
 
 ```
-$ make microsetup
+helm upgrade my-release kloeckneri/db-operator --set image.repository=my-db-operator --set image.tag=v1.0.0-dev
 ```
-
-microsetup is used for our integration test in pipeline.
 
 ### Run unit test locally
 

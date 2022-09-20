@@ -17,6 +17,8 @@
 package controllers
 
 import (
+	"strings"
+
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -26,7 +28,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"strings"
 )
 
 const (
@@ -39,7 +40,6 @@ type secretEventHandler struct {
 }
 
 func (e *secretEventHandler) Update(evt event.UpdateEvent, q workqueue.RateLimitingInterface) {
-
 	logrus.Info("Start processing Database Secret Update Event")
 
 	switch v := evt.ObjectNew.(type) {
@@ -75,9 +75,11 @@ func (e *secretEventHandler) Update(evt event.UpdateEvent, q workqueue.RateLimit
 func (e *secretEventHandler) Delete(event.DeleteEvent, workqueue.RateLimitingInterface) {
 	logrus.Error("secretEventHandler.Delete(...) event has been FIRED but NOT implemented!")
 }
+
 func (e *secretEventHandler) Generic(event.GenericEvent, workqueue.RateLimitingInterface) {
 	logrus.Error("secretEventHandler.Generic(...) event has been FIRED but NOT implemented!")
 }
+
 func (e *secretEventHandler) Create(evt event.CreateEvent, q workqueue.RateLimitingInterface) {
 	logrus.Error("secretEventHandler.Create(...) event has been FIRED but NOT implemented!")
 }

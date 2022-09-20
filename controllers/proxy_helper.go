@@ -19,7 +19,6 @@ package controllers
 
 import (
 	"errors"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -150,7 +149,7 @@ func determineProxyTypeForInstance(conf *config.Config, dbin *kciv1alpha1.DbInst
 
 // getOperatorNamespace returns the namespace the operator should be running in.
 func getOperatorNamespace() (string, error) {
-	nsBytes, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+	nsBytes, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
 	if err != nil {
 		if os.IsNotExist(err) {
 			return "", ErrNoNamespace

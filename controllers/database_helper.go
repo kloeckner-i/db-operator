@@ -29,7 +29,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-//ConnectionStringFields defines default fields that can be used to generate a connection string
+// ConnectionStringFields defines default fields that can be used to generate a connection string
 type ConnectionStringFields struct {
 	Protocol     string
 	DatabaseHost string
@@ -221,7 +221,7 @@ func generateConnectionString(dbcr *kciv1alpha1.Database, databaseCred database.
 		Password:     databaseCred.Password,
 		DatabaseName: databaseCred.Name,
 	}
-	
+
 	// If proxy is not used, set a real database address
 	if !dbcr.Status.ProxyStatus.Status {
 		db, err := determinDatabaseType(dbcr, databaseCred)

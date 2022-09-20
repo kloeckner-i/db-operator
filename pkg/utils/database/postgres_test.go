@@ -65,6 +65,7 @@ func TestPostgresCreateUser(t *testing.T) {
 	err = p.createUser(admin)
 	assert.Error(t, err, "Should get error")
 }
+
 func TestPublicSchema(t *testing.T) {
 	p := testPostgres()
 	p.DropPublicSchema = false
@@ -83,7 +84,7 @@ func TestDropPublicSchema(t *testing.T) {
 	p.DropPublicSchema = true
 	p.dropPublicSchema(admin)
 	assert.NoError(t, p.checkSchemas())
-	
+
 	// Schemas is recreated here not to breaks tests for extensions
 	p.Schemas = []string{"public"}
 	assert.NoError(t, p.createSchemas(admin))

@@ -100,7 +100,6 @@ func newMysqlTestDbCr() *kciv1alpha1.Database {
 }
 
 func TestIsSpecChanged(t *testing.T) {
-
 	db := newPostgresTestDbCr(newPostgresTestDbInstanceCr())
 
 	testDbSecret := &corev1.Secret{

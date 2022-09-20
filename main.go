@@ -102,19 +102,18 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "DbInstance")
 		os.Exit(1)
 	}
-	
 
 	watchNamespaces := os.Getenv("WATCH_NAMESPACE")
 	namespaces := strings.Split(watchNamespaces, ",")
 	setupLog.Info("Database resources will be served in the next namespaces", "namespaces", namespaces)
-	
+
 	if err = (&controllers.DatabaseReconciler{
-		Client:   mgr.GetClient(),
-		Log:      ctrl.Log.WithName("controllers").WithName("Database"),
-		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor("database-controller"),
-		Interval: time.Duration(i),
-		Conf:     &conf,
+		Client:          mgr.GetClient(),
+		Log:             ctrl.Log.WithName("controllers").WithName("Database"),
+		Scheme:          mgr.GetScheme(),
+		Recorder:        mgr.GetEventRecorderFor("database-controller"),
+		Interval:        time.Duration(i),
+		Conf:            &conf,
 		WatchNamespaces: namespaces,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Database")

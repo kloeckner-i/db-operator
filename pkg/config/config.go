@@ -17,7 +17,6 @@
 package config
 
 import (
-	"io/ioutil"
 	"os"
 
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
@@ -31,7 +30,7 @@ func LoadConfig() Config {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		logrus.Fatalf("Failed to open config file: %v", err)
 	}
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		logrus.Fatalf("Loading of configuration failed: %v", err)
 	}
