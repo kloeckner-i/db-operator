@@ -52,9 +52,9 @@ To see which version is working together check out our [version matrix](https://
 * make
 * kubectl v1.14+ (< v1.21)
 * helm v3.0.2+
-* [minikube](https://kubernetes.io/docs/tasks/tools/install-minikube/) or [k3d](https://github.com/rancher/k3d)
+* [k3d](https://github.com/rancher/k3d)
 
-To have kubernetes environment locally, you need to install [minikube](https://kubernetes.io/docs/tasks/tools/install-minikube/) or [microk8s](https://microk8s.io/).
+To have kubernetes environment locally, you need to install [k3d](https://github.com/rancher/k3d).
 
 
 #### makefile help
@@ -78,14 +78,7 @@ test                  run go unit test
 vet                   go vet to find issues
 ```
 
-### Developing with Minikube
-
-#### How to run db-operator
-
-```
-$ make miniup
-$ make setup
-```
+### Developing locally
 
 #### After code changes
 
@@ -99,54 +92,33 @@ rebuild local docker image
 $ make build
 ```
 
-delete running db-operator and apply new image
-```
-$ make deploy
-```
-
-or both at once
-```
-$ make update
-```
-
-#### After helm template changes
-
-```
-$ make helm
-```
-### Developing with k3d
-#### How to run db-operator
+#### Run local kubernetes
 ```
 $ make k3d_setup
 ```
-#### After code changes
 
-rebuild local docker image
+or 
+
+```
+$ make k3s_mac_lima_create
+```
+
+#### Import local docker image
+
 ```
 $ make k3d_build
 ```
 
-delete running db-operator and apply new image
+or
 ```
-$ make deploy
-```
-#### After helm template changes
-
-```
-$ make helm
+$ make k3s_mac_image
 ```
 
-### Developing with microk8s
-
-* Microk8s supports only linux environment. Non linux user can use microk8s using vm for example multipass. Please find details [here](https://microk8s.io/)
-
-#### How to run db-operator
+### Deploy
 
 ```
-$ make microsetup
+helm upgrade my-release kloeckneri/db-operator --set image.repository=my-db-operator --set image.tag=v1.0.0-dev
 ```
-
-microsetup is used for our integration test in pipeline.
 
 ### Run unit test locally
 
