@@ -12,7 +12,9 @@ RUN go mod download
 
 # build
 COPY . .
-RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -tags build -o /usr/local/bin/db-operator main.go
+
+ARG GOARCH
+RUN GOOS=linux GOARCH=$GOARCH CGO_ENABLED=0 go build -tags build -o /usr/local/bin/db-operator main.go
 
 FROM alpine:3.15
 LABEL maintainer="dev@kloeckner-i.com"

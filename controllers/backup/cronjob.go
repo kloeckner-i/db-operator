@@ -27,6 +27,7 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -114,6 +115,41 @@ func buildJobTemplate(conf *config.Config, dbcr *kciv1alpha1.Database) (batchv1b
 	}, nil
 }
 
+func getResourceRequirements(conf *config.Config) v1.ResourceRequirements {
+	resourceRequirements := v1.ResourceRequirements{}
+
+	requests := make(v1.ResourceList)
+	cpuRequests, err := resource.ParseQuantity(conf.Backup.Resource.Requests.Cpu)
+	if err == nil {
+		requests["cpu"] = cpuRequests
+	}
+	memRequests, err := resource.ParseQuantity(conf.Backup.Resource.Requests.Memory)
+	if err == nil {
+		requests["memory"] = memRequests
+	}
+	if len(requests) != 0 {
+		resourceRequirements.Requests = requests
+	}
+
+	limits := make(v1.ResourceList)
+	cpuLimits, err := resource.ParseQuantity(conf.Backup.Resource.Limits.Cpu)
+	if err == nil {
+		limits["cpu"] = cpuLimits
+	}
+	memLimits, err := resource.ParseQuantity(conf.Backup.Resource.Limits.Memory)
+	if err == nil {
+		limits["memory"] = memLimits
+	}
+
+	if len(limits) != 0 {
+		resourceRequirements.Limits = limits
+	}
+	// debug
+	logrus.Infof("resourceRequirements debug: %+v\n", resourceRequirements)
+
+	return resourceRequirements
+}
+
 func postgresBackupContainer(conf *config.Config, dbcr *kciv1alpha1.Database) (v1.Container, error) {
 	env, err := postgresEnvVars(conf, dbcr)
 	if err != nil {
@@ -126,6 +162,7 @@ func postgresBackupContainer(conf *config.Config, dbcr *kciv1alpha1.Database) (v
 		ImagePullPolicy: v1.PullAlways,
 		VolumeMounts:    volumeMounts(),
 		Env:             env,
+		Resources:       getResourceRequirements(conf),
 	}, nil
 }
 
@@ -141,6 +178,7 @@ func mysqlBackupContainer(conf *config.Config, dbcr *kciv1alpha1.Database) (v1.C
 		ImagePullPolicy: v1.PullAlways,
 		VolumeMounts:    volumeMounts(),
 		Env:             env,
+		Resources:       getResourceRequirements(conf),
 	}, nil
 }
 

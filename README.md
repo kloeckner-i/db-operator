@@ -117,7 +117,7 @@ $ make k3s_mac_image
 ### Deploy
 
 ```
-helm upgrade my-release kloeckneri/db-operator --set image.repository=my-db-operator --set image.tag=v1.0.0-dev
+helm upgrade my-release kloeckneri/db-operator --set image.repository=my-db-operator --set image.tag=1.0.0-dev --set image.pullPolicy=IfNotPresent
 ```
 
 ### Run unit test locally

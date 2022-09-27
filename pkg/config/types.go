@@ -54,6 +54,7 @@ type backupConfig struct {
 	Mysql                 mysqlBackupConfig    `yaml:"mysql"`
 	NodeSelector          map[string]string    `yaml:"nodeSelector"`
 	ActiveDeadlineSeconds int64                `yaml:"activeDeadlineSeconds"`
+	Resource              ResourceRequirements `yaml:"resources"`
 }
 
 type postgresBackupConfig struct {
@@ -62,6 +63,16 @@ type postgresBackupConfig struct {
 
 type mysqlBackupConfig struct {
 	Image string `yaml:"image"`
+}
+
+type ResourceRequirements struct {
+	Limits   ResourceList `yaml:"limits,omitempty"`
+	Requests ResourceList `yaml:"requests,omitempty"`
+}
+
+type ResourceList struct {
+	Cpu    string `yaml:"cpu,omitempty"`
+	Memory string `yaml:"memory,omitempty"`
 }
 
 // monitoringConfig defines prometheus exporter configurations

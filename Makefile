@@ -14,7 +14,11 @@ help:   ## show this help
 	@grep -E '^(.+)\:\ .*##\ (.+)' ${MAKEFILE_LIST} | sort | sed 's/:.*##/#/' | column -t -c 2 -s '#'
 
 build: $(SRC) ## build db-operator docker image
-	@docker build -t my-db-operator:v1.0.0-dev .
+	@docker build --build-arg GOARCH=amd64 -t my-db-operator:v1.0.0-dev .
+	@docker save my-db-operator > my-image.tar
+
+build_arm: $(SRC) ## build db-operator docker image for arm
+	@docker build --platform=linux/arm64 --build-arg GOARCH=arm64 -t my-db-operator:v1.0.0-dev .
 	@docker save my-db-operator > my-image.tar
 
 addexamples: ## add examples via kubectl create -f examples/
@@ -46,7 +50,7 @@ k3s_mac_deploy: build k3s_mac_image ## build image and import image to local lim
 
 k3s_mac_image: ## import built image to local lima k8s
 	limactl copy my-image.tar k3s:/tmp/db.tar
-	limactl shell k3s sudo k3s ctr images import /tmp/db.tar
+	limactl shell k3s sudo k3s ctr images import --all-platforms /tmp/db.tar
 	limactl shell k3s rm -f /tmp/db.tar
 
 k3d_setup: k3d_install k3d_image ## install k3d and import image to your k3d cluster
