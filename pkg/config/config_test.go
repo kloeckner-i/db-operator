@@ -48,3 +48,12 @@ func TestLoadConfigFailCases(t *testing.T) {
 	LoadConfig()
 	assert.Equal(t, expectedFatal, fatalCalled)
 }
+
+func TestBackupResourceConfig(t *testing.T) {
+	os.Setenv("CONFIG_PATH", "./test/config_backup.yaml")
+	conf := LoadConfig()
+	assert.Equal(t, conf.Backup.Resource.Requests.Cpu, "50m")
+	assert.Equal(t, conf.Backup.Resource.Requests.Memory, "50Mi")
+	assert.Equal(t, conf.Backup.Resource.Limits.Cpu, "100m")
+	assert.Equal(t, conf.Backup.Resource.Limits.Memory, "100Mi")
+}

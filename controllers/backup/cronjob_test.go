@@ -24,6 +24,8 @@ import (
 	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
 	"github.com/kloeckner-i/db-operator/pkg/config"
 	"github.com/stretchr/testify/assert"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 func TestGCSBackupCronGsql(t *testing.T) {
@@ -94,4 +96,16 @@ func TestGCSBackupCronGeneric(t *testing.T) {
 	assert.Equal(t, "TestNS", funcCronObject.Namespace)
 	assert.Equal(t, "TestNS-TestDB-backup", funcCronObject.Name)
 	assert.Equal(t, "* * * * *", funcCronObject.Spec.Schedule)
+}
+
+func TestGetResourceRequirements(t *testing.T) {
+	os.Setenv("CONFIG_PATH", "./test/backup_config.yaml")
+	conf := config.LoadConfig()
+
+	expected := v1.ResourceRequirements{
+		Requests: map[v1.ResourceName]resource.Quantity{v1.ResourceCPU: resource.MustParse("50m"), v1.ResourceMemory: resource.MustParse("50Mi")},
+		Limits:   map[v1.ResourceName]resource.Quantity{v1.ResourceCPU: resource.MustParse("100m"), v1.ResourceMemory: resource.MustParse("100Mi")},
+	}
+	result := getResourceRequirements(&conf)
+	assert.Equal(t, expected, result)
 }

@@ -1,9 +1,4 @@
 backup:
-  nodeSelector: {}
-  postgres:
-    image: postgresbackupimage:latest
-  mysql:
-    image: mysqlbackupimage:latest
   resources:
     requests:
       cpu: 50m
