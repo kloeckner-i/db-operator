@@ -140,12 +140,9 @@ func getResourceRequirements(conf *config.Config) v1.ResourceRequirements {
 	if err == nil {
 		limits["memory"] = memLimits
 	}
-
 	if len(limits) != 0 {
 		resourceRequirements.Limits = limits
 	}
-	// debug
-	logrus.Infof("resourceRequirements debug: %+v\n", resourceRequirements)
 
 	return resourceRequirements
 }
