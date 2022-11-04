@@ -117,7 +117,9 @@ $ make k3s_mac_image
 ### Deploy
 
 ```
-helm upgrade my-release kloeckneri/db-operator --set image.repository=my-db-operator --set image.tag=1.0.0-dev --set image.pullPolicy=IfNotPresent
+helm repo add kloeckneri https://kloeckner-i.github.io/charts
+helm repo update
+helm upgrade my-release kloeckneri/db-operator --set image.repository=my-db-operator --set image.tag=1.0.0-dev --set image.pullPolicy=IfNotPresent --install
 ```
 
 ### Run unit test locally

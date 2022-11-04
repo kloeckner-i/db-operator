@@ -35,8 +35,9 @@ type DatabaseSpec struct {
 	// These keywords can be used: Protocol, DatabaseHost, DatabasePort, UserName, Password, DatabaseName.
 	// Default template looks like this:
 	// "{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}"
-	ConnectionStringTemplate string   `json:"connectionStringTemplate,omitempty"`
-	Postgres                 Postgres `json:"postgres,omitempty"`
+	ConnectionStringTemplate string            `json:"connectionStringTemplate,omitempty"`
+	SecretsTemplates         map[string]string `json:"secretsTemplates,omitempty"`
+	Postgres                 Postgres          `json:"postgres,omitempty"`
 }
 
 // Postgres struct should be used to provide resource that only applicable to postgres

@@ -15,7 +15,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: example-instance-admin-secret
-  namespace: << operator namespace >>
+  namespace: default
 type: Opaque
 data:
   user: cG9zdGdyZXM=

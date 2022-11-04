@@ -30,7 +30,18 @@ import (
 )
 
 // ConnectionStringFields defines default fields that can be used to generate a connection string
+// / Deprecated
 type ConnectionStringFields struct {
+	Protocol     string
+	DatabaseHost string
+	DatabasePort int32
+	UserName     string
+	Password     string
+	DatabaseName string
+}
+
+// SecretsTemplatesFields defines default fields that can be used to generate secrets with db creds
+type SecretsTemplatesFields struct {
 	Protocol     string
 	DatabaseHost string
 	DatabasePort int32
@@ -262,7 +273,84 @@ func generateConnectionString(dbcr *kciv1alpha1.Database, databaseCred database.
 	return
 }
 
+func generateTemplatedSecrets(dbcr *kciv1alpha1.Database, databaseCred database.Credentials) (secrets map[string]string, err error) {
+	secrets = map[string]string{}
+	// The string that's going to be generated if the default template is used:
+	// "postgresql://user:password@host:port/database"
+	dbData := ConnectionStringFields{
+		DatabaseHost: dbcr.Status.ProxyStatus.ServiceName,
+		DatabasePort: dbcr.Status.ProxyStatus.SQLPort,
+		UserName:     databaseCred.Username,
+		Password:     databaseCred.Password,
+		DatabaseName: databaseCred.Name,
+	}
+
+	// If proxy is not used, set a real database address
+	if !dbcr.Status.ProxyStatus.Status {
+		db, err := determinDatabaseType(dbcr, databaseCred)
+		if err != nil {
+			return nil, err
+		}
+		dbAddress := db.GetDatabaseAddress()
+		dbData.DatabaseHost = dbAddress.Host
+		dbData.DatabasePort = int32(dbAddress.Port)
+	}
+	// If engine is 'postgres', the protocol should be postgresql
+	if dbcr.Status.InstanceRef.Spec.Engine == "postgres" {
+		dbData.Protocol = "postgresql"
+	} else {
+		dbData.Protocol = dbcr.Status.InstanceRef.Spec.Engine
+	}
+
+	// If dbcr.Spec.ConnectionString is not specified, use the defalt template
+	if len(dbcr.Spec.SecretsTemplates) > 0 {
+		for key, value := range dbcr.Spec.SecretsTemplates {
+			var tmpl string = value
+			t, err := template.New("secret").Parse(tmpl)
+			if err != nil {
+				logrus.Error(err)
+				return nil, err
+			}
+
+			var secretBytes bytes.Buffer
+			err = t.Execute(&secretBytes, dbData)
+			if err != nil {
+				logrus.Error(err)
+				return nil, err
+			}
+
+			connString := secretBytes.String()
+
+			secrets[key] = connString
+		}
+	} else {
+		const tmpl = "{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}"
+		t, err := template.New("secret").Parse(tmpl)
+		if err != nil {
+			logrus.Error(err)
+			return nil, err
+		}
+
+		var secretBytes bytes.Buffer
+		err = t.Execute(&secretBytes, dbData)
+		if err != nil {
+			logrus.Error(err)
+			return nil, err
+		}
+
+		connString := secretBytes.String()
+
+		secrets["CONNECTION_STRING"] = connString
+	}
+	return
+}
+
 func addConnectionStringToSecret(dbcr *kciv1alpha1.Database, secretData map[string][]byte, connectionString string) *v1.Secret {
 	secretData["CONNECTION_STRING"] = []byte(connectionString)
+	return kci.SecretBuilder(dbcr.Spec.SecretName, dbcr.GetNamespace(), secretData)
+}
+
+func addTemplatedSecretToSecret(dbcr *kciv1alpha1.Database, secretData map[string][]byte, secretName string, secretValue string) *v1.Secret {
+	secretData[secretName] = []byte(secretValue)
 	return kci.SecretBuilder(dbcr.Spec.SecretName, dbcr.GetNamespace(), secretData)
 }
