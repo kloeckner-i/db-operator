@@ -603,20 +603,24 @@ func (r *DatabaseReconciler) createConnectionString(ctx context.Context, dbcr *k
 		return err
 	}
 
-	logrus.Info("generating secrets, since the secretsTemplates field is not empty, connectionStringTemplate is ignored.")
-	dbSecrets, err := generateTemplatedSecrets(dbcr, databaseCred)
-	if err != nil {
-		return err
+	/*
+		if connectionString and secretsTemplates -> secretsTemplates + warning
+		if connectionString -> connectionString + warning
+		if secretsTemplates -> secretsTemplates
+		if none -> secretsTemplates with a default value
+	*/
+	useLegacyConnectionString := false
+	switch {
+	case len(dbcr.Spec.ConnectionStringTemplate) > 0 && len(dbcr.Spec.SecretsTemplates) > 0:
+		logrus.Warn("connectionStringTemplate will be ignored since secretsTemplates is not empty")
+		useLegacyConnectionString = false
+	case len(dbcr.Spec.ConnectionStringTemplate) > 0:
+		logrus.Warn("connectionStringTemplate is deprecated and will be removed in *** version, consider using secretsTemplates")
+		useLegacyConnectionString = true
+	default:
+		logrus.Info("generating secrets")
 	}
-	for key, value := range dbSecrets {
-		anotherSecret := addTemplatedSecretToSecret(dbcr, databaseSecret.Data, key, value)
-		err = r.Update(ctx, anotherSecret, &client.UpdateOptions{})
-		if err != nil {
-			return err
-		}
-	}
-	if len(dbcr.Spec.ConnectionStringTemplate) > 0 {
-
+	if useLegacyConnectionString {
 		// Generate the connection string
 		dbConnectionString, err := generateConnectionString(dbcr, databaseCred)
 		if err != nil {
@@ -633,8 +637,19 @@ func (r *DatabaseReconciler) createConnectionString(ctx context.Context, dbcr *k
 			return err
 		}
 		logrus.Infof("DB: namespace=%s, name=%s connection string is added to credentials secret", dbcr.Namespace, dbcr.Name)
+	} else {
+		dbSecrets, err := generateTemplatedSecrets(dbcr, databaseCred)
+		if err != nil {
+			return err
+		}
+		for key, value := range dbSecrets {
+			anotherSecret := addTemplatedSecretToSecret(dbcr, databaseSecret.Data, key, value)
+			err = r.Update(ctx, anotherSecret, &client.UpdateOptions{})
+			if err != nil {
+				return err
+			}
+		}
 	}
-
 	return nil
 }
 

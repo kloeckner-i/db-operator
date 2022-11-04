@@ -304,6 +304,7 @@ func generateTemplatedSecrets(dbcr *kciv1alpha1.Database, databaseCred database.
 
 	// If dbcr.Spec.ConnectionString is not specified, use the defalt template
 	if len(dbcr.Spec.SecretsTemplates) > 0 {
+		logrus.Info("creating secrets from templates")
 		for key, value := range dbcr.Spec.SecretsTemplates {
 			var tmpl string = value
 			t, err := template.New("secret").Parse(tmpl)
@@ -324,6 +325,7 @@ func generateTemplatedSecrets(dbcr *kciv1alpha1.Database, databaseCred database.
 			secrets[key] = connString
 		}
 	} else {
+		logrus.Info("creating a CONNECTION_STRING template")
 		const tmpl = "{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}"
 		t, err := template.New("secret").Parse(tmpl)
 		if err != nil {
