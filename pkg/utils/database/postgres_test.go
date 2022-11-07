@@ -78,9 +78,18 @@ func TestDropPublicSchemaFail(t *testing.T) {
 	assert.Error(t, p.checkSchemas())
 }
 
-func TestDropPublicSchema(t *testing.T) {
+func TestDropPublicSchemaMonitoringTrue(t *testing.T) {
 	p := testPostgres()
 	admin := getPostgresAdmin()
+	p.DropPublicSchema = true
+	p.dropPublicSchema(admin)
+	assert.Error(t, p.checkSchemas())
+}
+
+func TestDropPublicSchemaMonitoringFalse(t *testing.T) {
+	p := testPostgres()
+	admin := getPostgresAdmin()
+	p.Monitoring = false
 	p.DropPublicSchema = true
 	p.dropPublicSchema(admin)
 	assert.NoError(t, p.checkSchemas())

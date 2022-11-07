@@ -173,9 +173,6 @@ func (p Postgres) createDatabase(admin AdminCredentials) error {
 	}
 
 	if p.DropPublicSchema {
-		if p.Monitoring {
-			return fmt.Errorf("can not drop public schema when monitoring is enabled on instance level")
-		}
 		if err := p.dropPublicSchema(admin); err != nil {
 			return fmt.Errorf("can not drop public schema - %s", err)
 		}
@@ -230,6 +227,10 @@ func (p Postgres) createUser(admin AdminCredentials) error {
 }
 
 func (p Postgres) dropPublicSchema(admin AdminCredentials) error {
+	if p.Monitoring {
+		return fmt.Errorf("can not drop public schema when monitoring is enabled on instance level")
+	}
+
 	drop := "DROP SCHEMA IF EXISTS public;"
 	if err := p.executeExec(p.Database, drop, admin); err != nil {
 		logrus.Errorf("failed to drop the schema Public: %s", err)
