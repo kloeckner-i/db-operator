@@ -24,7 +24,7 @@ import (
 )
 
 func testPostgres() *Postgres {
-	return &Postgres{"local", test.GetPostgresHost(), test.GetPostgresPort(), "testdb", "testuser", "testpassword", true, []string{}, false, false, false, []string{}}
+	return &Postgres{"local", test.GetPostgresHost(), test.GetPostgresPort(), "testdb", "testuser", "testpassword", false, []string{}, false, false, false, []string{}}
 }
 
 func getPostgresAdmin() AdminCredentials {
@@ -81,6 +81,7 @@ func TestDropPublicSchemaFail(t *testing.T) {
 func TestDropPublicSchemaMonitoringTrue(t *testing.T) {
 	p := testPostgres()
 	admin := getPostgresAdmin()
+	p.Monitoring = true
 	p.DropPublicSchema = true
 	p.dropPublicSchema(admin)
 	assert.Error(t, p.checkSchemas())
@@ -94,14 +95,24 @@ func TestDropPublicSchemaMonitoringFalse(t *testing.T) {
 	p.dropPublicSchema(admin)
 	assert.NoError(t, p.checkSchemas())
 
-	// Schemas is recreated here not to breaks tests for extensions
+	// Schemas is recreated here not to breaks tests
 	p.Schemas = []string{"public"}
 	assert.NoError(t, p.createSchemas(admin))
+}
+
+func TestEnableMonitoring(t *testing.T) {
+	p := testPostgres()
+	admin := getPostgresAdmin()
+	p.Monitoring = true
+	p.enableMonitoring(admin)
+	p.Extensions = []string{"pg_stat_statements"}
+	assert.NoError(t, p.checkExtensions())
 }
 
 func TestPostgresNoExtensions(t *testing.T) {
 	admin := getPostgresAdmin()
 	p := testPostgres()
+	p.Extensions = []string{}
 
 	assert.NoError(t, p.addExtensions(admin))
 	assert.NoError(t, p.checkExtensions())
