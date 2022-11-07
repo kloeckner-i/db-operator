@@ -41,6 +41,7 @@ type Postgres struct {
 	Database         string
 	User             string
 	Password         string
+	Monitoring       bool
 	Extensions       []string
 	SSLEnabled       bool
 	SkipCAVerify     bool
@@ -161,10 +162,22 @@ func (p Postgres) createDatabase(admin AdminCredentials) error {
 		}
 	}
 
+	err := p.enableMonitoring(admin)
+	if err != nil {
+		return fmt.Errorf("can not enable monitoring - %s", err)
+	}
+
+	err = p.addExtensions(admin)
+	if err != nil {
+		return fmt.Errorf("can not add extension - %s", err)
+	}
+
 	if p.DropPublicSchema {
+		if p.Monitoring {
+			return fmt.Errorf("can not drop public schema when monitoring is enabled on instance level")
+		}
 		if err := p.dropPublicSchema(admin); err != nil {
-			logrus.Errorf("failed dropping the public schema %s", err)
-			return err
+			return fmt.Errorf("can not drop public schema - %s", err)
 		}
 		if len(p.Schemas) == 0 {
 			logrus.Info("the public schema is dropped, but no additional schemas are created, schema creation must be handled on the application side now")
@@ -176,12 +189,6 @@ func (p Postgres) createDatabase(admin AdminCredentials) error {
 			logrus.Errorf("failed creating additional schemas %s", err)
 			return err
 		}
-	}
-
-	err := p.addExtensions(admin)
-	if err != nil {
-		logrus.Errorf("failed creating postgres extensions %s", err)
-		return err
 	}
 
 	return nil
@@ -321,10 +328,23 @@ func (p Postgres) addExtensions(admin AdminCredentials) error {
 		query := fmt.Sprintf("CREATE EXTENSION IF NOT EXISTS \"%s\";", ext)
 		err := p.executeExec(p.Database, query, admin)
 		if err != nil {
-			logrus.Errorf("failed creating extensions %s - %s", query, err)
 			return err
 		}
 	}
+	return nil
+}
+
+func (p Postgres) enableMonitoring(admin AdminCredentials) error {
+	monitoringExtension := "pg_stat_statements"
+
+	if p.Monitoring {
+		query := fmt.Sprintf("CREATE EXTENSION IF NOT EXISTS \"%s\";", monitoringExtension)
+		err := p.executeExec(p.Database, query, admin)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

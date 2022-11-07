@@ -190,7 +190,6 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		case dbPhaseCreate:
 			err := r.createDatabase(ctx, dbcr)
 			if err != nil {
-				logrus.Errorf("DB: namespace=%s, name=%s failed creating database - %s", dbcr.Namespace, dbcr.Name, err)
 				// when database creation failed, don't requeue request. to prevent exceeding api limit (ex: against google api)
 				return r.manageError(ctx, dbcr, err, false)
 			}
@@ -353,7 +352,7 @@ func (r *DatabaseReconciler) createDatabase(ctx context.Context, dbcr *kciv1alph
 
 	err = database.Create(db, adminCred)
 	if err != nil {
-		logrus.Errorf("DB: namespace=%s, name=%s failed creating database", dbcr.Namespace, dbcr.Name)
+
 		return err
 	}
 

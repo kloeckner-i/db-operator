@@ -74,10 +74,6 @@ func determinDatabaseType(dbcr *kciv1alpha1.Database, dbCred database.Credential
 	switch engine {
 	case "postgres":
 		extList := dbcr.Spec.Extensions
-		if monitoringEnabled {
-			extList = append(dbcr.Spec.Extensions, "pg_stat_statements")
-		}
-
 		db := database.Postgres{
 			Backend:          backend,
 			Host:             host,
@@ -85,6 +81,7 @@ func determinDatabaseType(dbcr *kciv1alpha1.Database, dbCred database.Credential
 			Database:         dbCred.Name,
 			User:             dbCred.Username,
 			Password:         dbCred.Password,
+			Monitoring:       monitoringEnabled,
 			Extensions:       extList,
 			SSLEnabled:       instance.Spec.SSLConnection.Enabled,
 			SkipCAVerify:     instance.Spec.SSLConnection.SkipVerify,
