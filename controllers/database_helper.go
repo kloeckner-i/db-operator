@@ -275,6 +275,14 @@ func generateConnectionString(dbcr *kciv1alpha1.Database, databaseCred database.
 
 func generateTemplatedSecrets(dbcr *kciv1alpha1.Database, databaseCred database.Credentials) (secrets map[string]string, err error) {
 	secrets = map[string]string{}
+	var templates map[string]string
+	if len(dbcr.Spec.SecretsTemplates) > 0 {
+		templates = dbcr.Spec.SecretsTemplates
+	} else {
+		const tmpl = "{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}"
+		templates["CONNECTION_STRING"] = tmpl
+
+	}
 	// The string that's going to be generated if the default template is used:
 	// "postgresql://user:password@host:port/database"
 	dbData := ConnectionStringFields{
@@ -302,31 +310,9 @@ func generateTemplatedSecrets(dbcr *kciv1alpha1.Database, databaseCred database.
 		dbData.Protocol = dbcr.Status.InstanceRef.Spec.Engine
 	}
 
-	// If dbcr.Spec.ConnectionString is not specified, use the defalt template
-	if len(dbcr.Spec.SecretsTemplates) > 0 {
-		logrus.Info("creating secrets from templates")
-		for key, value := range dbcr.Spec.SecretsTemplates {
-			var tmpl string = value
-			t, err := template.New("secret").Parse(tmpl)
-			if err != nil {
-				logrus.Error(err)
-				return nil, err
-			}
-
-			var secretBytes bytes.Buffer
-			err = t.Execute(&secretBytes, dbData)
-			if err != nil {
-				logrus.Error(err)
-				return nil, err
-			}
-
-			connString := secretBytes.String()
-
-			secrets[key] = connString
-		}
-	} else {
-		logrus.Info("creating a CONNECTION_STRING template")
-		const tmpl = "{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}"
+	logrus.Info("creating secrets from templates")
+	for key, value := range templates {
+		var tmpl string = value
 		t, err := template.New("secret").Parse(tmpl)
 		if err != nil {
 			logrus.Error(err)
@@ -342,7 +328,7 @@ func generateTemplatedSecrets(dbcr *kciv1alpha1.Database, databaseCred database.
 
 		connString := secretBytes.String()
 
-		secrets["CONNECTION_STRING"] = connString
+		secrets[key] = connString
 	}
 	return
 }

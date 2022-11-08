@@ -603,20 +603,13 @@ func (r *DatabaseReconciler) createConnectionString(ctx context.Context, dbcr *k
 		return err
 	}
 
-	/*
-		if connectionString and secretsTemplates -> secretsTemplates + warning
-		if connectionString -> connectionString + warning
-		if secretsTemplates -> secretsTemplates
-		if none -> secretsTemplates with a default value
-	*/
 	useLegacyConnectionString := false
 	switch {
-	case len(dbcr.Spec.ConnectionStringTemplate) > 0 && len(dbcr.Spec.SecretsTemplates) > 0:
-		logrus.Warn("connectionStringTemplate will be ignored since secretsTemplates is not empty")
-		useLegacyConnectionString = false
 	case len(dbcr.Spec.ConnectionStringTemplate) > 0:
 		logrus.Warn("connectionStringTemplate is deprecated and will be removed in *** version, consider using secretsTemplates")
 		useLegacyConnectionString = true
+	case len(dbcr.Spec.ConnectionStringTemplate) > 0 && len(dbcr.Spec.SecretsTemplates) > 0:
+		logrus.Warn("connectionStringTemplate will be ignored since secretsTemplates is not empty")
 	default:
 		logrus.Info("generating secrets")
 	}
@@ -632,22 +625,18 @@ func (r *DatabaseReconciler) createConnectionString(ctx context.Context, dbcr *k
 		}
 		logrus.Debugf("DB: namespace=%s, name=%s updating credentials secret", dbcr.Namespace, dbcr.Name)
 		newSecret := addConnectionStringToSecret(dbcr, databaseSecret.Data, dbConnectionString)
-		err = r.Update(ctx, newSecret, &client.UpdateOptions{})
+		return r.Update(ctx, newSecret, &client.UpdateOptions{})
+	}
+
+	dbSecrets, err := generateTemplatedSecrets(dbcr, databaseCred)
+	if err != nil {
+		return err
+	}
+	for key, value := range dbSecrets {
+		anotherSecret := addTemplatedSecretToSecret(dbcr, databaseSecret.Data, key, value)
+		err = r.Update(ctx, anotherSecret, &client.UpdateOptions{})
 		if err != nil {
 			return err
-		}
-		logrus.Infof("DB: namespace=%s, name=%s connection string is added to credentials secret", dbcr.Namespace, dbcr.Name)
-	} else {
-		dbSecrets, err := generateTemplatedSecrets(dbcr, databaseCred)
-		if err != nil {
-			return err
-		}
-		for key, value := range dbSecrets {
-			anotherSecret := addTemplatedSecretToSecret(dbcr, databaseSecret.Data, key, value)
-			err = r.Update(ctx, anotherSecret, &client.UpdateOptions{})
-			if err != nil {
-				return err
-			}
 		}
 	}
 	return nil
