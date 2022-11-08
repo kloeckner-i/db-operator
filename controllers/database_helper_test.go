@@ -110,14 +110,7 @@ func TestMonitoringEnabled(t *testing.T) {
 	db, _ := determinDatabaseType(postgresDbCr, testDbcred)
 	postgresInterface, _ := db.(database.Postgres)
 
-	found := false
-	for _, ext := range postgresInterface.Extensions {
-		if ext == "pg_stat_statements" {
-			found = true
-			break
-		}
-	}
-	assert.Equal(t, found, true, "expected pg_stat_statement is included in extension list")
+	assert.Equal(t, postgresInterface.Monitoring, true, "expected monitoring is true in postgres interface")
 }
 
 func TestPsqlDefaultConnectionStringGeneratationWithProxy(t *testing.T) {
