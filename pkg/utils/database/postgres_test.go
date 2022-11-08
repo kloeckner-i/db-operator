@@ -24,7 +24,20 @@ import (
 )
 
 func testPostgres() *Postgres {
-	return &Postgres{"local", test.GetPostgresHost(), test.GetPostgresPort(), "testdb", "testuser", "testpassword", false, []string{}, false, false, false, []string{}}
+	return &Postgres{
+		Backend:          "local",
+		Host:             test.GetPostgresHost(),
+		Port:             test.GetPostgresPort(),
+		Database:         "testdb",
+		User:             "testuser",
+		Password:         "testpassword",
+		Monitoring:       false,
+		Extensions:       []string{},
+		SSLEnabled:       false,
+		SkipCAVerify:     false,
+		DropPublicSchema: false,
+		Schemas:          []string{},
+	}
 }
 
 func getPostgresAdmin() AdminCredentials {
