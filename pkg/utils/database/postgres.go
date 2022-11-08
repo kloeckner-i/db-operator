@@ -162,12 +162,14 @@ func (p Postgres) createDatabase(admin AdminCredentials) error {
 		}
 	}
 
-	err := p.enableMonitoring(admin)
-	if err != nil {
-		return fmt.Errorf("can not enable monitoring - %s", err)
+	if p.Monitoring {
+		err := p.enableMonitoring(admin)
+		if err != nil {
+			return fmt.Errorf("can not enable monitoring - %s", err)
+		}
 	}
 
-	err = p.addExtensions(admin)
+	err := p.addExtensions(admin)
 	if err != nil {
 		return fmt.Errorf("can not add extension - %s", err)
 	}
@@ -338,12 +340,10 @@ func (p Postgres) addExtensions(admin AdminCredentials) error {
 func (p Postgres) enableMonitoring(admin AdminCredentials) error {
 	monitoringExtension := "pg_stat_statements"
 
-	if p.Monitoring {
-		query := fmt.Sprintf("CREATE EXTENSION IF NOT EXISTS \"%s\";", monitoringExtension)
-		err := p.executeExec(p.Database, query, admin)
-		if err != nil {
-			return err
-		}
+	query := fmt.Sprintf("CREATE EXTENSION IF NOT EXISTS \"%s\";", monitoringExtension)
+	err := p.executeExec(p.Database, query, admin)
+	if err != nil {
+		return err
 	}
 
 	return nil
