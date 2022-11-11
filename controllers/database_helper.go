@@ -27,18 +27,8 @@ import (
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/utils/strings/slices"
 )
-
-// ConnectionStringFields defines default fields that can be used to generate a connection string
-// / Deprecated
-type ConnectionStringFields struct {
-	Protocol     string
-	DatabaseHost string
-	DatabasePort int32
-	UserName     string
-	Password     string
-	DatabaseName string
-}
 
 // SecretsTemplatesFields defines default fields that can be used to generate secrets with db creds
 type SecretsTemplatesFields struct {
@@ -121,18 +111,54 @@ func determinDatabaseType(dbcr *kciv1alpha1.Database, dbCred database.Credential
 	}
 }
 
+func parseTemplatedSecretsData(dbcr *kciv1alpha1.Database, data map[string][]byte, useLegacyConnStr bool) (database.Credentials, error) {
+	untemplatedFields := []string{fieldMysqlDB, fieldMysqlPassword, fieldMysqlUser, fieldPostgresDB, fieldPostgresUser, fieldPostgressPassword}
+	cred, err := parseDatabaseSecretData(dbcr, data)
+	if err != nil {
+		return cred, err
+	}
+	cred.TemplatedSecrets = map[string]string{}
+
+	if useLegacyConnStr {
+		if connectionString, ok := data["CONNECTION_STRING"]; ok {
+			cred.TemplatedSecrets["CONNECTION_STRING"] = string(connectionString)
+		} else {
+			logrus.Info("CONNECTION_STRING key does not exist in the secret data")
+		}
+	} else {
+		for key := range dbcr.Spec.SecretsTemplates {
+			// Here we can see if there are obsolete entries in the secret data
+			if secret, ok := data[key]; ok {
+				delete(data, key)
+				cred.TemplatedSecrets[key] = string(secret)
+			} else {
+				logrus.Infof("%s key does not exist in secret data", key)
+			}
+		}
+		for key, value := range data {
+			if !slices.Contains(untemplatedFields, key) {
+				logrus.Infof("%s ---- %s ", key, value)
+			}
+		}
+	}
+
+	return cred, nil
+}
+
+func removeUntemplatedFields()
+
+const fieldPostgresDB = "POSTGRES_DB"
+const fieldPostgresUser = "POSTGRES_USER"
+const fieldPostgressPassword = "POSTGRES_PASSWORD"
+const fieldMysqlDB = "DB"
+const fieldMysqlUser = "USER"
+const fieldMysqlPassword = "PASSWORD"
+
 func parseDatabaseSecretData(dbcr *kciv1alpha1.Database, data map[string][]byte) (database.Credentials, error) {
 	cred := database.Credentials{}
 	engine, err := dbcr.GetEngineType()
 	if err != nil {
 		return cred, err
-	}
-
-	// Connection string can be empty
-	if connectionString, ok := data["CONNECTION_STRING"]; ok {
-		cred.ConnectionString = string(connectionString)
-	} else {
-		logrus.Info("CONNECTION_STRING key does not exist in secret data")
 	}
 
 	switch engine {
@@ -222,7 +248,7 @@ func generateConnectionString(dbcr *kciv1alpha1.Database, databaseCred database.
 	// "postgresql://user:password@host:port/database"
 	const defaultTemplate = "{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}"
 
-	dbData := ConnectionStringFields{
+	dbData := SecretsTemplatesFields{
 		DatabaseHost: dbcr.Status.ProxyStatus.ServiceName,
 		DatabasePort: dbcr.Status.ProxyStatus.SQLPort,
 		UserName:     databaseCred.Username,
@@ -275,17 +301,16 @@ func generateConnectionString(dbcr *kciv1alpha1.Database, databaseCred database.
 
 func generateTemplatedSecrets(dbcr *kciv1alpha1.Database, databaseCred database.Credentials) (secrets map[string]string, err error) {
 	secrets = map[string]string{}
-	var templates map[string]string
+	templates := map[string]string{}
 	if len(dbcr.Spec.SecretsTemplates) > 0 {
 		templates = dbcr.Spec.SecretsTemplates
 	} else {
 		const tmpl = "{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}"
 		templates["CONNECTION_STRING"] = tmpl
-
 	}
 	// The string that's going to be generated if the default template is used:
 	// "postgresql://user:password@host:port/database"
-	dbData := ConnectionStringFields{
+	dbData := SecretsTemplatesFields{
 		DatabaseHost: dbcr.Status.ProxyStatus.ServiceName,
 		DatabasePort: dbcr.Status.ProxyStatus.SQLPort,
 		UserName:     databaseCred.Username,
@@ -330,7 +355,7 @@ func generateTemplatedSecrets(dbcr *kciv1alpha1.Database, databaseCred database.
 
 		secrets[key] = connString
 	}
-	return
+	return secrets, nil
 }
 
 func addConnectionStringToSecret(dbcr *kciv1alpha1.Database, secretData map[string][]byte, connectionString string) *v1.Secret {
@@ -340,5 +365,10 @@ func addConnectionStringToSecret(dbcr *kciv1alpha1.Database, secretData map[stri
 
 func addTemplatedSecretToSecret(dbcr *kciv1alpha1.Database, secretData map[string][]byte, secretName string, secretValue string) *v1.Secret {
 	secretData[secretName] = []byte(secretValue)
+	return kci.SecretBuilder(dbcr.Spec.SecretName, dbcr.GetNamespace(), secretData)
+}
+
+func removeObsoleteSecret(dbcr *kciv1alpha1.Database, secretData map[string][]byte, secretName string) *v1.Secret {
+	delete(secretData, secretName)
 	return kci.SecretBuilder(dbcr.Spec.SecretName, dbcr.GetNamespace(), secretData)
 }
