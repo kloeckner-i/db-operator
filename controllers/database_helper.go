@@ -40,12 +40,14 @@ type SecretsTemplatesFields struct {
 	DatabaseName string
 }
 
-const fieldPostgresDB = "POSTGRES_DB"
-const fieldPostgresUser = "POSTGRES_USER"
-const fieldPostgressPassword = "POSTGRES_PASSWORD"
-const fieldMysqlDB = "DB"
-const fieldMysqlUser = "USER"
-const fieldMysqlPassword = "PASSWORD"
+const (
+	fieldPostgresDB        = "POSTGRES_DB"
+	fieldPostgresUser      = "POSTGRES_USER"
+	fieldPostgressPassword = "POSTGRES_PASSWORD"
+	fieldMysqlDB           = "DB"
+	fieldMysqlUser         = "USER"
+	fieldMysqlPassword     = "PASSWORD"
+)
 
 func determinDatabaseType(dbcr *kciv1alpha1.Database, dbCred database.Credentials) (database.Database, error) {
 	instance, err := dbcr.GetInstanceRef()

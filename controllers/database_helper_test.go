@@ -274,7 +274,6 @@ func TestUntemplatedFieldsGeneratation(t *testing.T) {
 		t.Fail()
 	}
 	assert.Equal(t, connString, expectedData, "generated connections string is wrong")
-
 }
 
 // Connection string tests should be removed later, when connection string is gone

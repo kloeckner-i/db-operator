@@ -353,7 +353,6 @@ func (r *DatabaseReconciler) createDatabase(ctx context.Context, dbcr *kciv1alph
 
 	err = database.Create(db, adminCred)
 	if err != nil {
-
 		return err
 	}
 
@@ -649,7 +648,7 @@ func (r *DatabaseReconciler) createTemplatedSecrets(ctx context.Context, dbcr *k
 
 		}
 	}
-	for key, _ := range databaseSecret.Data {
+	for key := range databaseSecret.Data {
 		if _, ok := dbSecrets[key]; !ok {
 			if !slices.Contains(untemplatedFields, key) {
 				logrus.Infof("Removing untemplated field: %s", key)
