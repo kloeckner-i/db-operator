@@ -606,7 +606,7 @@ func (r *DatabaseReconciler) createTemplatedSecrets(ctx context.Context, dbcr *k
 			dbcr.Name,
 		)
 	case len(dbcr.Spec.ConnectionStringTemplate) > 0:
-		logrus.Warnf("DB: namespace=%s, name=%s connectionStringTemplate is deprecated and will be removed in *** version, consider using secretsTemplates",
+		logrus.Warnf("DB: namespace=%s, name=%s connectionStringTemplate is deprecated and will be removed in the near future, consider using secretsTemplates",
 			dbcr.Namespace,
 			dbcr.Name,
 		)
