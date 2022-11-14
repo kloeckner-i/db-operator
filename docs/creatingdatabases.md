@@ -44,14 +44,11 @@ spec:
   backup:
     enable: false # turn it to true when you want to use back up feature. currently only support postgres
     cron: "0 0 * * *"
-  connectionStringTemplate: |
-    "jdbc:{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}" # provide a custom template to generate a database connection string
+  secretsTemplates:
+    CONNECTION_STRING: "jdbc:{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}" 
+    PASSWORD_USER: "{{ .Password }}_{{ .User }}"
 ```
-If your application needs a connections string in another format, you can provide your own template via the connectionStringTemplate field. When the `connectionStringTemplate` is empty, the default template is used:
-```
-{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}
-```
-These fields can be used to generate a custom template: 
+With `secretsTemplates` you can add fields to the database secret that are composed by any string and by any of the following templated values: 
 ```YAML
 - Protocol: Depending on db engine. Possible values are mysql/postgresql
 - UserName: The same value as for database user in the creds secret
@@ -59,6 +56,10 @@ These fields can be used to generate a custom template:
 - DatabaseHost: The same value as for db host in the connection configmap 
 - DatabasePort: The same value as for db port in the connection configmap 
 - DatabaseName: The same value as for db host in the creds secret
+```
+If no secretsTemplates are specified, the default one will be used: 
+```YAML
+CONNECTION_STRING: "jdbc:{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}" 
 ```
 
 For `postgres` it's also possible to drop the `Public` schema after the database creation, or to create additional schemas. To do that, you need to provide these fields: 
