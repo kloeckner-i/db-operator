@@ -593,7 +593,7 @@ func (r *DatabaseReconciler) createProxy(ctx context.Context, dbcr *kciv1alpha1.
 }
 
 func (r *DatabaseReconciler) createTemplatedSecrets(ctx context.Context, dbcr *kciv1alpha1.Database) error {
-untemplatedFields := []string{fieldMysqlDB, fieldMysqlPassword, fieldMysqlUser, fieldPostgresDB, fieldPostgresUser, fieldPostgressPassword}
+	untemplatedFields := []string{fieldMysqlDB, fieldMysqlPassword, fieldMysqlUser, fieldPostgresDB, fieldPostgresUser, fieldPostgressPassword}
 	// First of all the password should be taken from secret because it's not stored anywhere else
 	databaseSecret, err := r.getDatabaseSecret(ctx, dbcr)
 	if err != nil {
@@ -649,7 +649,7 @@ untemplatedFields := []string{fieldMysqlDB, fieldMysqlPassword, fieldMysqlUser, 
 
 		}
 	}
-	for key, _:= range databaseSecret.Data {
+	for key, _ := range databaseSecret.Data {
 		if _, ok := dbSecrets[key]; !ok {
 			if !slices.Contains(untemplatedFields, key) {
 				logrus.Infof("Removing untemplated field: %s", key)

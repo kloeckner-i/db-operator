@@ -152,7 +152,6 @@ func parseTemplatedSecretsData(dbcr *kciv1alpha1.Database, data map[string][]byt
 	return cred, nil
 }
 
-
 func parseDatabaseSecretData(dbcr *kciv1alpha1.Database, data map[string][]byte) (database.Credentials, error) {
 	cred := database.Credentials{}
 	engine, err := dbcr.GetEngineType()
