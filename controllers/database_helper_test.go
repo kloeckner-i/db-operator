@@ -22,6 +22,7 @@ import (
 
 	"github.com/kloeckner-i/db-operator/pkg/utils/database"
 	"github.com/stretchr/testify/assert"
+	v1 "k8s.io/api/core/v1"
 )
 
 var testDbcred = database.Credentials{Name: "testdb", Username: "testuser", Password: "password"}
@@ -264,16 +265,54 @@ func TestUntemplatedFieldsGeneratation(t *testing.T) {
 		postgresDbCr.Spec.SecretsTemplates[key] = "DUMMY"
 	}
 	postgresDbCr.Spec.SecretsTemplates["TMPL"] = "DUMMY"
-	expectedData := map[string]string{
-		"TMPL": "DUMMY",
+	expectedData := map[string][]byte{
+		"TMPL": []byte("DUMMY"),
 	}
 
-	connString, err := generateTemplatedSecrets(postgresDbCr, testDbcred)
+	sercretData, err := generateTemplatedSecrets(postgresDbCr, testDbcred)
 	if err != nil {
 		t.Logf("unexpected error: %s", err)
 		t.Fail()
 	}
-	assert.Equal(t, connString, expectedData, "generated connections string is wrong")
+
+	dummySecret := v1.Secret{
+		Data: map[string][]byte{},
+	}
+
+	newSecret := fillTemplatedSecretData(postgresDbCr, dummySecret.Data, sercretData)
+	assert.Equal(t, newSecret.Data, expectedData, "generated connections string is wrong")
+}
+
+func TestObsoleteFieldsRemoving(t *testing.T) {
+	instance := newPostgresTestDbInstanceCr()
+	postgresDbCr := newPostgresTestDbCr(instance)
+
+	postgresDbCr.Spec.SecretsTemplates = map[string]string{}
+	untemplatedFields := []string{fieldMysqlDB, fieldMysqlPassword, fieldMysqlUser, fieldPostgresDB, fieldPostgresUser, fieldPostgressPassword}
+	for _, key := range untemplatedFields {
+		postgresDbCr.Spec.SecretsTemplates[key] = "DUMMY"
+	}
+	postgresDbCr.Spec.SecretsTemplates["TMPL"] = "DUMMY"
+	expectedData := map[string][]byte{
+		"TMPL": []byte("DUMMY"),
+	}
+
+	sercretData, err := generateTemplatedSecrets(postgresDbCr, testDbcred)
+	if err != nil {
+		t.Logf("unexpected error: %s", err)
+		t.Fail()
+	}
+
+	dummySecret := v1.Secret{
+		Data: map[string][]byte{
+			"TO_REMOVE": []byte("this is supposed to be removed"),
+		},
+	}
+
+	newSecret := fillTemplatedSecretData(postgresDbCr, dummySecret.Data, sercretData)
+	newSecret = removeObsoleteSecret(postgresDbCr, dummySecret.Data, sercretData)
+
+	assert.Equal(t, newSecret.Data, expectedData, "generated connections string is wrong")
 }
 
 // Connection string tests should be removed later, when connection string is gone

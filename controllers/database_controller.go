@@ -42,7 +42,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
-	"k8s.io/utils/strings/slices"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -125,7 +124,6 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		// finalization logic fails, don't remove the finalizer so
 		// that we can retry during the next reconciliation.
 		if containsString(dbcr.ObjectMeta.Finalizers, "db."+dbcr.Name) {
-			logrus.Infof("DB: namespace=%s, name=%s deleting database", dbcr.Namespace, dbcr.Name)
 			err := r.deleteDatabase(ctx, dbcr)
 			if err != nil {
 				logrus.Errorf("DB: namespace=%s, name=%s failed deleting database - %s", dbcr.Namespace, dbcr.Name, err)
@@ -592,7 +590,6 @@ func (r *DatabaseReconciler) createProxy(ctx context.Context, dbcr *kciv1alpha1.
 }
 
 func (r *DatabaseReconciler) createTemplatedSecrets(ctx context.Context, dbcr *kciv1alpha1.Database) error {
-	untemplatedFields := []string{fieldMysqlDB, fieldMysqlPassword, fieldMysqlUser, fieldPostgresDB, fieldPostgresUser, fieldPostgressPassword}
 	// First of all the password should be taken from secret because it's not stored anywhere else
 	databaseSecret, err := r.getDatabaseSecret(ctx, dbcr)
 	if err != nil {
@@ -604,12 +601,18 @@ func (r *DatabaseReconciler) createTemplatedSecrets(ctx context.Context, dbcr *k
 	useLegacyConnectionString := false
 	switch {
 	case len(dbcr.Spec.ConnectionStringTemplate) > 0 && len(dbcr.Spec.SecretsTemplates) > 0:
-		logrus.Warn("connectionStringTemplate will be ignored since secretsTemplates is not empty")
+		logrus.Warnf("DB: namespace=%s, name=%s connectionStringTemplate will be ignored since secretsTemplates is not empty",
+			dbcr.Namespace,
+			dbcr.Name,
+		)
 	case len(dbcr.Spec.ConnectionStringTemplate) > 0:
-		logrus.Warn("connectionStringTemplate is deprecated and will be removed in *** version, consider using secretsTemplates")
+		logrus.Warnf("DB: namespace=%s, name=%s connectionStringTemplate is deprecated and will be removed in *** version, consider using secretsTemplates",
+			dbcr.Namespace,
+			dbcr.Name,
+		)
 		useLegacyConnectionString = true
 	default:
-		logrus.Info("generating secrets")
+		logrus.Infof("DB: namespace=%s, name=%s generating secrets", dbcr.Namespace, dbcr.Name)
 	}
 
 	databaseCred, err := parseTemplatedSecretsData(dbcr, databaseSecret.Data, useLegacyConnectionString)
@@ -636,30 +639,16 @@ func (r *DatabaseReconciler) createTemplatedSecrets(ctx context.Context, dbcr *k
 	if err != nil {
 		return err
 	}
-	for key, value := range dbSecrets {
-		if !slices.Contains(untemplatedFields, key) {
-			logrus.Warnf("%s can't be used for templating, because it's used for default secret created by operator", key)
-		} else {
-			newSecret := addTemplatedSecretToSecret(dbcr, databaseSecret.Data, key, value)
-			err = r.Update(ctx, newSecret, &client.UpdateOptions{})
-			if err != nil {
-				return err
-			}
-
-		}
+	// Adding values
+	newSecret := fillTemplatedSecretData(dbcr, databaseSecret.Data, dbSecrets)
+	err = r.Update(ctx, newSecret, &client.UpdateOptions{})
+	if err != nil {
+		return err
 	}
-	for key := range databaseSecret.Data {
-		if _, ok := dbSecrets[key]; !ok {
-			if !slices.Contains(untemplatedFields, key) {
-				logrus.Infof("Removing untemplated field: %s", key)
-				newSecret := removeObsoleteSecret(dbcr, databaseSecret.Data, key)
-				err = r.Update(ctx, newSecret, &client.UpdateOptions{})
-				if err != nil {
-					return err
-				}
-
-			}
-		}
+	newSecret = removeObsoleteSecret(dbcr, databaseSecret.Data, dbSecrets)
+	err = r.Update(ctx, newSecret, &client.UpdateOptions{})
+	if err != nil {
+		return err
 	}
 
 	return nil

@@ -13,6 +13,4 @@ spec:
     enable: true
     cron: "0 0 * * *"
   secretsTemplates:
-      CONNECTION_STRING: "{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}"
-      PASSWORD_2: "{{ .Password }}"
-      DATABASE_NAME: "My database name is {{ .DatabaseName }}"
+      CONNECTION_STRING_1: "{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}"

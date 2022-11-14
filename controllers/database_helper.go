@@ -49,6 +49,10 @@ const (
 	fieldMysqlPassword     = "PASSWORD"
 )
 
+func getUntemplatedSecrets() []string {
+	return []string{fieldMysqlDB, fieldMysqlPassword, fieldMysqlUser, fieldPostgresDB, fieldPostgresUser, fieldPostgressPassword}
+}
+
 func determinDatabaseType(dbcr *kciv1alpha1.Database, dbCred database.Credentials) (database.Database, error) {
 	instance, err := dbcr.GetInstanceRef()
 	if err != nil {
@@ -121,7 +125,6 @@ func determinDatabaseType(dbcr *kciv1alpha1.Database, dbCred database.Credential
 }
 
 func parseTemplatedSecretsData(dbcr *kciv1alpha1.Database, data map[string][]byte, useLegacyConnStr bool) (database.Credentials, error) {
-	untemplatedFields := []string{fieldMysqlDB, fieldMysqlPassword, fieldMysqlUser, fieldPostgresDB, fieldPostgresUser, fieldPostgressPassword}
 	cred, err := parseDatabaseSecretData(dbcr, data)
 	if err != nil {
 		return cred, err
@@ -132,7 +135,7 @@ func parseTemplatedSecretsData(dbcr *kciv1alpha1.Database, data map[string][]byt
 		if connectionString, ok := data["CONNECTION_STRING"]; ok {
 			cred.TemplatedSecrets["CONNECTION_STRING"] = string(connectionString)
 		} else {
-			logrus.Info("CONNECTION_STRING key does not exist in the secret data")
+			logrus.Infof("DB: namespace=%s, name=%s CONNECTION_STRING key does not exist in the secret data", dbcr.Namespace, dbcr.Name)
 		}
 	} else {
 		for key := range dbcr.Spec.SecretsTemplates {
@@ -141,12 +144,11 @@ func parseTemplatedSecretsData(dbcr *kciv1alpha1.Database, data map[string][]byt
 				delete(data, key)
 				cred.TemplatedSecrets[key] = string(secret)
 			} else {
-				logrus.Infof("%s key does not exist in secret data", key)
-			}
-		}
-		for key, value := range data {
-			if !slices.Contains(untemplatedFields, key) {
-				logrus.Infof("%s ---- %s ", key, value)
+				logrus.Infof("DB: namespace=%s, name=%s %s key does not exist in secret data",
+					dbcr.Namespace,
+					dbcr.Name,
+					key,
+				)
 			}
 		}
 	}
@@ -335,27 +337,39 @@ func generateTemplatedSecrets(dbcr *kciv1alpha1.Database, databaseCred database.
 		dbData.Protocol = dbcr.Status.InstanceRef.Spec.Engine
 	}
 
-	logrus.Info("creating secrets from templates")
+	logrus.Infof("DB: namespace=%s, name=%s creating secrets from templates", dbcr.Namespace, dbcr.Name)
 	for key, value := range templates {
 		var tmpl string = value
 		t, err := template.New("secret").Parse(tmpl)
 		if err != nil {
-			logrus.Error(err)
 			return nil, err
 		}
 
 		var secretBytes bytes.Buffer
 		err = t.Execute(&secretBytes, dbData)
 		if err != nil {
-			logrus.Error(err)
 			return nil, err
 		}
-
 		connString := secretBytes.String()
-
 		secrets[key] = connString
 	}
 	return secrets, nil
+}
+
+func fillTemplatedSecretData(dbcr *kciv1alpha1.Database, secretData map[string][]byte, newSecretFields map[string]string) (newSecret *v1.Secret) {
+	untemplatedSecrets := getUntemplatedSecrets()
+	for key, value := range newSecretFields {
+		if slices.Contains(untemplatedSecrets, key) {
+			logrus.Warnf("DB: namespace=%s, name=%s %s can't be used for templating, because it's used for default secret created by operator",
+				dbcr.Namespace,
+				dbcr.Name,
+				key,
+			)
+		} else {
+			newSecret = addTemplatedSecretToSecret(dbcr, secretData, key, value)
+		}
+	}
+	return
 }
 
 func addConnectionStringToSecret(dbcr *kciv1alpha1.Database, secretData map[string][]byte, connectionString string) *v1.Secret {
@@ -368,7 +382,18 @@ func addTemplatedSecretToSecret(dbcr *kciv1alpha1.Database, secretData map[strin
 	return kci.SecretBuilder(dbcr.Spec.SecretName, dbcr.GetNamespace(), secretData)
 }
 
-func removeObsoleteSecret(dbcr *kciv1alpha1.Database, secretData map[string][]byte, secretName string) *v1.Secret {
-	delete(secretData, secretName)
+func removeObsoleteSecret(dbcr *kciv1alpha1.Database, secretData map[string][]byte, newSecretFields map[string]string) *v1.Secret {
+	untemplatedSecrets := getUntemplatedSecrets()
+
+	for key := range secretData {
+		if _, ok := newSecretFields[key]; !ok {
+			// Check if is a untemplatead secret, so it's not removed accidentally
+			if !slices.Contains(untemplatedSecrets, key) {
+				logrus.Infof("DB: namespace=%s, name=%s removing an obsolete field: %s", dbcr.Namespace, dbcr.Name, key)
+				delete(secretData, key)
+			}
+		}
+	}
+
 	return kci.SecretBuilder(dbcr.Spec.SecretName, dbcr.GetNamespace(), secretData)
 }
