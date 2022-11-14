@@ -46,7 +46,7 @@ releases:
               port: 5432
             secrets:
               adminUser: postgres
-              adminPassword: 0hFk8zgUMR
+              adminPassword: mSuijxycI0
 
   - name: postgres-instance
     installed: true

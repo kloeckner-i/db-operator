@@ -12,8 +12,7 @@ spec:
   backup:
     enable: true
     cron: "0 0 * * *"
-  # connectionStringTemplate: |
-    # "conn_string::jdbc:{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}"
-  # secretsTemplates:
-    # CONNECTION_STRING_3: "{{ .Password }}{{ .Password }}{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}"
-    # CONNECTION_STRING_2: "jdbc:{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}"
+  secretsTemplates:
+      CONNECTION_STRING: "{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}"
+      PASSWORD_2: "{{ .Password }}"
+      DATABASE_NAME: "My database name is {{ .DatabaseName }}"

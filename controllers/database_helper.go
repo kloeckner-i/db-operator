@@ -40,6 +40,13 @@ type SecretsTemplatesFields struct {
 	DatabaseName string
 }
 
+const fieldPostgresDB = "POSTGRES_DB"
+const fieldPostgresUser = "POSTGRES_USER"
+const fieldPostgressPassword = "POSTGRES_PASSWORD"
+const fieldMysqlDB = "DB"
+const fieldMysqlUser = "USER"
+const fieldMysqlPassword = "PASSWORD"
+
 func determinDatabaseType(dbcr *kciv1alpha1.Database, dbCred database.Credentials) (database.Database, error) {
 	instance, err := dbcr.GetInstanceRef()
 	if err != nil {
@@ -145,14 +152,6 @@ func parseTemplatedSecretsData(dbcr *kciv1alpha1.Database, data map[string][]byt
 	return cred, nil
 }
 
-func removeUntemplatedFields()
-
-const fieldPostgresDB = "POSTGRES_DB"
-const fieldPostgresUser = "POSTGRES_USER"
-const fieldPostgressPassword = "POSTGRES_PASSWORD"
-const fieldMysqlDB = "DB"
-const fieldMysqlUser = "USER"
-const fieldMysqlPassword = "PASSWORD"
 
 func parseDatabaseSecretData(dbcr *kciv1alpha1.Database, data map[string][]byte) (database.Credentials, error) {
 	cred := database.Credentials{}

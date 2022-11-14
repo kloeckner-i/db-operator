@@ -21,7 +21,7 @@ type Credentials struct {
 	Name             string
 	Username         string
 	Password         string
-	ConnectionString string
+	TemplatedSecrets map[string]string
 }
 
 // DatabaseAddress contains host and port of a database instance
