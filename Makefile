@@ -56,6 +56,7 @@ k3s_mac_image: ## import built image to local lima k8s
 k3d_setup: k3d_install k3d_image ## install k3d and import image to your k3d cluster
 
 k3d_install: ## install k3d cluster locally
+	@curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
 	@k3d cluster create myk3s -i rancher/k3s:$(K8S_VERSION)-k3s1
 	@kubectl get pod
 
