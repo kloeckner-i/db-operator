@@ -357,7 +357,7 @@ func generateTemplatedSecrets(dbcr *kciv1alpha1.Database, databaseCred database.
 }
 
 func fillTemplatedSecretData(dbcr *kciv1alpha1.Database, secretData map[string][]byte, newSecretFields map[string]string) (newSecret *v1.Secret) {
-	blockedTempatedKeys := getblockedTempatedKeys()
+	blockedTempatedKeys := getBlockedTempatedKeys()
 	for key, value := range newSecretFields {
 		if slices.Contains(blockedTempatedKeys, key) {
 			logrus.Warnf("DB: namespace=%s, name=%s %s can't be used for templating, because it's used for default secret created by operator",
