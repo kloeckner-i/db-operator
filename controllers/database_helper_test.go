@@ -255,7 +255,7 @@ func TestWrongTemplatedSecretGeneratation(t *testing.T) {
 	assert.Contains(t, err.Error(), errSubstr, "the error doesn't contain expected substring")
 }
 
-func TestUntemplatedFieldsGeneratation(t *testing.T) {
+func TestBlockedTempatedKeysGeneratation(t *testing.T) {
 	instance := newPostgresTestDbInstanceCr()
 	postgresDbCr := newPostgresTestDbCr(instance)
 

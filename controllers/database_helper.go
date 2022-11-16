@@ -49,7 +49,7 @@ const (
 	fieldMysqlPassword     = "PASSWORD"
 )
 
-func getUntemplatedSecrets() []string {
+func getBlockedTempatedKeys() []string {
 	return []string{fieldMysqlDB, fieldMysqlPassword, fieldMysqlUser, fieldPostgresDB, fieldPostgresUser, fieldPostgressPassword}
 }
 
@@ -357,9 +357,9 @@ func generateTemplatedSecrets(dbcr *kciv1alpha1.Database, databaseCred database.
 }
 
 func fillTemplatedSecretData(dbcr *kciv1alpha1.Database, secretData map[string][]byte, newSecretFields map[string]string) (newSecret *v1.Secret) {
-	untemplatedSecrets := getUntemplatedSecrets()
+	blockedTempatedKeys := getblockedTempatedKeys()
 	for key, value := range newSecretFields {
-		if slices.Contains(untemplatedSecrets, key) {
+		if slices.Contains(blockedTempatedKeys, key) {
 			logrus.Warnf("DB: namespace=%s, name=%s %s can't be used for templating, because it's used for default secret created by operator",
 				dbcr.Namespace,
 				dbcr.Name,
@@ -383,12 +383,12 @@ func addTemplatedSecretToSecret(dbcr *kciv1alpha1.Database, secretData map[strin
 }
 
 func removeObsoleteSecret(dbcr *kciv1alpha1.Database, secretData map[string][]byte, newSecretFields map[string]string) *v1.Secret {
-	untemplatedSecrets := getUntemplatedSecrets()
+	blockedTempatedKeys := getBlockedTempatedKeys()
 
 	for key := range secretData {
 		if _, ok := newSecretFields[key]; !ok {
 			// Check if is a untemplatead secret, so it's not removed accidentally
-			if !slices.Contains(untemplatedSecrets, key) {
+			if !slices.Contains(blockedTempatedKeys, key) {
 				logrus.Infof("DB: namespace=%s, name=%s removing an obsolete field: %s", dbcr.Namespace, dbcr.Name, key)
 				delete(secretData, key)
 			}
