@@ -22,6 +22,7 @@ import (
 
 	"github.com/kloeckner-i/db-operator/pkg/utils/database"
 	"github.com/stretchr/testify/assert"
+	v1 "k8s.io/api/core/v1"
 )
 
 var testDbcred = database.Credentials{Name: "testdb", Username: "testuser", Password: "password"}
@@ -113,12 +114,214 @@ func TestMonitoringEnabled(t *testing.T) {
 	assert.Equal(t, postgresInterface.Monitoring, true, "expected monitoring is true in postgres interface")
 }
 
+func TestPsqlDefaultTemplatedSecretGeneratationWithProxy(t *testing.T) {
+	instance := newPostgresTestDbInstanceCr()
+	postgresDbCr := newPostgresTestDbCr(instance)
+	postgresDbCr.Status.ProxyStatus.Status = true
+
+	c := SecretsTemplatesFields{
+		DatabaseHost: "postgres",
+		DatabasePort: 5432,
+		UserName:     testDbcred.Username,
+		Password:     testDbcred.Password,
+		DatabaseName: testDbcred.Name,
+	}
+
+	postgresDbCr.Status.ProxyStatus.SQLPort = c.DatabasePort
+	postgresDbCr.Status.ProxyStatus.ServiceName = c.DatabaseHost
+
+	protocol := "postgresql"
+	expectedData := map[string]string{
+		"CONNECTION_STRING": fmt.Sprintf("%s://%s:%s@%s:%d/%s", protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName),
+	}
+
+	connString, err := generateTemplatedSecrets(postgresDbCr, testDbcred)
+	if err != nil {
+		t.Logf("Unexpected error: %s", err)
+		t.Fail()
+	}
+	assert.Equal(t, expectedData, connString, "generated connections string is wrong")
+}
+
+func TestPsqlDefaultTemplatedSecretGeneratationWithoutProxy(t *testing.T) {
+	instance := newPostgresTestDbInstanceCr()
+	postgresDbCr := newPostgresTestDbCr(instance)
+
+	c := SecretsTemplatesFields{
+		DatabaseHost: "postgres",
+		DatabasePort: 5432,
+		UserName:     testDbcred.Username,
+		Password:     testDbcred.Password,
+		DatabaseName: testDbcred.Name,
+	}
+
+	protocol := "postgresql"
+	expectedData := map[string]string{
+		"CONNECTION_STRING": fmt.Sprintf("%s://%s:%s@%s:%d/%s", protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName),
+	}
+
+	connString, err := generateTemplatedSecrets(postgresDbCr, testDbcred)
+	if err != nil {
+		t.Logf("Unexpected error: %s", err)
+		t.Fail()
+	}
+	assert.Equal(t, expectedData, connString, "generated connections string is wrong")
+}
+
+func TestMysqlDefaultTemlatedSecretGeneratationWithoutProxy(t *testing.T) {
+	mysqlDbCr := newMysqlTestDbCr()
+	c := SecretsTemplatesFields{
+		DatabaseHost: "mysql",
+		DatabasePort: 3306,
+		UserName:     testDbcred.Username,
+		Password:     testDbcred.Password,
+		DatabaseName: testDbcred.Name,
+	}
+	protocol := "mysql"
+	expectedData := map[string]string{
+		"CONNECTION_STRING": fmt.Sprintf("%s://%s:%s@%s:%d/%s", protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName),
+	}
+
+	connString, err := generateTemplatedSecrets(mysqlDbCr, testDbcred)
+	if err != nil {
+		t.Logf("Unexpected error: %s", err)
+		t.Fail()
+	}
+	assert.Equal(t, connString, expectedData, "generated connections string is wrong")
+}
+
+func TestAddingTemplatedSecretsToSecret(t *testing.T) {
+	instance := newPostgresTestDbInstanceCr()
+	postgresDbCr := newPostgresTestDbCr(instance)
+	secretData := map[string][]byte{
+		"POSTGRES_DB":       []byte("postgres"),
+		"POSTGRES_USER":     []byte("root"),
+		"POSTGRES_PASSWORD": []byte("qwertyu9"),
+	}
+
+	connectionString := "it's a dummy connection string"
+
+	secret := addTemplatedSecretToSecret(postgresDbCr, secretData, "TMPL", connectionString)
+	secretData["CONNECTION_STRING"] = []byte(connectionString)
+	if val, ok := secret.Data["TMPL"]; ok {
+		assert.Equal(t, string(val), connectionString, "connections string in a secret contains unexpected values")
+		return
+	}
+}
+
+func TestPsqlCustomSecretGeneratation(t *testing.T) {
+	instance := newPostgresTestDbInstanceCr()
+	postgresDbCr := newPostgresTestDbCr(instance)
+
+	prefix := "custom->"
+	postfix := "<-for_storing_data_you_know"
+	postgresDbCr.Spec.SecretsTemplates = map[string]string{
+		"CHECK_1": fmt.Sprintf("%s{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}%s", prefix, postfix),
+		"CHECK_2": "{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}",
+	}
+
+	c := SecretsTemplatesFields{
+		DatabaseHost: "postgres",
+		DatabasePort: 5432,
+		UserName:     testDbcred.Username,
+		Password:     testDbcred.Password,
+		DatabaseName: testDbcred.Name,
+	}
+	protocol := "postgresql"
+	expectedData := map[string]string{
+		"CHECK_1": fmt.Sprintf("%s%s://%s:%s@%s:%d/%s%s", prefix, protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName, postfix),
+		"CHECK_2": fmt.Sprintf("%s://%s:%s@%s:%d/%s", protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName),
+	}
+
+	connString, err := generateTemplatedSecrets(postgresDbCr, testDbcred)
+	if err != nil {
+		t.Logf("unexpected error: %s", err)
+		t.Fail()
+	}
+	assert.Equal(t, connString, expectedData, "generated connections string is wrong")
+}
+
+func TestWrongTemplatedSecretGeneratation(t *testing.T) {
+	instance := newPostgresTestDbInstanceCr()
+	postgresDbCr := newPostgresTestDbCr(instance)
+
+	postgresDbCr.Spec.SecretsTemplates = map[string]string{
+		"TMPL": "{{ .Protocol }}://{{ .User }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}",
+	}
+
+	_, err := generateTemplatedSecrets(postgresDbCr, testDbcred)
+	errSubstr := "can't evaluate field User in type controllers.SecretsTemplatesFields"
+
+	assert.Contains(t, err.Error(), errSubstr, "the error doesn't contain expected substring")
+}
+
+func TestBlockedTempatedKeysGeneratation(t *testing.T) {
+	instance := newPostgresTestDbInstanceCr()
+	postgresDbCr := newPostgresTestDbCr(instance)
+
+	postgresDbCr.Spec.SecretsTemplates = map[string]string{}
+	untemplatedFields := []string{fieldMysqlDB, fieldMysqlPassword, fieldMysqlUser, fieldPostgresDB, fieldPostgresUser, fieldPostgressPassword}
+	for _, key := range untemplatedFields {
+		postgresDbCr.Spec.SecretsTemplates[key] = "DUMMY"
+	}
+	postgresDbCr.Spec.SecretsTemplates["TMPL"] = "DUMMY"
+	expectedData := map[string][]byte{
+		"TMPL": []byte("DUMMY"),
+	}
+
+	sercretData, err := generateTemplatedSecrets(postgresDbCr, testDbcred)
+	if err != nil {
+		t.Logf("unexpected error: %s", err)
+		t.Fail()
+	}
+
+	dummySecret := v1.Secret{
+		Data: map[string][]byte{},
+	}
+
+	newSecret := fillTemplatedSecretData(postgresDbCr, dummySecret.Data, sercretData)
+	assert.Equal(t, newSecret.Data, expectedData, "generated connections string is wrong")
+}
+
+func TestObsoleteFieldsRemoving(t *testing.T) {
+	instance := newPostgresTestDbInstanceCr()
+	postgresDbCr := newPostgresTestDbCr(instance)
+
+	postgresDbCr.Spec.SecretsTemplates = map[string]string{}
+	untemplatedFields := []string{fieldMysqlDB, fieldMysqlPassword, fieldMysqlUser, fieldPostgresDB, fieldPostgresUser, fieldPostgressPassword}
+	for _, key := range untemplatedFields {
+		postgresDbCr.Spec.SecretsTemplates[key] = "DUMMY"
+	}
+	postgresDbCr.Spec.SecretsTemplates["TMPL"] = "DUMMY"
+	expectedData := map[string][]byte{
+		"TMPL": []byte("DUMMY"),
+	}
+
+	sercretData, err := generateTemplatedSecrets(postgresDbCr, testDbcred)
+	if err != nil {
+		t.Logf("unexpected error: %s", err)
+		t.Fail()
+	}
+
+	dummySecret := v1.Secret{
+		Data: map[string][]byte{
+			"TO_REMOVE": []byte("this is supposed to be removed"),
+		},
+	}
+
+	newSecret := fillTemplatedSecretData(postgresDbCr, dummySecret.Data, sercretData)
+	newSecret = removeObsoleteSecret(postgresDbCr, dummySecret.Data, sercretData)
+
+	assert.Equal(t, newSecret.Data, expectedData, "generated connections string is wrong")
+}
+
+// Connection string tests should be removed later, when connection string is gone
 func TestPsqlDefaultConnectionStringGeneratationWithProxy(t *testing.T) {
 	instance := newPostgresTestDbInstanceCr()
 	postgresDbCr := newPostgresTestDbCr(instance)
 	postgresDbCr.Status.ProxyStatus.Status = true
 
-	c := ConnectionStringFields{
+	c := SecretsTemplatesFields{
 		DatabaseHost: "postgres",
 		DatabasePort: 5432,
 		UserName:     testDbcred.Username,
@@ -144,7 +347,7 @@ func TestPsqlDefaultConnectionStringGeneratationWithoutProxy(t *testing.T) {
 	instance := newPostgresTestDbInstanceCr()
 	postgresDbCr := newPostgresTestDbCr(instance)
 
-	c := ConnectionStringFields{
+	c := SecretsTemplatesFields{
 		DatabaseHost: "postgres",
 		DatabasePort: 5432,
 		UserName:     testDbcred.Username,
@@ -165,7 +368,7 @@ func TestPsqlDefaultConnectionStringGeneratationWithoutProxy(t *testing.T) {
 
 func TestMysqlDefaultConnectionStringGeneratationWithoutProxy(t *testing.T) {
 	mysqlDbCr := newMysqlTestDbCr()
-	c := ConnectionStringFields{
+	c := SecretsTemplatesFields{
 		DatabaseHost: "mysql",
 		DatabasePort: 3306,
 		UserName:     testDbcred.Username,
@@ -210,7 +413,7 @@ func TestPsqlCustomConnectionStringGeneratation(t *testing.T) {
 	postfix := "<-for_storing_data_you_know"
 	postgresDbCr.Spec.ConnectionStringTemplate = fmt.Sprintf("%s{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}%s", prefix, postfix)
 
-	c := ConnectionStringFields{
+	c := SecretsTemplatesFields{
 		DatabaseHost: "postgres",
 		DatabasePort: 5432,
 		UserName:     testDbcred.Username,
@@ -235,7 +438,7 @@ func TestWrongTemplateConnectionStringGeneratation(t *testing.T) {
 	postgresDbCr.Spec.ConnectionStringTemplate = "{{ .Protocol }}://{{ .User }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}"
 
 	_, err := generateConnectionString(postgresDbCr, testDbcred)
-	errSubstr := "can't evaluate field User in type controllers.ConnectionStringFields"
+	errSubstr := "can't evaluate field User in type controllers.SecretsTemplatesFields"
 
 	assert.Contains(t, err.Error(), errSubstr, "the error doesn't contain expected substring")
 }

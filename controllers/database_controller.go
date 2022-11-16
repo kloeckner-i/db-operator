@@ -63,7 +63,7 @@ var (
 	dbPhaseCreate               = "Creating"
 	dbPhaseInstanceAccessSecret = "InstanceAccessSecretCreating"
 	dbPhaseProxy                = "ProxyCreating"
-	dbPhaseConnectionString     = "ConnectionStringCreating"
+	dbPhaseSecretsTemplating    = "SecretsTemplating"
 	dbPhaseConfigMap            = "InfoConfigMapCreating"
 	dbPhaseMonitoring           = "MonitoringCreating"
 	dbPhaseBackupJob            = "BackupJobCreating"
@@ -124,7 +124,6 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		// finalization logic fails, don't remove the finalizer so
 		// that we can retry during the next reconciliation.
 		if containsString(dbcr.ObjectMeta.Finalizers, "db."+dbcr.Name) {
-			logrus.Infof("DB: namespace=%s, name=%s deleting database", dbcr.Namespace, dbcr.Name)
 			err := r.deleteDatabase(ctx, dbcr)
 			if err != nil {
 				logrus.Errorf("DB: namespace=%s, name=%s failed deleting database - %s", dbcr.Namespace, dbcr.Name, err)
@@ -205,9 +204,9 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			if err != nil {
 				return r.manageError(ctx, dbcr, err, true)
 			}
-			dbcr.Status.Phase = dbPhaseConnectionString
-		case dbPhaseConnectionString:
-			err := r.createConnectionString(ctx, dbcr)
+			dbcr.Status.Phase = dbPhaseSecretsTemplating
+		case dbPhaseSecretsTemplating:
+			err := r.createTemplatedSecrets(ctx, dbcr)
 			if err != nil {
 				return r.manageError(ctx, dbcr, err, true)
 			}
@@ -352,7 +351,6 @@ func (r *DatabaseReconciler) createDatabase(ctx context.Context, dbcr *kciv1alph
 
 	err = database.Create(db, adminCred)
 	if err != nil {
-
 		return err
 	}
 
@@ -591,34 +589,68 @@ func (r *DatabaseReconciler) createProxy(ctx context.Context, dbcr *kciv1alpha1.
 	return nil
 }
 
-func (r *DatabaseReconciler) createConnectionString(ctx context.Context, dbcr *kciv1alpha1.Database) error {
+func (r *DatabaseReconciler) createTemplatedSecrets(ctx context.Context, dbcr *kciv1alpha1.Database) error {
 	// First of all the password should be taken from secret because it's not stored anywhere else
 	databaseSecret, err := r.getDatabaseSecret(ctx, dbcr)
 	if err != nil {
 		return err
 	}
 	// Then parse the secret to get the password
-	databaseCred, err := parseDatabaseSecretData(dbcr, databaseSecret.Data)
+	// Connection stirng is deprecated and will be removed soon. So this switch is temporary.
+	// Once connection string is removed, the switch and the following if condition are gone
+	useLegacyConnectionString := false
+	switch {
+	case len(dbcr.Spec.ConnectionStringTemplate) > 0 && len(dbcr.Spec.SecretsTemplates) > 0:
+		logrus.Warnf("DB: namespace=%s, name=%s connectionStringTemplate will be ignored since secretsTemplates is not empty",
+			dbcr.Namespace,
+			dbcr.Name,
+		)
+	case len(dbcr.Spec.ConnectionStringTemplate) > 0:
+		logrus.Warnf("DB: namespace=%s, name=%s connectionStringTemplate is deprecated and will be removed in the near future, consider using secretsTemplates",
+			dbcr.Namespace,
+			dbcr.Name,
+		)
+		useLegacyConnectionString = true
+	default:
+		logrus.Infof("DB: namespace=%s, name=%s generating secrets", dbcr.Namespace, dbcr.Name)
+	}
+
+	databaseCred, err := parseTemplatedSecretsData(dbcr, databaseSecret.Data, useLegacyConnectionString)
 	if err != nil {
 		return err
 	}
 
-	// Generate the connection string
-	dbConnectionString, err := generateConnectionString(dbcr, databaseCred)
+	if useLegacyConnectionString {
+		// Generate the connection string
+		dbConnectionString, err := generateConnectionString(dbcr, databaseCred)
+		if err != nil {
+			return err
+		}
+		// Update database-credentials secret.
+		if databaseCred.TemplatedSecrets["CONNECTION_STRING"] == dbConnectionString {
+			return nil
+		}
+		logrus.Debugf("DB: namespace=%s, name=%s updating credentials secret", dbcr.Namespace, dbcr.Name)
+		newSecret := addConnectionStringToSecret(dbcr, databaseSecret.Data, dbConnectionString)
+		return r.Update(ctx, newSecret, &client.UpdateOptions{})
+	}
+
+	dbSecrets, err := generateTemplatedSecrets(dbcr, databaseCred)
 	if err != nil {
 		return err
 	}
-	// Update database-credentials secret.
-	if databaseCred.ConnectionString == dbConnectionString {
-		return nil
-	}
-	logrus.Debugf("DB: namespace=%s, name=%s updating credentials secret", dbcr.Namespace, dbcr.Name)
-	newSecret := addConnectionStringToSecret(dbcr, databaseSecret.Data, dbConnectionString)
+	// Adding values
+	newSecret := fillTemplatedSecretData(dbcr, databaseSecret.Data, dbSecrets)
 	err = r.Update(ctx, newSecret, &client.UpdateOptions{})
 	if err != nil {
 		return err
 	}
-	logrus.Infof("DB: namespace=%s, name=%s connection string is added to credentials secret", dbcr.Namespace, dbcr.Name)
+	newSecret = removeObsoleteSecret(dbcr, databaseSecret.Data, dbSecrets)
+	err = r.Update(ctx, newSecret, &client.UpdateOptions{})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

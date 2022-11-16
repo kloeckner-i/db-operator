@@ -104,6 +104,10 @@ spec:
                 type: object
               secretName:
                 type: string
+              secretsTemplates:
+                additionalProperties:
+                  type: string
+                type: object
             required:
             - backup
             - deletionProtected
