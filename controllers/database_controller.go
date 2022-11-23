@@ -86,7 +86,7 @@ var (
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.2/pkg/reconcile
 func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	logrus.Infof("RECONCILE")
+	logrus.Infof("RECONCILE: Here we go")
 	_ = r.Log.WithValues("database", req.NamespacedName)
 
 	reconcilePeriod := r.Interval * time.Second
@@ -158,6 +158,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 
 	if isDBChanged(dbcr, databaseSecret) {
+		logrus.Infof("RECONCILE: DB is changed")
 		logrus.Infof("DB: namespace=%s, name=%s spec changed", dbcr.Namespace, dbcr.Name)
 		err := r.initialize(ctx, dbcr)
 		if err != nil {
@@ -181,44 +182,51 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	// database status not true, process phase
 	if !dbcr.Status.Status {
+		logrus.Infof("RECONCILE: DB is not true anymore")
 		phase := dbcr.Status.Phase
-		logrus.Infof("RECONCILE RECONCILE %v", phase)
 		logrus.Infof("DB: namespace=%s, name=%s start %s", dbcr.Namespace, dbcr.Name, phase)
 
 		defer promDBsPhaseTime.WithLabelValues(phase).Observe(kci.TimeTrack(time.Now()))
-
+		logrus.Infof("RECONCILE: 1. Here we are creating a database")
 		err := r.createDatabase(ctx, dbcr)
 		if err != nil {
 			// when database creation failed, don't requeue request. to prevent exceeding api limit (ex: against google api)
 			return r.manageError(ctx, dbcr, err, false)
 		}
+		logrus.Infof("RECONCILE: 2. Creating an instances access secret")
 		dbcr.Status.Phase = dbPhaseInstanceAccessSecret
 		err = r.createInstanceAccessSecret(ctx, dbcr)
 		if err != nil {
 			return r.manageError(ctx, dbcr, err, true)
 		}
+		logrus.Infof("RECONCILE: 3. Creating a proxy")
 		dbcr.Status.Phase = dbPhaseProxy
 		err = r.createProxy(ctx, dbcr)
 		if err != nil {
 			return r.manageError(ctx, dbcr, err, true)
 		}
+		logrus.Infof("RECONCILE: 4. Templating a secret")
 		dbcr.Status.Phase = dbPhaseSecretsTemplating
 		err = r.createTemplatedSecrets(ctx, dbcr)
 		if err != nil {
 			return r.manageError(ctx, dbcr, err, true)
 		}
+		logrus.Infof("RECONCILE: 5. Creating a config map")
 		dbcr.Status.Phase = dbPhaseConfigMap
 		err = r.createInfoConfigMap(ctx, dbcr)
 		if err != nil {
 			return r.manageError(ctx, dbcr, err, true)
 		}
+		logrus.Infof("RECONCILE: 6. Creating backup job")
 		dbcr.Status.Phase = dbPhaseBackupJob
 		err = r.createBackupJob(ctx, dbcr)
 		if err != nil {
 			return r.manageError(ctx, dbcr, err, true)
 		}
+		logrus.Infof("RECONCILE: 7. Finishing")
 		dbcr.Status.Phase = dbPhaseFinish
 		dbcr.Status.Status = true
+		logrus.Infof("RECONCILE: 8. Ready to go")
 		dbcr.Status.Phase = dbPhaseReady
 		// return reconcileResult, nil // do nothing and don't requeue
 		// default:
@@ -235,9 +243,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			logrus.Errorf("error status subresource updating - %s", err)
 			return r.manageError(ctx, dbcr, err, true)
 		}
-
 		logrus.Infof("DB: namespace=%s, name=%s finish %s", dbcr.Namespace, dbcr.Name, phase)
-		return reconcile.Result{Requeue: true}, nil // success phase, but not done ... requeue for next step
 	}
 
 	// status true do nothing and don't requeue
