@@ -86,6 +86,7 @@ var (
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.2/pkg/reconcile
 func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	logrus.Infof("RECONCILE")
 	_ = r.Log.WithValues("database", req.NamespacedName)
 
 	reconcilePeriod := r.Interval * time.Second
@@ -181,61 +182,53 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	// database status not true, process phase
 	if !dbcr.Status.Status {
 		phase := dbcr.Status.Phase
+		logrus.Infof("RECONCILE RECONCILE %v", phase)
 		logrus.Infof("DB: namespace=%s, name=%s start %s", dbcr.Namespace, dbcr.Name, phase)
 
 		defer promDBsPhaseTime.WithLabelValues(phase).Observe(kci.TimeTrack(time.Now()))
 
-		switch phase {
-		case dbPhaseCreate:
-			err := r.createDatabase(ctx, dbcr)
-			if err != nil {
-				// when database creation failed, don't requeue request. to prevent exceeding api limit (ex: against google api)
-				return r.manageError(ctx, dbcr, err, false)
-			}
-			dbcr.Status.Phase = dbPhaseInstanceAccessSecret
-		case dbPhaseInstanceAccessSecret:
-			err := r.createInstanceAccessSecret(ctx, dbcr)
-			if err != nil {
-				return r.manageError(ctx, dbcr, err, true)
-			}
-			dbcr.Status.Phase = dbPhaseProxy
-		case dbPhaseProxy:
-			err := r.createProxy(ctx, dbcr)
-			if err != nil {
-				return r.manageError(ctx, dbcr, err, true)
-			}
-			dbcr.Status.Phase = dbPhaseSecretsTemplating
-		case dbPhaseSecretsTemplating:
-			err := r.createTemplatedSecrets(ctx, dbcr)
-			if err != nil {
-				return r.manageError(ctx, dbcr, err, true)
-			}
-			dbcr.Status.Phase = dbPhaseConfigMap
-		case dbPhaseConfigMap:
-			err := r.createInfoConfigMap(ctx, dbcr)
-			if err != nil {
-				return r.manageError(ctx, dbcr, err, true)
-			}
-			dbcr.Status.Phase = dbPhaseBackupJob
-		case dbPhaseBackupJob:
-			err := r.createBackupJob(ctx, dbcr)
-			if err != nil {
-				return r.manageError(ctx, dbcr, err, true)
-			}
-			dbcr.Status.Phase = dbPhaseFinish
-		case dbPhaseFinish:
-			dbcr.Status.Status = true
-			dbcr.Status.Phase = dbPhaseReady
-		case dbPhaseReady:
-			return reconcileResult, nil // do nothing and don't requeue
-		default:
-			logrus.Errorf("DB: namespace=%s, name=%s unknown phase %s", dbcr.Namespace, dbcr.Name, phase)
-			err := r.initialize(ctx, dbcr)
-			if err != nil {
-				return r.manageError(ctx, dbcr, err, true)
-			} // set phase to initial state
-			return r.manageError(ctx, dbcr, errors.New("unknown phase"), false)
+		err := r.createDatabase(ctx, dbcr)
+		if err != nil {
+			// when database creation failed, don't requeue request. to prevent exceeding api limit (ex: against google api)
+			return r.manageError(ctx, dbcr, err, false)
 		}
+		dbcr.Status.Phase = dbPhaseInstanceAccessSecret
+		err = r.createInstanceAccessSecret(ctx, dbcr)
+		if err != nil {
+			return r.manageError(ctx, dbcr, err, true)
+		}
+		dbcr.Status.Phase = dbPhaseProxy
+		err = r.createProxy(ctx, dbcr)
+		if err != nil {
+			return r.manageError(ctx, dbcr, err, true)
+		}
+		dbcr.Status.Phase = dbPhaseSecretsTemplating
+		err = r.createTemplatedSecrets(ctx, dbcr)
+		if err != nil {
+			return r.manageError(ctx, dbcr, err, true)
+		}
+		dbcr.Status.Phase = dbPhaseConfigMap
+		err = r.createInfoConfigMap(ctx, dbcr)
+		if err != nil {
+			return r.manageError(ctx, dbcr, err, true)
+		}
+		dbcr.Status.Phase = dbPhaseBackupJob
+		err = r.createBackupJob(ctx, dbcr)
+		if err != nil {
+			return r.manageError(ctx, dbcr, err, true)
+		}
+		dbcr.Status.Phase = dbPhaseFinish
+		dbcr.Status.Status = true
+		dbcr.Status.Phase = dbPhaseReady
+		// return reconcileResult, nil // do nothing and don't requeue
+		// default:
+		// logrus.Errorf("DB: namespace=%s, name=%s unknown phase %s", dbcr.Namespace, dbcr.Name, phase)
+		// err := r.initialize(ctx, dbcr)
+		// if err != nil {
+		// return r.manageError(ctx, dbcr, err, true)
+		// } // set phase to initial state
+		// return r.manageError(ctx, dbcr, errors.New("unknown phase"), false)
+		// }
 
 		err = r.Status().Update(ctx, dbcr)
 		if err != nil {
