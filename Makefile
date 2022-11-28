@@ -63,8 +63,6 @@ k3d_install: ## install k3d cluster locally
 k3d_image: build ## rebuild the docker images and upload into your k3d cluster
 	@k3d image import my-image.tar -c myk3s
 
-k3d_start: 
-	@k3d cluster create myk3s -i rancher/k3s:$(K8S_VERSION)-k3s1
 ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 manifests: controller-gen ## generate custom resource definitions
 	$(CONTROLLER_GEN) crd rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases

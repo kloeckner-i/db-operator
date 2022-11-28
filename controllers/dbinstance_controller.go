@@ -67,7 +67,6 @@ type DbInstanceReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.2/pkg/reconcile
 func (r *DbInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	logrus.Infof("RECONCILE DBIN: Here we go")
 	_ = r.Log.WithValues("dbinstkosnoance", req.NamespacedName)
 
 	reconcilePeriod := r.Interval * time.Second
@@ -102,58 +101,45 @@ func (r *DbInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	phase := dbin.Status.Phase
-	logrus.Infof("RECONCILE DBIN: %s", phase)
 	logrus.Infof("Instance: name=%s %s", dbin.Name, phase)
 	defer promDBInstancesPhaseTime.WithLabelValues(phase).Observe(time.Since(time.Now()).Seconds())
 	promDBInstancesPhase.WithLabelValues(dbin.Name).Set(dbInstancePhaseToFloat64(phase))
 	if !dbin.Status.Status {
-	logrus.Infof("RECONCILE DBIN: 1. Validating")
-	if err := dbin.ValidateBackend(); err != nil {
-		return reconcileResult, err
+		if err := dbin.ValidateBackend(); err != nil {
+			return reconcileResult, err
+		}
+
+		if err := dbin.ValidateEngine(); err != nil {
+			return reconcileResult, err
+		}
+
+		addDBInstanceChecksumStatus(ctx, dbin)
+		dbin.Status.Phase = dbInstancePhaseCreate
+		dbin.Status.Info = map[string]string{}
+
+		err = r.create(ctx, dbin)
+		if err != nil {
+			logrus.Errorf("Instance: name=%s instance creation failed - %s", dbin.Name, err)
+			return reconcileResult, nil // failed but don't requeue the request. retry by changing spec or config
+		}
+		dbin.Status.Status = true
+		dbin.Status.Phase = dbInstancePhaseBroadcast
+
+		err = r.broadcast(ctx, dbin)
+		if err != nil {
+			logrus.Errorf("Instance: name=%s broadcasting failed - %s", dbin.Name, err)
+			return reconcileResult, err
+		}
+		dbin.Status.Phase = dbInstancePhaseProxyCreate
+
+		err = r.createProxy(ctx, dbin)
+		if err != nil {
+			logrus.Errorf("Instance: name=%s proxy creation failed - %s", dbin.Name, err)
+			return reconcileResult, err
+		}
+		dbin.Status.Phase = dbInstancePhaseRunning
+
 	}
-
-	if err := dbin.ValidateEngine(); err != nil {
-		return reconcileResult, err
-	}
-
-	addDBInstanceChecksumStatus(ctx, dbin)
-	dbin.Status.Phase = dbInstancePhaseCreate
-	dbin.Status.Info = map[string]string{}
-
-	logrus.Infof("RECONCILE DBIN: 2. Creating")
-	err = r.create(ctx, dbin)
-	if err != nil {
-		logrus.Errorf("Instance: name=%s instance creation failed - %s", dbin.Name, err)
-		return reconcileResult, nil // failed but don't requeue the request. retry by changing spec or config
-	}
-	dbin.Status.Status = true
-	dbin.Status.Phase = dbInstancePhaseBroadcast
-
-	logrus.Infof("RECONCILE DBIN: 3. Broadcasting")
-	err = r.broadcast(ctx, dbin)
-	if err != nil {
-		logrus.Errorf("Instance: name=%s broadcasting failed - %s", dbin.Name, err)
-		return reconcileResult, err
-	}
-	dbin.Status.Phase = dbInstancePhaseProxyCreate
-
-	logrus.Infof("RECONCILE DBIN: 4. Creating a proxy")
-	err = r.createProxy(ctx, dbin)
-	if err != nil {
-		logrus.Errorf("Instance: name=%s proxy creation failed - %s", dbin.Name, err)
-		return reconcileResult, err
-	}
-	dbin.Status.Phase = dbInstancePhaseRunning
-
-	logrus.Infof("RECONCILE DBIN: 5. Running")
-	//	default:
-	//		logrus.Errorf("Instance: name=%s unknown phase %s", dbin.Name, phase)
-	//		dbin.Status.Phase = dbInstancePhaseValidate // set phase to initial state
-	//		return reconcileResult, errors.New("unknown phase")
-	//	}
-
-	// dbinstance created successfully - don't requeue
-}
 	return reconcileResult, nil
 }
 
