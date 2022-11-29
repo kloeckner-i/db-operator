@@ -104,10 +104,7 @@ func (r *DbInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	logrus.Infof("Instance: name=%s %s", dbin.Name, phase)
 	defer promDBInstancesPhaseTime.WithLabelValues(phase).Observe(time.Since(time.Now()).Seconds())
 	promDBInstancesPhase.WithLabelValues(dbin.Name).Set(dbInstancePhaseToFloat64(phase))
-
-	switch phase {
-	case dbInstancePhaseValidate:
-		dbin.Status.Status = false
+	if !dbin.Status.Status {
 		if err := dbin.ValidateBackend(); err != nil {
 			return reconcileResult, err
 		}
@@ -119,37 +116,30 @@ func (r *DbInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		addDBInstanceChecksumStatus(ctx, dbin)
 		dbin.Status.Phase = dbInstancePhaseCreate
 		dbin.Status.Info = map[string]string{}
-	case dbInstancePhaseCreate:
-		err := r.create(ctx, dbin)
+
+		err = r.create(ctx, dbin)
 		if err != nil {
 			logrus.Errorf("Instance: name=%s instance creation failed - %s", dbin.Name, err)
 			return reconcileResult, nil // failed but don't requeue the request. retry by changing spec or config
 		}
 		dbin.Status.Status = true
 		dbin.Status.Phase = dbInstancePhaseBroadcast
-	case dbInstancePhaseBroadcast:
-		err := r.broadcast(ctx, dbin)
+
+		err = r.broadcast(ctx, dbin)
 		if err != nil {
 			logrus.Errorf("Instance: name=%s broadcasting failed - %s", dbin.Name, err)
 			return reconcileResult, err
 		}
 		dbin.Status.Phase = dbInstancePhaseProxyCreate
-	case dbInstancePhaseProxyCreate:
-		err := r.createProxy(ctx, dbin)
+
+		err = r.createProxy(ctx, dbin)
 		if err != nil {
 			logrus.Errorf("Instance: name=%s proxy creation failed - %s", dbin.Name, err)
 			return reconcileResult, err
 		}
 		dbin.Status.Phase = dbInstancePhaseRunning
-	case dbInstancePhaseRunning:
-		return reconcileResult, nil // do nothing and don't requeue
-	default:
-		logrus.Errorf("Instance: name=%s unknown phase %s", dbin.Name, phase)
-		dbin.Status.Phase = dbInstancePhaseValidate // set phase to initial state
-		return reconcileResult, errors.New("unknown phase")
-	}
 
-	// dbinstance created successfully - don't requeue
+	}
 	return reconcileResult, nil
 }
 

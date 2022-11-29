@@ -175,7 +175,6 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			return r.manageError(ctx, dbcr, err, true)
 		}
 		logrus.Infof("DB: namespace=%s, name=%s initialized", dbcr.Namespace, dbcr.Name)
-		return reconcileResult, nil
 	}
 
 	// database status not true, process phase
@@ -184,67 +183,46 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		logrus.Infof("DB: namespace=%s, name=%s start %s", dbcr.Namespace, dbcr.Name, phase)
 
 		defer promDBsPhaseTime.WithLabelValues(phase).Observe(kci.TimeTrack(time.Now()))
-
-		switch phase {
-		case dbPhaseCreate:
-			err := r.createDatabase(ctx, dbcr)
-			if err != nil {
-				// when database creation failed, don't requeue request. to prevent exceeding api limit (ex: against google api)
-				return r.manageError(ctx, dbcr, err, false)
-			}
-			dbcr.Status.Phase = dbPhaseInstanceAccessSecret
-		case dbPhaseInstanceAccessSecret:
-			err := r.createInstanceAccessSecret(ctx, dbcr)
-			if err != nil {
-				return r.manageError(ctx, dbcr, err, true)
-			}
-			dbcr.Status.Phase = dbPhaseProxy
-		case dbPhaseProxy:
-			err := r.createProxy(ctx, dbcr)
-			if err != nil {
-				return r.manageError(ctx, dbcr, err, true)
-			}
-			dbcr.Status.Phase = dbPhaseSecretsTemplating
-		case dbPhaseSecretsTemplating:
-			err := r.createTemplatedSecrets(ctx, dbcr)
-			if err != nil {
-				return r.manageError(ctx, dbcr, err, true)
-			}
-			dbcr.Status.Phase = dbPhaseConfigMap
-		case dbPhaseConfigMap:
-			err := r.createInfoConfigMap(ctx, dbcr)
-			if err != nil {
-				return r.manageError(ctx, dbcr, err, true)
-			}
-			dbcr.Status.Phase = dbPhaseBackupJob
-		case dbPhaseBackupJob:
-			err := r.createBackupJob(ctx, dbcr)
-			if err != nil {
-				return r.manageError(ctx, dbcr, err, true)
-			}
-			dbcr.Status.Phase = dbPhaseFinish
-		case dbPhaseFinish:
-			dbcr.Status.Status = true
-			dbcr.Status.Phase = dbPhaseReady
-		case dbPhaseReady:
-			return reconcileResult, nil // do nothing and don't requeue
-		default:
-			logrus.Errorf("DB: namespace=%s, name=%s unknown phase %s", dbcr.Namespace, dbcr.Name, phase)
-			err := r.initialize(ctx, dbcr)
-			if err != nil {
-				return r.manageError(ctx, dbcr, err, true)
-			} // set phase to initial state
-			return r.manageError(ctx, dbcr, errors.New("unknown phase"), false)
+		err := r.createDatabase(ctx, dbcr)
+		if err != nil {
+			// when database creation failed, don't requeue request. to prevent exceeding api limit (ex: against google api)
+			return r.manageError(ctx, dbcr, err, false)
 		}
+		dbcr.Status.Phase = dbPhaseInstanceAccessSecret
+		err = r.createInstanceAccessSecret(ctx, dbcr)
+		if err != nil {
+			return r.manageError(ctx, dbcr, err, true)
+		}
+		dbcr.Status.Phase = dbPhaseProxy
+		err = r.createProxy(ctx, dbcr)
+		if err != nil {
+			return r.manageError(ctx, dbcr, err, true)
+		}
+		dbcr.Status.Phase = dbPhaseSecretsTemplating
+		err = r.createTemplatedSecrets(ctx, dbcr)
+		if err != nil {
+			return r.manageError(ctx, dbcr, err, true)
+		}
+		dbcr.Status.Phase = dbPhaseConfigMap
+		err = r.createInfoConfigMap(ctx, dbcr)
+		if err != nil {
+			return r.manageError(ctx, dbcr, err, true)
+		}
+		dbcr.Status.Phase = dbPhaseBackupJob
+		err = r.createBackupJob(ctx, dbcr)
+		if err != nil {
+			return r.manageError(ctx, dbcr, err, true)
+		}
+		dbcr.Status.Phase = dbPhaseFinish
+		dbcr.Status.Status = true
+		dbcr.Status.Phase = dbPhaseReady
 
 		err = r.Status().Update(ctx, dbcr)
 		if err != nil {
 			logrus.Errorf("error status subresource updating - %s", err)
 			return r.manageError(ctx, dbcr, err, true)
 		}
-
 		logrus.Infof("DB: namespace=%s, name=%s finish %s", dbcr.Namespace, dbcr.Name, phase)
-		return reconcile.Result{Requeue: true}, nil // success phase, but not done ... requeue for next step
 	}
 
 	// status true do nothing and don't requeue
