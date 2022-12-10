@@ -46,7 +46,7 @@ spec:
     cron: "0 0 * * *"
   secretsTemplates:
     CONNECTION_STRING: "jdbc:{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}" 
-    PASSWORD_USER: "{{ .Password }}_{{ .User }}"
+    PASSWORD_USER: "{{ .Password }}_{{ .UserName }}"
 ```
 With `secretsTemplates` you can add fields to the database secret that are composed by any string and by any of the following templated values: 
 ```YAML
