@@ -163,7 +163,7 @@ Possible phases and meanings
 
 | Phase                 | Description                           |
 |-------------------    |-----------------------                |
-| `Valitating`          | Validate all the necessary fields provided in the resource spec |
+| `Validating`          | Validate all the necessary fields provided in the resource spec |
 | `Creating`            | Create (only google type) or check if the database server is reachable |
 | `Broadcasting`        | Trigger `Database` phase cycle if there was an update on `DbInstance` |
 | `ProxyCreating`       | Creating Google Cloud Proxy `Deployment` and `Service` to be used as endpoint for connecting to the database (only google type) |
