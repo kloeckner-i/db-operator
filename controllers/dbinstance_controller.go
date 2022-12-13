@@ -37,7 +37,7 @@ import (
 )
 
 var (
-	dbInstancePhaseValidate    = "Valitating"
+	dbInstancePhaseValidate    = "Validating"
 	dbInstancePhaseCreate      = "Creating"
 	dbInstancePhaseBroadcast   = "Broadcasting"
 	dbInstancePhaseProxyCreate = "ProxyCreating"
