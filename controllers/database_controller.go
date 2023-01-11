@@ -179,37 +179,47 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	// database status not true, process phase
 	if !dbcr.Status.Status {
+		ownership := []metav1.OwnerReference{}
+		if dbcr.Spec.Cleanup {
+			ownership = append(ownership, metav1.OwnerReference{
+				APIVersion: dbcr.APIVersion,
+				Kind:       dbcr.Kind,
+				Name:       dbcr.Name,
+				UID:        dbcr.GetUID(),
+			},
+			)
+		}
+
 		phase := dbcr.Status.Phase
 		logrus.Infof("DB: namespace=%s, name=%s start %s", dbcr.Namespace, dbcr.Name, phase)
 
 		defer promDBsPhaseTime.WithLabelValues(phase).Observe(kci.TimeTrack(time.Now()))
-		err := r.createDatabase(ctx, dbcr)
+		err := r.createDatabase(ctx, dbcr, ownership)
 		if err != nil {
 			// when database creation failed, don't requeue request. to prevent exceeding api limit (ex: against google api)
 			return r.manageError(ctx, dbcr, err, false)
 		}
+
 		dbcr.Status.Phase = dbPhaseInstanceAccessSecret
-		err = r.createInstanceAccessSecret(ctx, dbcr)
-		if err != nil {
+
+		if err = r.createInstanceAccessSecret(ctx, dbcr, ownership); err != nil {
 			return r.manageError(ctx, dbcr, err, true)
 		}
 		dbcr.Status.Phase = dbPhaseProxy
-		err = r.createProxy(ctx, dbcr)
+		err = r.createProxy(ctx, dbcr, ownership)
 		if err != nil {
 			return r.manageError(ctx, dbcr, err, true)
 		}
 		dbcr.Status.Phase = dbPhaseSecretsTemplating
-		err = r.createTemplatedSecrets(ctx, dbcr)
-		if err != nil {
+		if err = r.createTemplatedSecrets(ctx, dbcr, ownership); err != nil {
 			return r.manageError(ctx, dbcr, err, true)
 		}
 		dbcr.Status.Phase = dbPhaseConfigMap
-		err = r.createInfoConfigMap(ctx, dbcr)
-		if err != nil {
+		if err = r.createInfoConfigMap(ctx, dbcr, ownership); err != nil {
 			return r.manageError(ctx, dbcr, err, true)
 		}
 		dbcr.Status.Phase = dbPhaseBackupJob
-		err = r.createBackupJob(ctx, dbcr)
+		err = r.createBackupJob(ctx, dbcr, ownership)
 		if err != nil {
 			return r.manageError(ctx, dbcr, err, true)
 		}
@@ -278,7 +288,7 @@ func (r *DatabaseReconciler) initialize(ctx context.Context, dbcr *kciv1alpha1.D
 }
 
 // createDatabase secret, actual database using admin secret
-func (r *DatabaseReconciler) createDatabase(ctx context.Context, dbcr *kciv1alpha1.Database) error {
+func (r *DatabaseReconciler) createDatabase(ctx context.Context, dbcr *kciv1alpha1.Database, ownership []metav1.OwnerReference) error {
 	databaseSecret, err := r.getDatabaseSecret(ctx, dbcr)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
@@ -287,7 +297,7 @@ func (r *DatabaseReconciler) createDatabase(ctx context.Context, dbcr *kciv1alph
 				logrus.Errorf("can not generate credentials for database - %s", err)
 				return err
 			}
-			newDatabaseSecret := kci.SecretBuilder(dbcr.Spec.SecretName, dbcr.Namespace, secretData)
+			newDatabaseSecret := kci.SecretBuilder(dbcr.Spec.SecretName, dbcr.Namespace, secretData, ownership)
 			err = r.Create(ctx, newDatabaseSecret)
 			if err != nil {
 				// failed to create secret
@@ -388,7 +398,7 @@ func (r *DatabaseReconciler) deleteDatabase(ctx context.Context, dbcr *kciv1alph
 	return nil
 }
 
-func (r *DatabaseReconciler) createInstanceAccessSecret(ctx context.Context, dbcr *kciv1alpha1.Database) error {
+func (r *DatabaseReconciler) createInstanceAccessSecret(ctx context.Context, dbcr *kciv1alpha1.Database, ownership []metav1.OwnerReference) error {
 	if backend, _ := dbcr.GetBackendType(); backend != "google" {
 		logrus.Debugf("DB: namespace=%s, name=%s %s doesn't need instance access secret skipping...", dbcr.Namespace, dbcr.Name, backend)
 		return nil
@@ -422,7 +432,7 @@ func (r *DatabaseReconciler) createInstanceAccessSecret(ctx context.Context, dbc
 	secretData[credFile] = data
 
 	newName := dbcr.InstanceAccessSecretName()
-	newSecret := kci.SecretBuilder(newName, dbcr.GetNamespace(), secretData)
+	newSecret := kci.SecretBuilder(newName, dbcr.GetNamespace(), secretData, ownership)
 
 	err = r.Create(ctx, newSecret)
 	if err != nil {
@@ -442,7 +452,7 @@ func (r *DatabaseReconciler) createInstanceAccessSecret(ctx context.Context, dbc
 	return nil
 }
 
-func (r *DatabaseReconciler) createProxy(ctx context.Context, dbcr *kciv1alpha1.Database) error {
+func (r *DatabaseReconciler) createProxy(ctx context.Context, dbcr *kciv1alpha1.Database, ownership []metav1.OwnerReference) error {
 	backend, _ := dbcr.GetBackendType()
 	if backend == "generic" {
 		logrus.Infof("DB: namespace=%s, name=%s %s proxy creation is not yet implemented skipping...", dbcr.Namespace, dbcr.Name, backend)
@@ -455,7 +465,7 @@ func (r *DatabaseReconciler) createProxy(ctx context.Context, dbcr *kciv1alpha1.
 	}
 
 	// create proxy configmap
-	cm, err := proxy.BuildConfigmap(proxyInterface)
+	cm, err := proxy.BuildConfigmap(proxyInterface, ownership)
 	if err != nil {
 		return err
 	}
@@ -478,7 +488,7 @@ func (r *DatabaseReconciler) createProxy(ctx context.Context, dbcr *kciv1alpha1.
 	}
 
 	// create proxy deployment
-	deploy, err := proxy.BuildDeployment(proxyInterface)
+	deploy, err := proxy.BuildDeployment(proxyInterface, ownership)
 	if err != nil {
 		return err
 	}
@@ -499,7 +509,7 @@ func (r *DatabaseReconciler) createProxy(ctx context.Context, dbcr *kciv1alpha1.
 	}
 
 	// create proxy service
-	svc, err := proxy.BuildService(proxyInterface)
+	svc, err := proxy.BuildService(proxyInterface, ownership)
 	if err != nil {
 		return err
 	}
@@ -533,7 +543,7 @@ func (r *DatabaseReconciler) createProxy(ctx context.Context, dbcr *kciv1alpha1.
 
 	if isMonitoringEnabled && inCrdList(crdList, "servicemonitors.monitoring.coreos.com") {
 		// create proxy PromServiceMonitor
-		promSvcMon, err := proxy.BuildServiceMonitor(proxyInterface)
+		promSvcMon, err := proxy.BuildServiceMonitor(proxyInterface, ownership)
 		if err != nil {
 			return err
 		}
@@ -567,15 +577,17 @@ func (r *DatabaseReconciler) createProxy(ctx context.Context, dbcr *kciv1alpha1.
 	return nil
 }
 
-func (r *DatabaseReconciler) createTemplatedSecrets(ctx context.Context, dbcr *kciv1alpha1.Database) error {
+func (r *DatabaseReconciler) createTemplatedSecrets(ctx context.Context, dbcr *kciv1alpha1.Database, ownership []metav1.OwnerReference) error {
 	// First of all the password should be taken from secret because it's not stored anywhere else
 	databaseSecret, err := r.getDatabaseSecret(ctx, dbcr)
 	if err != nil {
 		return err
 	}
 	// Then parse the secret to get the password
-	// Connection stirng is deprecated and will be removed soon. So this switch is temporary.
+	// Connection string is deprecated and will be removed soon. So this switch is temporary.
 	// Once connection string is removed, the switch and the following if condition are gone
+	// Connection String doesn't support the cleaning up feature, so the secret with a connection
+	// string won't be removed after a db resource is removed.
 	useLegacyConnectionString := false
 	switch {
 	case len(dbcr.Spec.ConnectionStringTemplate) > 0 && len(dbcr.Spec.SecretsTemplates) > 0:
@@ -610,7 +622,10 @@ func (r *DatabaseReconciler) createTemplatedSecrets(ctx context.Context, dbcr *k
 		}
 		logrus.Debugf("DB: namespace=%s, name=%s updating credentials secret", dbcr.Namespace, dbcr.Name)
 		newSecret := addConnectionStringToSecret(dbcr, databaseSecret.Data, dbConnectionString)
-		return r.Update(ctx, newSecret, &client.UpdateOptions{})
+		if err = r.Update(ctx, newSecret, &client.UpdateOptions{}); err != nil {
+			return err
+		}
+		return nil
 	}
 
 	dbSecrets, err := generateTemplatedSecrets(dbcr, databaseCred)
@@ -618,21 +633,20 @@ func (r *DatabaseReconciler) createTemplatedSecrets(ctx context.Context, dbcr *k
 		return err
 	}
 	// Adding values
-	newSecret := fillTemplatedSecretData(dbcr, databaseSecret.Data, dbSecrets)
-	err = r.Update(ctx, newSecret, &client.UpdateOptions{})
-	if err != nil {
+	newSecret := fillTemplatedSecretData(dbcr, databaseSecret.Data, dbSecrets, ownership)
+	if err = r.Update(ctx, newSecret, &client.UpdateOptions{}); err != nil {
 		return err
 	}
-	newSecret = removeObsoleteSecret(dbcr, databaseSecret.Data, dbSecrets)
-	err = r.Update(ctx, newSecret, &client.UpdateOptions{})
-	if err != nil {
+
+	newSecret = removeObsoleteSecret(dbcr, databaseSecret.Data, dbSecrets, ownership)
+	if err = r.Update(ctx, newSecret, &client.UpdateOptions{}); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (r *DatabaseReconciler) createInfoConfigMap(ctx context.Context, dbcr *kciv1alpha1.Database) error {
+func (r *DatabaseReconciler) createInfoConfigMap(ctx context.Context, dbcr *kciv1alpha1.Database, ownership []metav1.OwnerReference) error {
 	instance, err := dbcr.GetInstanceRef()
 	if err != nil {
 		return err
@@ -645,19 +659,7 @@ func (r *DatabaseReconciler) createInfoConfigMap(ctx context.Context, dbcr *kciv
 		info["DB_HOST"] = proxyStatus.ServiceName
 		info["DB_PORT"] = strconv.FormatInt(int64(proxyStatus.SQLPort), 10)
 	}
-
-	databaseConfigResource := &corev1.ConfigMap{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ConfigMap",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: dbcr.Namespace,
-			Name:      dbcr.Spec.SecretName,
-			Labels:    kci.BaseLabelBuilder(),
-		},
-		Data: info,
-	}
+	databaseConfigResource := kci.ConfigMapBuilder(dbcr.Spec.SecretName, dbcr.Namespace, info, ownership)
 
 	err = r.Create(ctx, databaseConfigResource)
 	if err != nil {
@@ -678,13 +680,13 @@ func (r *DatabaseReconciler) createInfoConfigMap(ctx context.Context, dbcr *kciv
 	return nil
 }
 
-func (r *DatabaseReconciler) createBackupJob(ctx context.Context, dbcr *kciv1alpha1.Database) error {
+func (r *DatabaseReconciler) createBackupJob(ctx context.Context, dbcr *kciv1alpha1.Database, ownership []metav1.OwnerReference) error {
 	if !dbcr.Spec.Backup.Enable {
 		// if not enabled, skip
 		return nil
 	}
 
-	cronjob, err := backup.GCSBackupCron(r.Conf, dbcr)
+	cronjob, err := backup.GCSBackupCron(r.Conf, dbcr, ownership)
 	if err != nil {
 		return err
 	}

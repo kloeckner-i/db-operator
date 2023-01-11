@@ -23,9 +23,13 @@ import (
 	"github.com/kloeckner-i/db-operator/pkg/utils/database"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+
 )
 
 var testDbcred = database.Credentials{Name: "testdb", Username: "testuser", Password: "password"}
+var ownership = []metav1.OwnerReference{}
 
 func TestDeterminPostgresType(t *testing.T) {
 	postgresDbCr := newPostgresTestDbCr(newPostgresTestDbInstanceCr())
@@ -201,7 +205,7 @@ func TestAddingTemplatedSecretsToSecret(t *testing.T) {
 
 	connectionString := "it's a dummy connection string"
 
-	secret := addTemplatedSecretToSecret(postgresDbCr, secretData, "TMPL", connectionString)
+	secret := addTemplatedSecretToSecret(postgresDbCr, secretData, "TMPL", connectionString, ownership)
 	secretData["CONNECTION_STRING"] = []byte(connectionString)
 	if val, ok := secret.Data["TMPL"]; ok {
 		assert.Equal(t, string(val), connectionString, "connections string in a secret contains unexpected values")
@@ -279,7 +283,7 @@ func TestBlockedTempatedKeysGeneratation(t *testing.T) {
 		Data: map[string][]byte{},
 	}
 
-	newSecret := fillTemplatedSecretData(postgresDbCr, dummySecret.Data, sercretData)
+	newSecret := fillTemplatedSecretData(postgresDbCr, dummySecret.Data, sercretData, ownership)
 	assert.Equal(t, newSecret.Data, expectedData, "generated connections string is wrong")
 }
 
@@ -309,8 +313,8 @@ func TestObsoleteFieldsRemoving(t *testing.T) {
 		},
 	}
 
-	newSecret := fillTemplatedSecretData(postgresDbCr, dummySecret.Data, sercretData)
-	newSecret = removeObsoleteSecret(postgresDbCr, dummySecret.Data, sercretData)
+	newSecret := fillTemplatedSecretData(postgresDbCr, dummySecret.Data, sercretData, ownership)
+	newSecret = removeObsoleteSecret(postgresDbCr, dummySecret.Data, sercretData, ownership)
 
 	assert.Equal(t, newSecret.Data, expectedData, "generated connections string is wrong")
 }

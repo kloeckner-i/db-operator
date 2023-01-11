@@ -43,16 +43,17 @@ type CloudProxy struct {
 
 const instanceAccessSecretVolumeName string = "gcloud-secret"
 
-func (cp *CloudProxy) buildService() (*v1.Service, error) {
+func (cp *CloudProxy) buildService(ownership []metav1.OwnerReference) (*v1.Service, error) {
 	return &v1.Service{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Service",
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cp.NamePrefix + "-svc",
-			Namespace: cp.Namespace,
-			Labels:    cp.Labels,
+			Name:            cp.NamePrefix + "-svc",
+			Namespace:       cp.Namespace,
+			Labels:          cp.Labels,
+			OwnerReferences: ownership,
 		},
 		Spec: v1.ServiceSpec{
 			Ports: []v1.ServicePort{
@@ -74,7 +75,7 @@ func (cp *CloudProxy) buildService() (*v1.Service, error) {
 	}, nil
 }
 
-func (cp *CloudProxy) buildDeployment() (*v1apps.Deployment, error) {
+func (cp *CloudProxy) buildDeployment(ownership []metav1.OwnerReference) (*v1apps.Deployment, error) {
 	spec, err := cp.deploymentSpec()
 	if err != nil {
 		return nil, err
@@ -86,9 +87,10 @@ func (cp *CloudProxy) buildDeployment() (*v1apps.Deployment, error) {
 			APIVersion: "apps/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cp.NamePrefix + "-cloudproxy",
-			Namespace: cp.Namespace,
-			Labels:    cp.Labels,
+			Name:            cp.NamePrefix + "-cloudproxy",
+			Namespace:       cp.Namespace,
+			Labels:          cp.Labels,
+			OwnerReferences: ownership,
 		},
 		Spec: spec,
 	}, nil
@@ -185,20 +187,21 @@ func (cp *CloudProxy) container() (v1.Container, error) {
 	}, nil
 }
 
-func (cp *CloudProxy) buildConfigMap() (*v1.ConfigMap, error) {
+func (cp *CloudProxy) buildConfigMap(_ []metav1.OwnerReference) (*v1.ConfigMap, error) {
 	return nil, nil
 }
 
-func (cp *CloudProxy) buildServiceMonitor() (*promv1.ServiceMonitor, error) {
+func (cp *CloudProxy) buildServiceMonitor(ownership []metav1.OwnerReference) (*promv1.ServiceMonitor, error) {
 	Endpoint := promv1.Endpoint{
 		Port: "metrics",
 	}
 
 	return &promv1.ServiceMonitor{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cp.NamePrefix + "-sm",
-			Namespace: cp.Namespace,
-			Labels:    cp.Labels,
+			Name:            cp.NamePrefix + "-sm",
+			Namespace:       cp.Namespace,
+			Labels:          cp.Labels,
+			OwnerReferences: ownership,
 		},
 		Spec: promv1.ServiceMonitorSpec{
 			Endpoints: []promv1.Endpoint{Endpoint},

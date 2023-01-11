@@ -133,6 +133,17 @@ data:
   ...
 ```
 
+By default ConfigMaps and Secrets are created without an Owner Reference, so they won't be removed if the `Database` resource is removed. If you want it to be deleted too, you need to turn on the cleanup function.
+```YAML
+apiVersion: "kci.rocks/v1alpha1"
+kind: "Database"
+metadata:
+  name: "example-db"
+spec:
+  cleanup: true
+```
+
+If this feature is enabled, then `Database` becomes an owner of Secrets and ConfigMaps, and by removing a database, you'll also remove them. 
 ### ConnectingToTheDatabase
 
 By using the secret and the configmap created by operator after database creation, pods in Kubernetes can connect to the database.

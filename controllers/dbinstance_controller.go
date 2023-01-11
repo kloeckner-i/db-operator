@@ -30,6 +30,7 @@ import (
 	"github.com/kloeckner-i/db-operator/pkg/utils/proxy"
 	"github.com/sirupsen/logrus"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -132,7 +133,7 @@ func (r *DbInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 		dbin.Status.Phase = dbInstancePhaseProxyCreate
 
-		err = r.createProxy(ctx, dbin)
+		err = r.createProxy(ctx, dbin, []metav1.OwnerReference{})
 		if err != nil {
 			logrus.Errorf("Instance: name=%s proxy creation failed - %s", dbin.Name, err)
 			return reconcileResult, err
@@ -242,7 +243,7 @@ func (r *DbInstanceReconciler) broadcast(ctx context.Context, dbin *kciv1alpha1.
 	return nil
 }
 
-func (r *DbInstanceReconciler) createProxy(ctx context.Context, dbin *kciv1alpha1.DbInstance) error {
+func (r *DbInstanceReconciler) createProxy(ctx context.Context, dbin *kciv1alpha1.DbInstance, ownership []metav1.OwnerReference) error {
 	proxyInterface, err := determineProxyTypeForInstance(r.Conf, dbin)
 	if err != nil {
 		if err == ErrNoProxySupport {
@@ -252,7 +253,7 @@ func (r *DbInstanceReconciler) createProxy(ctx context.Context, dbin *kciv1alpha
 	}
 
 	// create proxy deployment
-	deploy, err := proxy.BuildDeployment(proxyInterface)
+	deploy, err := proxy.BuildDeployment(proxyInterface, ownership)
 	if err != nil {
 		return err
 	}
@@ -273,7 +274,7 @@ func (r *DbInstanceReconciler) createProxy(ctx context.Context, dbin *kciv1alpha
 	}
 
 	// create proxy service
-	svc, err := proxy.BuildService(proxyInterface)
+	svc, err := proxy.BuildService(proxyInterface, ownership)
 	if err != nil {
 		return err
 	}

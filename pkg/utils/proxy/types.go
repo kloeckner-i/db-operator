@@ -20,12 +20,13 @@ import (
 	promv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	v1apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Proxy for database
 type Proxy interface {
-	buildDeployment() (*v1apps.Deployment, error)
-	buildService() (*v1.Service, error)
-	buildServiceMonitor() (*promv1.ServiceMonitor, error)
-	buildConfigMap() (*v1.ConfigMap, error)
+	buildDeployment(ownership []metav1.OwnerReference) (*v1apps.Deployment, error)
+	buildService(ownership []metav1.OwnerReference) (*v1.Service, error)
+	buildServiceMonitor(ownership []metav1.OwnerReference) (*promv1.ServiceMonitor, error)
+	buildConfigMap(ownership []metav1.OwnerReference) (*v1.ConfigMap, error)
 }

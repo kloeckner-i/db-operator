@@ -27,6 +27,7 @@ import (
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/strings/slices"
 )
 
@@ -356,7 +357,7 @@ func generateTemplatedSecrets(dbcr *kciv1alpha1.Database, databaseCred database.
 	return secrets, nil
 }
 
-func fillTemplatedSecretData(dbcr *kciv1alpha1.Database, secretData map[string][]byte, newSecretFields map[string]string) (newSecret *v1.Secret) {
+func fillTemplatedSecretData(dbcr *kciv1alpha1.Database, secretData map[string][]byte, newSecretFields map[string]string, ownership []metav1.OwnerReference) (newSecret *v1.Secret) {
 	blockedTempatedKeys := getBlockedTempatedKeys()
 	for key, value := range newSecretFields {
 		if slices.Contains(blockedTempatedKeys, key) {
@@ -366,7 +367,7 @@ func fillTemplatedSecretData(dbcr *kciv1alpha1.Database, secretData map[string][
 				key,
 			)
 		} else {
-			newSecret = addTemplatedSecretToSecret(dbcr, secretData, key, value)
+			newSecret = addTemplatedSecretToSecret(dbcr, secretData, key, value, ownership)
 		}
 	}
 	return
@@ -374,15 +375,15 @@ func fillTemplatedSecretData(dbcr *kciv1alpha1.Database, secretData map[string][
 
 func addConnectionStringToSecret(dbcr *kciv1alpha1.Database, secretData map[string][]byte, connectionString string) *v1.Secret {
 	secretData["CONNECTION_STRING"] = []byte(connectionString)
-	return kci.SecretBuilder(dbcr.Spec.SecretName, dbcr.GetNamespace(), secretData)
+	return kci.SecretBuilder(dbcr.Spec.SecretName, dbcr.GetNamespace(), secretData, []metav1.OwnerReference{})
 }
 
-func addTemplatedSecretToSecret(dbcr *kciv1alpha1.Database, secretData map[string][]byte, secretName string, secretValue string) *v1.Secret {
+func addTemplatedSecretToSecret(dbcr *kciv1alpha1.Database, secretData map[string][]byte, secretName string, secretValue string, ownership []metav1.OwnerReference) *v1.Secret {
 	secretData[secretName] = []byte(secretValue)
-	return kci.SecretBuilder(dbcr.Spec.SecretName, dbcr.GetNamespace(), secretData)
+	return kci.SecretBuilder(dbcr.Spec.SecretName, dbcr.GetNamespace(), secretData, ownership)
 }
 
-func removeObsoleteSecret(dbcr *kciv1alpha1.Database, secretData map[string][]byte, newSecretFields map[string]string) *v1.Secret {
+func removeObsoleteSecret(dbcr *kciv1alpha1.Database, secretData map[string][]byte, newSecretFields map[string]string, ownership []metav1.OwnerReference) *v1.Secret {
 	blockedTempatedKeys := getBlockedTempatedKeys()
 
 	for key := range secretData {
@@ -395,5 +396,5 @@ func removeObsoleteSecret(dbcr *kciv1alpha1.Database, secretData map[string][]by
 		}
 	}
 
-	return kci.SecretBuilder(dbcr.Spec.SecretName, dbcr.GetNamespace(), secretData)
+	return kci.SecretBuilder(dbcr.Spec.SecretName, dbcr.GetNamespace(), secretData, ownership)
 }
