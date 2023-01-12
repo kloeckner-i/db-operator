@@ -21,11 +21,12 @@ import (
 	"github.com/sirupsen/logrus"
 	v1apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // BuildDeployment builds kubernetes deployment object to create proxy container of the database
-func BuildDeployment(proxy Proxy) (*v1apps.Deployment, error) {
-	deploy, err := proxy.buildDeployment()
+func BuildDeployment(proxy Proxy, ownership []metav1.OwnerReference) (*v1apps.Deployment, error) {
+	deploy, err := proxy.buildDeployment(ownership)
 	if err != nil {
 		logrus.Error("failed building proxy deployment")
 		return nil, err
@@ -35,8 +36,8 @@ func BuildDeployment(proxy Proxy) (*v1apps.Deployment, error) {
 }
 
 // BuildService builds kubernetes service object for proxy service of the database
-func BuildService(proxy Proxy) (*v1.Service, error) {
-	svc, err := proxy.buildService()
+func BuildService(proxy Proxy, ownership []metav1.OwnerReference) (*v1.Service, error) {
+	svc, err := proxy.buildService(ownership)
 	if err != nil {
 		logrus.Error("failed building proxy service")
 		return nil, err
@@ -46,8 +47,8 @@ func BuildService(proxy Proxy) (*v1.Service, error) {
 }
 
 // BuildConfigmap builds kubernetes configmap object used by proxy container of the database
-func BuildConfigmap(proxy Proxy) (*v1.ConfigMap, error) {
-	cm, err := proxy.buildConfigMap()
+func BuildConfigmap(proxy Proxy, ownership []metav1.OwnerReference) (*v1.ConfigMap, error) {
+	cm, err := proxy.buildConfigMap(ownership)
 	if err != nil {
 		logrus.Error("failed building proxy configmap")
 		return nil, err
@@ -57,8 +58,8 @@ func BuildConfigmap(proxy Proxy) (*v1.ConfigMap, error) {
 }
 
 // BuildServiceMonitor builds kubernetes prometheus ServiceMonitor CR object used for monitoring
-func BuildServiceMonitor(proxy Proxy) (*promv1.ServiceMonitor, error) {
-	promSerMon, err := proxy.buildServiceMonitor()
+func BuildServiceMonitor(proxy Proxy, ownership []metav1.OwnerReference) (*promv1.ServiceMonitor, error) {
+	promSerMon, err := proxy.buildServiceMonitor(ownership)
 	if err != nil {
 		logrus.Error("failed building promServiceMonitor configmap")
 		return nil, err

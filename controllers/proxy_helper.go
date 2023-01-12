@@ -77,7 +77,7 @@ func determineProxyTypeForDB(conf *config.Config, dbcr *kciv1alpha1.Database) (p
 			return nil, err
 		}
 
-		return &proxy.CloudProxy{
+		proxy := &proxy.CloudProxy{
 			NamePrefix:             "db-" + dbcr.Name,
 			Namespace:              dbcr.Namespace,
 			InstanceConnectionName: instance.Status.Info["DB_CONN"],
@@ -87,7 +87,8 @@ func determineProxyTypeForDB(conf *config.Config, dbcr *kciv1alpha1.Database) (p
 			Labels:                 kci.LabelBuilder(labels),
 			Conf:                   conf,
 			MonitoringEnabled:      monitoringEnabled,
-		}, nil
+		}
+		return proxy, nil
 
 	default:
 		err := errors.New("not supported backend type")

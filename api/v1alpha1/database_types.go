@@ -38,6 +38,7 @@ type DatabaseSpec struct {
 	ConnectionStringTemplate string            `json:"connectionStringTemplate,omitempty"`
 	SecretsTemplates         map[string]string `json:"secretsTemplates,omitempty"`
 	Postgres                 Postgres          `json:"postgres,omitempty"`
+	Cleanup                  bool              `json:"cleanup,omitempty"`
 }
 
 // Postgres struct should be used to provide resource that only applicable to postgres
