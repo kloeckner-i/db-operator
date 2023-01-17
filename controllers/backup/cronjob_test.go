@@ -21,7 +21,7 @@ import (
 	"os"
 	"testing"
 
-	kciv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
+	kciv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
 	"github.com/kloeckner-i/db-operator/pkg/config"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
@@ -31,12 +31,12 @@ import (
 
 func TestGCSBackupCronGsql(t *testing.T) {
 	ownership := []metav1.OwnerReference{}
-	dbcr := &kciv1alpha1.Database{}
+	dbcr := &kciv1beta1.Database{}
 	dbcr.Namespace = "TestNS"
 	dbcr.Name = "TestDB"
-	instance := &kciv1alpha1.DbInstance{}
+	instance := &kciv1beta1.DbInstance{}
 	instance.Status.Info = map[string]string{"DB_CONN": "TestConnection", "DB_PORT": "1234"}
-	instance.Spec.Google = &kciv1alpha1.GoogleInstance{InstanceName: "google-instance-1"}
+	instance.Spec.Google = &kciv1beta1.GoogleInstance{InstanceName: "google-instance-1"}
 	dbcr.Status.InstanceRef = instance
 	dbcr.Spec.Instance = "staging"
 	dbcr.Spec.Backup.Cron = "* * * * *"
@@ -67,12 +67,12 @@ func TestGCSBackupCronGsql(t *testing.T) {
 
 func TestGCSBackupCronGeneric(t *testing.T) {
 	ownership := []metav1.OwnerReference{}
-	dbcr := &kciv1alpha1.Database{}
+	dbcr := &kciv1beta1.Database{}
 	dbcr.Namespace = "TestNS"
 	dbcr.Name = "TestDB"
-	instance := &kciv1alpha1.DbInstance{}
+	instance := &kciv1beta1.DbInstance{}
 	instance.Status.Info = map[string]string{"DB_CONN": "TestConnection", "DB_PORT": "1234"}
-	instance.Spec.Generic = &kciv1alpha1.GenericInstance{BackupHost: "slave.test"}
+	instance.Spec.Generic = &kciv1beta1.GenericInstance{BackupHost: "slave.test"}
 	dbcr.Status.InstanceRef = instance
 	dbcr.Spec.Instance = "staging"
 	dbcr.Spec.Backup.Cron = "* * * * *"
@@ -106,16 +106,16 @@ func TestGCSBackupCronGenericWithOwnerReference(t *testing.T) {
 	ownership := []metav1.OwnerReference{}
 	ownership = append(ownership, metav1.OwnerReference{
 		APIVersion: "api-version",
-		Kind: "kind",
-		Name: "name",
-		UID: "uid",
+		Kind:       "kind",
+		Name:       "name",
+		UID:        "uid",
 	})
-	dbcr := &kciv1alpha1.Database{}
+	dbcr := &kciv1beta1.Database{}
 	dbcr.Namespace = "TestNS"
 	dbcr.Name = "TestDB"
-	instance := &kciv1alpha1.DbInstance{}
+	instance := &kciv1beta1.DbInstance{}
 	instance.Status.Info = map[string]string{"DB_CONN": "TestConnection", "DB_PORT": "1234"}
-	instance.Spec.Generic = &kciv1alpha1.GenericInstance{BackupHost: "slave.test"}
+	instance.Spec.Generic = &kciv1beta1.GenericInstance{BackupHost: "slave.test"}
 	dbcr.Status.InstanceRef = instance
 	dbcr.Spec.Instance = "staging"
 	dbcr.Spec.Backup.Cron = "* * * * *"

@@ -1,0 +1,12 @@
+apiVersion: kci.rocks/v1beta1
+kind: DbInstance
+metadata:
+  labels:
+    app.kubernetes.io/name: dbinstance
+    app.kubernetes.io/instance: dbinstance-sample
+    app.kubernetes.io/part-of: db-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: db-operator
+  name: dbinstance-sample
+spec:
+  # TODO(user): Add fields here

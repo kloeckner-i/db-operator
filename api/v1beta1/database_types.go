@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 
-package v1alpha1
+package v1beta1
 
 import (
 	"errors"
-
-	"github.com/kloeckner-i/db-operator/api/v1beta1"
-	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -29,23 +26,18 @@ import (
 
 // DatabaseSpec defines the desired state of Database
 type DatabaseSpec struct {
-	SecretName        string         `json:"secretName"`
-	Instance          string         `json:"instance"`
-	DeletionProtected bool           `json:"deletionProtected"`
-	Backup            DatabaseBackup `json:"backup"`
-	Extensions        []string       `json:"extensions,omitempty"`
-	// ConnectionStringTemplate field can be used to pass a custom template for generating a db connection string.
-	// These keywords can be used: Protocol, DatabaseHost, DatabasePort, UserName, Password, DatabaseName.
-	// Default template looks like this:
-	// "{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}"
-	ConnectionStringTemplate string            `json:"connectionStringTemplate,omitempty"`
-	SecretsTemplates         map[string]string `json:"secretsTemplates,omitempty"`
-	Postgres                 Postgres          `json:"postgres,omitempty"`
-	Cleanup                  bool              `json:"cleanup,omitempty"`
+	SecretName        string            `json:"secretName"`
+	Instance          string            `json:"instance"`
+	DeletionProtected bool              `json:"deletionProtected"`
+	Backup            DatabaseBackup    `json:"backup"`
+	SecretsTemplates  map[string]string `json:"secretsTemplates,omitempty"`
+	Postgres          Postgres          `json:"postgres,omitempty"`
+	Cleanup           bool              `json:"cleanup,omitempty"`
 }
 
 // Postgres struct should be used to provide resource that only applicable to postgres
 type Postgres struct {
+	Extensions []string `json:"extensions,omitempty"`
 	// If set to true, the public schema will be dropped after the database creation
 	DropPublicSchema bool `json:"dropPublicSchema,omitempty"`
 	// Specify schemas to be created. The user created by db-operator will have all access on them.
@@ -79,15 +71,15 @@ type DatabaseBackup struct {
 	Cron   string `json:"cron"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-//+kubebuilder:resource:shortName=db
-//+kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`,description="current db phase"
-//+kubebuilder:printcolumn:name="Status",type=boolean,JSONPath=`.status.status`,description="current db status"
-//+kubebuilder:printcolumn:name="Protected",type=boolean,JSONPath=`.spec.deletionProtected`,description="If database is protected to not get deleted."
-//+kubebuilder:printcolumn:name="DBInstance",type=string,JSONPath=`.spec.instance`,description="instance reference"
-//+kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`,description="time since creation of resource"
-
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:shortName=db
+// +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`,description="current db phase"
+// +kubebuilder:printcolumn:name="Status",type=boolean,JSONPath=`.status.status`,description="current db status"
+// +kubebuilder:printcolumn:name="Protected",type=boolean,JSONPath=`.spec.deletionProtected`,description="If database is protected to not get deleted."
+// +kubebuilder:printcolumn:name="DBInstance",type=string,JSONPath=`.spec.instance`,description="instance reference"
+// +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`,description="time since creation of resource"
+// +kubebuilder:storageversion
 // Database is the Schema for the databases API
 type Database struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -154,39 +146,4 @@ func (db *Database) InstanceAccessSecretName() string {
 	return "dbin-" + db.Spec.Instance + "-access-secret"
 }
 
-// ConvertTo converts this v1alpha1 to v1beta1. (upgrade)
-func (db *Database) ConvertTo(dstRaw conversion.Hub) error {
-
-	dst := dstRaw.(*v1beta1.Database)
-	dst.ObjectMeta = db.ObjectMeta
-
-	dst.Spec.Backup = v1beta1.DatabaseBackup(db.Spec.Backup)
-	dst.Spec.Cleanup = db.Spec.Cleanup
-	dst.Spec.DeletionProtected = db.Spec.DeletionProtected
-	dst.Spec.Instance = db.Spec.Instance
-	dst.Spec.Postgres.DropPublicSchema = db.Spec.Postgres.DropPublicSchema
-	dst.Spec.Postgres.Extensions = db.Spec.Extensions
-	dst.Spec.Postgres.Schemas = db.Spec.Postgres.Schemas
-	dst.Spec.SecretName = db.Spec.SecretName
-	dst.Spec.SecretsTemplates = db.Spec.SecretsTemplates
-
-	return nil
-}
-
-// ConvertFrom converts from the Hub version (v1beta1) to (v1alpha1). (downgrade)
-func (dst *Database) ConvertFrom(srcRaw conversion.Hub) error {
-	db := srcRaw.(*v1beta1.Database)
-	dst.ObjectMeta = db.ObjectMeta
-
-	dst.Spec.Backup = DatabaseBackup(db.Spec.Backup)
-	dst.Spec.Cleanup = db.Spec.Cleanup
-	dst.Spec.DeletionProtected = db.Spec.DeletionProtected
-	dst.Spec.Instance = db.Spec.Instance
-	dst.Spec.Postgres.DropPublicSchema = db.Spec.Postgres.DropPublicSchema
-	dst.Spec.Extensions = db.Spec.Postgres.Extensions
-	dst.Spec.Postgres.Schemas = db.Spec.Postgres.Schemas
-	dst.Spec.SecretName = db.Spec.SecretName
-	dst.Spec.SecretsTemplates = db.Spec.SecretsTemplates
-
-	return nil
-}
+func (db *Database) Hub() {}

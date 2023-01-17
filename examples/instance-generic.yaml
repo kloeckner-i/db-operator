@@ -1,4 +1,4 @@
-apiVersion: kci.rocks/v1alpha1
+apiVersion: kci.rocks/v1beta1
 kind: DbInstance
 metadata:
   name: "example-generic"

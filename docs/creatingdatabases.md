@@ -33,7 +33,7 @@ For more details about how it works check [here](howitworks.md)
 Create Database custom resource
 
 ```YAML
-apiVersion: "kci.rocks/v1alpha1"
+apiVersion: "kci.rocks/v1beta1"
 kind: "Database"
 metadata:
   name: "example-db"
@@ -48,6 +48,7 @@ spec:
     CONNECTION_STRING: "jdbc:{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}" 
     PASSWORD_USER: "{{ .Password }}_{{ .UserName }}"
 ```
+
 With `secretsTemplates` you can add fields to the database secret that are composed by any string and by any of the following templated values: 
 ```YAML
 - Protocol: Depending on db engine. Possible values are mysql/postgresql
@@ -135,7 +136,7 @@ data:
 
 By default ConfigMaps and Secrets are created without an Owner Reference, so they won't be removed if the `Database` resource is removed. If you want it to be deleted too, you need to turn on the cleanup function.
 ```YAML
-apiVersion: "kci.rocks/v1alpha1"
+apiVersion: "kci.rocks/v1beta1"
 kind: "Database"
 metadata:
   name: "example-db"
@@ -228,7 +229,7 @@ PostgreSQL extensions listed under `spec.extensions` will be enabled by DB Opera
 DB Operator execute `CREATE EXTENSION IF NOT EXISTS` on the target database.
 
 ```YAML
-apiVersion: "kci.rocks/v1alpha1"
+apiVersion: "kci.rocks/v1beta1"
 kind: "Database"
 metadata:
   name: "example-db"

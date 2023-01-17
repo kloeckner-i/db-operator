@@ -1,0 +1,27 @@
+# permissions for end users to view dbinstances.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: dbinstance-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: db-operator
+    app.kubernetes.io/part-of: db-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: dbinstance-viewer-role
+rules:
+- apiGroups:
+  - kci.rocks
+  resources:
+  - dbinstances
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - kci.rocks
+  resources:
+  - dbinstances/status
+  verbs:
+  - get
