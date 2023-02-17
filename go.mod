@@ -12,7 +12,7 @@ require (
 	github.com/lib/pq v1.10.5
 	github.com/mitchellh/hashstructure v1.1.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.52.1
-	github.com/prometheus/client_golang v1.11.0
+	github.com/prometheus/client_golang v1.11.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.8.0
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
