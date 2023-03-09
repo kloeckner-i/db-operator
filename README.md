@@ -21,6 +21,10 @@ DB Operator provides following features:
 The repository contains helm charts for db-operator is moved to https://github.com/kloeckner-i/charts
 New chart after db-operator > 1.2.7, db-instances > 1.3.0 will be only available in new repository.
 
+## CRD Versions are upgraded!
+Now both `DbInstance` and `Database` resources are upgraded to `v1beta1`.
+In case you were using `connectionStringTemplate`, make sure I've migrated to `secretsTempaltes` before upgrading, because `connectionStringTemplate` is removed in this version. Everything else should go seamless. We've added `Webhooks` that will take care of resources with an old API version and convert them to the newer one.  
+
 ### Downloading old charts
 
 Installing older version of charts is still possible.

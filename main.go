@@ -23,14 +23,16 @@ import (
 	"strings"
 	"time"
 
-	kcirocksv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
-	"github.com/kloeckner-i/db-operator/controllers"
-	"github.com/kloeckner-i/db-operator/pkg/config"
-	"github.com/kloeckner-i/db-operator/pkg/utils/thirdpartyapi"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+
+	kcirocksv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
+	kcirocksv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
+	"github.com/kloeckner-i/db-operator/controllers"
+	"github.com/kloeckner-i/db-operator/pkg/config"
+	"github.com/kloeckner-i/db-operator/pkg/utils/thirdpartyapi"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.) to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -48,6 +50,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(kcirocksv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(kcirocksv1beta1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 
 	thirdpartyapi.AppendToScheme(scheme)
@@ -117,6 +120,14 @@ func main() {
 		WatchNamespaces: namespaces,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Database")
+		os.Exit(1)
+	}
+	if err = (&kcirocksv1beta1.Database{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "Database")
+		os.Exit(1)
+	}
+	if err = (&kcirocksv1beta1.DbInstance{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "DbInstance")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

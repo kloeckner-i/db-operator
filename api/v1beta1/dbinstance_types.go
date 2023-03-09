@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-package v1alpha1
+package v1beta1
 
 import (
 	"errors"
 
-	"github.com/kloeckner-i/db-operator/api/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -105,6 +103,7 @@ type DbInstanceSSLConnection struct {
 //+kubebuilder:resource:scope=Cluster,shortName=dbin
 //+kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`,description="current phase"
 //+kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.status`,description="health status"
+// +kubebuilder:storageversion
 
 // DbInstance is the Schema for the dbinstances API
 type DbInstance struct {
@@ -187,50 +186,7 @@ func (dbin *DbInstance) GetBackendType() (string, error) {
 
 // IsMonitoringEnabled returns boolean value if monitoring is enabled for the instance
 func (dbin *DbInstance) IsMonitoringEnabled() bool {
-	if dbin.Spec.Monitoring.Enabled == false {
-		return false
-	}
-	return true
+	return dbin.Spec.Monitoring.Enabled
 }
 
-// ConvertTo converts this v1alpha1 to v1beta1. (upgrade)
-func (dbin *DbInstance) ConvertTo(dstRaw conversion.Hub) error {
-	dst := dstRaw.(*v1beta1.DbInstance)
-	dst.ObjectMeta = dbin.ObjectMeta
-	dst.Spec.AdminUserSecret = v1beta1.NamespacedName(dbin.Spec.AdminUserSecret)
-	dst.Spec.Backup = v1beta1.DbInstanceBackup(dbin.Spec.Backup)
-	if dbin.Spec.DbInstanceSource.Generic != nil {
-		dst.Spec.DbInstanceSource.Generic = (*v1beta1.GenericInstance)(dbin.Spec.DbInstanceSource.Generic)
-	} else if dbin.Spec.DbInstanceSource.Google != nil {
-
-		dst.Spec.DbInstanceSource.Google.APIEndpoint = dbin.Spec.DbInstanceSource.Google.APIEndpoint
-		dst.Spec.DbInstanceSource.Google.InstanceName = dbin.Spec.DbInstanceSource.Google.InstanceName
-		dst.Spec.DbInstanceSource.Google.ClientSecret = v1beta1.NamespacedName(dbin.Spec.DbInstanceSource.Google.ClientSecret)
-		dst.Spec.DbInstanceSource.Google.ConfigmapName = v1beta1.NamespacedName(dbin.Spec.Google.ConfigmapName)
-	}
-	dst.Spec.Engine = dbin.Spec.Engine
-	dst.Spec.Monitoring = v1beta1.DbInstanceMonitoring(dbin.Spec.Monitoring)
-	dst.Spec.SSLConnection = v1beta1.DbInstanceSSLConnection(dbin.Spec.SSLConnection)
-	return nil
-}
-
-// ConvertFrom converts from the Hub version (v1beta1) to (v1alpha1). (downgrade)
-func (dst *DbInstance) ConvertFrom(srcRaw conversion.Hub) error {
-	dbin := srcRaw.(*v1beta1.DbInstance)
-	dst.ObjectMeta = dbin.ObjectMeta
-	dst.Spec.AdminUserSecret = NamespacedName(dbin.Spec.AdminUserSecret)
-	dst.Spec.Backup = DbInstanceBackup(dbin.Spec.Backup)
-	if dbin.Spec.DbInstanceSource.Generic != nil {
-		dst.Spec.DbInstanceSource.Generic = (*GenericInstance)(dbin.Spec.DbInstanceSource.Generic)
-	} else if dbin.Spec.DbInstanceSource.Google != nil {
-
-		dst.Spec.DbInstanceSource.Google.APIEndpoint = dbin.Spec.DbInstanceSource.Google.APIEndpoint
-		dst.Spec.DbInstanceSource.Google.InstanceName = dbin.Spec.DbInstanceSource.Google.InstanceName
-		dst.Spec.DbInstanceSource.Google.ClientSecret = NamespacedName(dbin.Spec.DbInstanceSource.Google.ClientSecret)
-		dst.Spec.DbInstanceSource.Google.ConfigmapName = NamespacedName(dbin.Spec.Google.ConfigmapName)
-	}
-	dst.Spec.Engine = dbin.Spec.Engine
-	dst.Spec.Monitoring = DbInstanceMonitoring(dbin.Spec.Monitoring)
-	dst.Spec.SSLConnection = DbInstanceSSLConnection(dbin.Spec.SSLConnection)
-	return nil
-}
+func (db *DbInstance) Hub() {}
