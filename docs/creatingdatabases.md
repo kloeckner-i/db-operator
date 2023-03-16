@@ -74,6 +74,8 @@ postgres:
 
 If you initialize a database with `dropPublicSchema: false` and then later change it to `true`, or add schemas with the `schemas` field and later try to remove them by updating the manifest, you may be unable to do that. Because `db-operator` won't use `DROP CASCADE` for removing schemas, and if there are objects depending on a schema, someone with admin access will have to remove these objects manually. 
 
+There is a support for [Postgres Database Templated](https://www.postgresql.org/docs/current/manage-ag-templatedbs.html). To create a database from template, you need to set `.spec.postgres.template`. It's referencing to a database on the Postgres server, but not to the k8s Database resource that is created by operator, so there is no validation on the db-operator side that a template exists.
+
 After successful `Database` creation, you must be able to get a secret named like `example-db-credentials`.
 
 ```

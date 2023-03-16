@@ -59,6 +59,7 @@ jobs:
       - name: Remove MySQL App Armour Configuration
         run: |
           set -x
+          sudo apt-get update
           sudo apt-get remove mysql-server --purge
           sudo apt-get install apparmor-profiles
           sudo apparmor_parser -R /etc/apparmor.d/usr.sbin.mysqld
