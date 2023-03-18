@@ -66,7 +66,6 @@ k3d_image: build ## rebuild the docker images and upload into your k3d cluster
 ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 manifests: controller-gen ## generate custom resource definitions
 	$(CONTROLLER_GEN) crd rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
-	$(CONTROLLER_GEN) crd webhook paths="./..." output:crd:artifacts:config=charts/db-operator/crds
 
 ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 generate: controller-gen ## generate supporting code for custom resource types
