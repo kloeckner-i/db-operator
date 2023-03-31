@@ -19,7 +19,7 @@ package database
 import (
 	"testing"
 
-	"github.com/kloeckner-i/db-operator/pkg/test"
+	"github.com/db-operator/db-operator/pkg/test"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -5,9 +5,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.3
   creationTimestamp: null
-  name: databases.kci.rocks
+  name: databases.kinda.rocks
 spec:
-  group: kci.rocks
+  group: kinda.rocks
   names:
     kind: Database
     listKind: DatabaseList

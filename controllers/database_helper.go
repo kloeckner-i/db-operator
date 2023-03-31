@@ -22,9 +22,9 @@ import (
 	"strconv"
 	"text/template"
 
-	kciv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
-	"github.com/kloeckner-i/db-operator/pkg/utils/database"
-	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
+	kciv1beta1 "github.com/db-operator/db-operator/api/v1beta1"
+	"github.com/db-operator/db-operator/pkg/utils/database"
+	"github.com/db-operator/db-operator/pkg/utils/kci"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

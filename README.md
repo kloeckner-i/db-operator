@@ -18,7 +18,7 @@ DB Operator provides following features:
 * [Upgrade guide](docs/upgradeguide.md) - breaking changes and guide for the upgrade
 
 ## Helm Chart is migrated!
-The repository contains helm charts for db-operator is moved to https://github.com/kloeckner-i/charts
+The repository contains helm charts for db-operator is moved to https://github.com/db-operator/charts
 New chart after db-operator > 1.2.7, db-instances > 1.3.0 will be only available in new repository.
 
 ## CRD Versions are upgraded!
@@ -44,9 +44,9 @@ $ helm repo add kloeckneri https://kloeckner-i.github.io/charts/
 $ helm install --name my-release kloeckneri/db-operator
 ```
 
-To see more options of helm values, [see chart repo]([https://github.com/kloeckner-i/charts/tree/main/charts/db-operator])
+To see more options of helm values, [see chart repo]([https://github.com/db-operator/charts/tree/main/charts/db-operator])
 
-To see which version is working together check out our [version matrix](https://github.com/kloeckner-i/db-operator/wiki/Version-Matrix).
+To see which version is working together check out our [version matrix](https://github.com/db-operator/db-operator/wiki/Version-Matrix).
 
 ## Development
 

@@ -13,7 +13,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: "test1234"
   sqladmin:
-    image: ghcr.io/kloeckner-i/cloudish-sql:v1.0.0
+    # -- TODO: Switch to a proper version after it's merged in the upstream project
+    image: ghcr.io/db-operator/cloudish-sql:a284d7002eaf71c7b7cfde54f089a7db72dfc33c
     ports:
       - "8080:8080"
     environment:

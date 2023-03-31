@@ -16,7 +16,7 @@ webhooks:
   name: mdatabase.kb.io
   rules:
   - apiGroups:
-    - kci.rocks
+    - kinda.rocks
     apiVersions:
     - v1beta1
     operations:
@@ -36,7 +36,7 @@ webhooks:
   name: mdbinstance.kb.io
   rules:
   - apiGroups:
-    - kci.rocks
+    - kinda.rocks
     apiVersions:
     - v1beta1
     operations:
@@ -63,7 +63,7 @@ webhooks:
   name: vdatabase.kb.io
   rules:
   - apiGroups:
-    - kci.rocks
+    - kinda.rocks
     apiVersions:
     - v1beta1
     operations:
@@ -83,7 +83,7 @@ webhooks:
   name: vdbinstance.kb.io
   rules:
   - apiGroups:
-    - kci.rocks
+    - kinda.rocks
     apiVersions:
     - v1beta1
     operations:

@@ -27,13 +27,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
+	kciv1beta1 "github.com/db-operator/db-operator/api/v1beta1"
+	"github.com/db-operator/db-operator/controllers/backup"
+	"github.com/db-operator/db-operator/pkg/config"
+	"github.com/db-operator/db-operator/pkg/utils/database"
+	"github.com/db-operator/db-operator/pkg/utils/kci"
+	"github.com/db-operator/db-operator/pkg/utils/proxy"
 	"github.com/go-logr/logr"
-	kciv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
-	"github.com/kloeckner-i/db-operator/controllers/backup"
-	"github.com/kloeckner-i/db-operator/pkg/config"
-	"github.com/kloeckner-i/db-operator/pkg/utils/database"
-	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
-	"github.com/kloeckner-i/db-operator/pkg/utils/proxy"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	crdv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -72,9 +72,9 @@ var (
 	dbPhaseDelete               = "Deleting"
 )
 
-//+kubebuilder:rbac:groups=kci.rocks,resources=databases,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=kci.rocks,resources=databases/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=kci.rocks,resources=databases/finalizers,verbs=update
+//+kubebuilder:rbac:groups=kinda.rocks,resources=databases,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=kinda.rocks,resources=databases/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=kinda.rocks,resources=databases/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

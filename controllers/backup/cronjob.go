@@ -20,9 +20,9 @@ import (
 	"errors"
 	"fmt"
 
-	kciv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
-	"github.com/kloeckner-i/db-operator/pkg/config"
-	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
+	kciv1beta1 "github.com/db-operator/db-operator/api/v1beta1"
+	"github.com/db-operator/db-operator/pkg/config"
+	"github.com/db-operator/db-operator/pkg/utils/kci"
 	"github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"

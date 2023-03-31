@@ -20,7 +20,7 @@ import (
 	"errors"
 	"strconv"
 
-	kcidb "github.com/kloeckner-i/db-operator/pkg/utils/database"
+	kcidb "github.com/db-operator/db-operator/pkg/utils/database"
 	"github.com/sirupsen/logrus"
 )
 

@@ -21,13 +21,13 @@ import (
 	"errors"
 	"time"
 
+	kciv1beta1 "github.com/db-operator/db-operator/api/v1beta1"
+	"github.com/db-operator/db-operator/pkg/config"
+	"github.com/db-operator/db-operator/pkg/utils/database"
+	"github.com/db-operator/db-operator/pkg/utils/dbinstance"
+	"github.com/db-operator/db-operator/pkg/utils/kci"
+	"github.com/db-operator/db-operator/pkg/utils/proxy"
 	"github.com/go-logr/logr"
-	kciv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
-	"github.com/kloeckner-i/db-operator/pkg/config"
-	"github.com/kloeckner-i/db-operator/pkg/utils/database"
-	"github.com/kloeckner-i/db-operator/pkg/utils/dbinstance"
-	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
-	"github.com/kloeckner-i/db-operator/pkg/utils/proxy"
 	"github.com/sirupsen/logrus"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -54,9 +54,9 @@ type DbInstanceReconciler struct {
 	Conf     *config.Config
 }
 
-//+kubebuilder:rbac:groups=kci.rocks,resources=dbinstances,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=kci.rocks,resources=dbinstances/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=kci.rocks,resources=dbinstances/finalizers,verbs=update
+//+kubebuilder:rbac:groups=kinda.rocks,resources=dbinstances,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=kinda.rocks,resources=dbinstances/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=kinda.rocks,resources=dbinstances/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

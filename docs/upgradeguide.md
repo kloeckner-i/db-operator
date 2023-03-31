@@ -13,7 +13,7 @@
 Example Percona type instance Custom Resource
 
 ```YAML
-apiVersion: kci.rocks/v1alpha1
+apiVersion: kinda.rocks/v1alpha1
 kind: DbInstance
 metadata:
   name: percona-instance
@@ -59,7 +59,7 @@ mysql_variables=
 4. Create Generic type instance with proxysql as host.
 
 ```YAML
-apiVersion: kci.rocks/v1alpha1
+apiVersion: kinda.rocks/v1alpha1
 kind: DbInstance
 metadata:
   name: new-generic-instance
@@ -76,7 +76,7 @@ spec:
 5. Update `Database` resources to point new generic instance.
 
 ```YAML
-apiVersion: "kci.rocks/v1alpha1"
+apiVersion: "kinda.rocks/v1alpha1"
 kind: "Database"
 metadata:
   name: "example-db"

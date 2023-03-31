@@ -1,4 +1,4 @@
-apiVersion: kci.rocks/v1beta1
+apiVersion: kinda.rocks/v1beta1
 kind: DbInstance
 metadata:
   name: example-gsql

@@ -22,9 +22,9 @@ import (
 	"testing"
 
 	"bou.ke/monkey"
-	kciv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
-	"github.com/kloeckner-i/db-operator/pkg/test"
-	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
+	kciv1beta1 "github.com/db-operator/db-operator/api/v1beta1"
+	"github.com/db-operator/db-operator/pkg/test"
+	"github.com/db-operator/db-operator/pkg/utils/kci"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

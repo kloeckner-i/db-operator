@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/kloeckner-i/db-operator/pkg/utils/database"
+	"github.com/db-operator/db-operator/pkg/utils/database"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

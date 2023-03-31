@@ -24,8 +24,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kloeckner-i/db-operator/pkg/utils/gcloud"
-	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
+	"github.com/db-operator/db-operator/pkg/utils/gcloud"
+	"github.com/db-operator/db-operator/pkg/utils/kci"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 	"google.golang.org/api/option"

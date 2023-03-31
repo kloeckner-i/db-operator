@@ -29,7 +29,7 @@ Or use existing secret created by stable mysql/postgres helm chart.
 
 Create **DbInstance** custom resource.
 ```YAML
-apiVersion: kci.rocks/v1beta1
+apiVersion: kinda.rocks/v1beta1
 kind: DbInstance
 metadata:
   name: example-generic
@@ -80,7 +80,7 @@ data:
 ```
 Configure `DbInstance` like below. 
 ```YAML
-apiVersion: kci.rocks/v1beta1
+apiVersion: kinda.rocks/v1beta1
 kind: DbInstance
 metadata:
   name: example-gsql
@@ -130,7 +130,7 @@ kubectl create secret generic example-gsql-admin-secret --from-literal=user=<adm
 
 Create **DbInstance** custom resource.
 ```YAML
-apiVersion: kci.rocks/v1beta1
+apiVersion: kinda.rocks/v1beta1
 kind: DbInstance
 metadata:
   name: example-gsql
@@ -182,7 +182,7 @@ To use ssl connection, set `sslConnection.enabled` to `true` in `DbInstance` spe
 * mysql: disabled
 
 ```YAML
-apiVersion: kci.rocks/v1beta1
+apiVersion: kinda.rocks/v1beta1
 kind: DbInstance
 metadata:
   name: example-generic
@@ -199,7 +199,7 @@ spec:
 * mysql: required
 
 ```YAML
-apiVersion: kci.rocks/v1beta1
+apiVersion: kinda.rocks/v1beta1
 kind: DbInstance
 metadata:
   name: example-generic
@@ -216,7 +216,7 @@ spec:
 * mysql: verify_ca
 
 ```YAML
-apiVersion: kci.rocks/v1beta1
+apiVersion: kinda.rocks/v1beta1
 kind: DbInstance
 metadata:
   name: example-generic

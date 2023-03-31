@@ -26,7 +26,7 @@ import (
 
 	// do not delete
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
+	"github.com/db-operator/db-operator/pkg/utils/kci"
 	"github.com/sirupsen/logrus"
 )
 

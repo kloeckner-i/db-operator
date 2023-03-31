@@ -20,7 +20,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/kloeckner-i/can-haz-password/password"
+	"github.com/db-operator/can-haz-password/password"
 	"github.com/stretchr/testify/assert"
 )
 

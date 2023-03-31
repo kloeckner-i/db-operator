@@ -41,7 +41,7 @@ data:
 Configure bucket name in DbInstance spec.
 
 ```YAML
-apiVersion: kci.rocks/v1alpha1
+apiVersion: kinda.rocks/v1alpha1
 kind: DbInstance
 metadata:
   name: example-instance
@@ -55,7 +55,7 @@ When the DbInstance type is generic, the host address which will be used by back
 When it's not specified, backup job will use `host` address by default.
 
 ```YAML
-apiVersion: kci.rocks/v1alpha1
+apiVersion: kinda.rocks/v1alpha1
 kind: DbInstance
 metadata:
   name: example-instance
@@ -72,7 +72,7 @@ spec:
 Change `backup.enable` to **true** in Database custom resource spec and set schedule with cronjob syntax.
 
 ```YAML
-apiVersion: "kci.rocks/v1alpha1"
+apiVersion: "kinda.rocks/v1alpha1"
 kind: "Database"
 metadata:
   name: "example-db"

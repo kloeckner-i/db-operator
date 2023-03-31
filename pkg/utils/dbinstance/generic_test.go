@@ -16,7 +16,7 @@
 
 package dbinstance
 
-import "github.com/kloeckner-i/db-operator/pkg/test"
+import "github.com/db-operator/db-operator/pkg/test"
 
 func testGenericMysqlInstance() *Generic {
 	return &Generic{

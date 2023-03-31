@@ -2,33 +2,33 @@
 # This file is used to track the info used to scaffold your project
 # and allow the plugins properly work.
 # More info: https://book.kubebuilder.io/reference/project-config.html
-domain: kci.rocks
+domain: kinda.rocks
 layout:
 - go.kubebuilder.io/v3
 projectName: db-operator
-repo: github.com/kloeckner-i/db-operator
+repo: github.com/db-operator/db-operator
 resources:
 - api:
     crdVersion: v1
   controller: true
-  domain: kci.rocks
+  domain: kinda.rocks
   kind: DbInstance
-  path: github.com/kloeckner-i/db-operator/api/v1alpha1
+  path: github.com/db-operator/db-operator/api/v1alpha1
   version: v1alpha1
 - api:
     crdVersion: v1
     namespaced: true
   controller: true
-  domain: kci.rocks
+  domain: kinda.rocks
   kind: Database
-  path: github.com/kloeckner-i/db-operator/api/v1alpha1
+  path: github.com/db-operator/db-operator/api/v1alpha1
   version: v1alpha1
 - api:
     crdVersion: v1
     namespaced: true
-  domain: kci.rocks
+  domain: kinda.rocks
   kind: Database
-  path: github.com/kloeckner-i/db-operator/api/v1beta1
+  path: github.com/db-operator/db-operator/api/v1beta1
   version: v1beta1
   webhooks:
     conversion: true
@@ -37,9 +37,9 @@ resources:
     webhookVersion: v1
 - api:
     crdVersion: v1
-  domain: kci.rocks
+  domain: kinda.rocks
   kind: DbInstance
-  path: github.com/kloeckner-i/db-operator/api/v1beta1
+  path: github.com/db-operator/db-operator/api/v1beta1
   version: v1beta1
   webhooks:
     conversion: true

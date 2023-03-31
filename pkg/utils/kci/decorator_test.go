@@ -19,7 +19,7 @@ package kci
 import (
 	"testing"
 
-	"github.com/kloeckner-i/db-operator/api/v1alpha1"
+	"github.com/db-operator/db-operator/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

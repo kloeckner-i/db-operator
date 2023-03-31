@@ -19,7 +19,7 @@ package v1alpha1
 import (
 	"errors"
 
-	"github.com/kloeckner-i/db-operator/api/v1beta1"
+	"github.com/db-operator/db-operator/api/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )

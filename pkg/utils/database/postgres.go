@@ -24,7 +24,7 @@ import (
 
 	// Don't delete below package. Used for driver "cloudsqlpostgres"
 	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
-	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
+	"github.com/db-operator/db-operator/pkg/utils/kci"
 
 	// Don't delete below package. Used for driver "postgres"
 	"github.com/lib/pq"

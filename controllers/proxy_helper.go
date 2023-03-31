@@ -23,10 +23,10 @@ import (
 	"strconv"
 	"strings"
 
-	kciv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
-	"github.com/kloeckner-i/db-operator/pkg/config"
-	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
-	proxy "github.com/kloeckner-i/db-operator/pkg/utils/proxy"
+	kciv1beta1 "github.com/db-operator/db-operator/api/v1beta1"
+	"github.com/db-operator/db-operator/pkg/config"
+	"github.com/db-operator/db-operator/pkg/utils/kci"
+	proxy "github.com/db-operator/db-operator/pkg/utils/proxy"
 	"github.com/sirupsen/logrus"
 )
 

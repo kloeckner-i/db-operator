@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/kloeckner-i/db-operator/pkg/config"
+	"github.com/db-operator/db-operator/pkg/config"
 	promv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	v1apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"

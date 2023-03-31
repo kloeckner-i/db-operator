@@ -1,14 +1,14 @@
-module github.com/kloeckner-i/db-operator
+module github.com/db-operator/db-operator
 
 go 1.18
 
 require (
 	bou.ke/monkey v1.0.2
 	github.com/GoogleCloudPlatform/cloudsql-proxy v1.30.1
+	github.com/db-operator/can-haz-password v0.1.1
 	github.com/go-logr/logr v1.2.3
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/google/uuid v1.3.0
-	github.com/kloeckner-i/can-haz-password v0.1.0
 	github.com/lib/pq v1.10.5
 	github.com/mitchellh/hashstructure v1.1.0
 	github.com/onsi/ginkgo/v2 v2.8.0

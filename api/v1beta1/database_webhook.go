@@ -34,7 +34,7 @@ func (r *Database) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 // TODO(user): EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 
-//+kubebuilder:webhook:path=/mutate-kci-rocks-v1beta1-database,mutating=true,failurePolicy=fail,sideEffects=None,groups=kci.rocks,resources=databases,verbs=create;update,versions=v1beta1,name=mdatabase.kb.io,admissionReviewVersions=v1
+//+kubebuilder:webhook:path=/mutate-kci-rocks-v1beta1-database,mutating=true,failurePolicy=fail,sideEffects=None,groups=kinda.rocks,resources=databases,verbs=create;update,versions=v1beta1,name=mdatabase.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Defaulter = &Database{}
 
@@ -46,7 +46,7 @@ func (r *Database) Default() {
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-//+kubebuilder:webhook:path=/validate-kci-rocks-v1beta1-database,mutating=false,failurePolicy=fail,sideEffects=None,groups=kci.rocks,resources=databases,verbs=create;update,versions=v1beta1,name=vdatabase.kb.io,admissionReviewVersions=v1
+//+kubebuilder:webhook:path=/validate-kci-rocks-v1beta1-database,mutating=false,failurePolicy=fail,sideEffects=None,groups=kinda.rocks,resources=databases,verbs=create;update,versions=v1beta1,name=vdatabase.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Validator = &Database{}
 

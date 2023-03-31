@@ -19,7 +19,7 @@ package config
 import (
 	"os"
 
-	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
+	"github.com/db-operator/db-operator/pkg/utils/kci"
 	"github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
 )
