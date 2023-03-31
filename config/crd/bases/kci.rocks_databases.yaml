@@ -395,6 +395,9 @@ spec:
                     items:
                       type: string
                     type: array
+                  template:
+                    description: Let user create database from template
+                    type: string
                 type: object
               secretName:
                 type: string

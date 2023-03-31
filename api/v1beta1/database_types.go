@@ -42,6 +42,8 @@ type Postgres struct {
 	DropPublicSchema bool `json:"dropPublicSchema,omitempty"`
 	// Specify schemas to be created. The user created by db-operator will have all access on them.
 	Schemas []string `json:"schemas,omitempty"`
+	// Let user create database from template
+	Template string `json:"template,omitempty"`
 }
 
 // DatabaseStatus defines the observed state of Database

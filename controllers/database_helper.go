@@ -102,6 +102,7 @@ func determinDatabaseType(dbcr *kciv1beta1.Database, dbCred database.Credentials
 			SkipCAVerify:     instance.Spec.SSLConnection.SkipVerify,
 			DropPublicSchema: dbcr.Spec.Postgres.DropPublicSchema,
 			Schemas:          dbcr.Spec.Postgres.Schemas,
+			Template:         dbcr.Spec.Postgres.Template,
 		}
 
 		return db, nil

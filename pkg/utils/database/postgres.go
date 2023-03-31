@@ -47,6 +47,7 @@ type Postgres struct {
 	SkipCAVerify     bool
 	DropPublicSchema bool
 	Schemas          []string
+	Template         string
 }
 
 const postgresDefaultSSLMode = "disable"
@@ -152,7 +153,13 @@ func (p Postgres) isRowExist(database, query, user, password string) bool {
 }
 
 func (p Postgres) createDatabase(admin AdminCredentials) error {
-	create := fmt.Sprintf("CREATE DATABASE \"%s\";", p.Database)
+	var create string
+	if len(p.Template) > 0 {
+		logrus.Infof("Creating database %s from template %s", p.Database, p.Template)
+		create = fmt.Sprintf("CREATE DATABASE \"%s\" TEMPLATE \"%s\";", p.Database, p.Template)
+	} else {
+		create = fmt.Sprintf("CREATE DATABASE \"%s\";", p.Database)
+	}
 
 	if !p.isDbExist(admin) {
 		err := p.executeExec("postgres", create, admin)

@@ -63,6 +63,32 @@ func TestPostgresCreateDatabase(t *testing.T) {
 	assert.NoErrorf(t, err, "Unexpected error %v", err)
 }
 
+func TestPostgresCreateDatabaseTemplate(t *testing.T) {
+	admin := getPostgresAdmin()
+	p := testPostgres()
+
+	err := p.createDatabase(admin)
+	assert.NoErrorf(t, err, "Unexpected error %v", err)
+
+	// Create a table to test template later
+	testquery := `CREATE TABLE test (
+  role_id serial PRIMARY KEY,
+  role_name VARCHAR (255) UNIQUE NOT NULL
+);`
+	assert.NoError(t, p.executeExec("postgres", testquery, admin))
+
+	p.Template = p.Database
+	p.Database = "newdatabase"
+	err = p.createDatabase(admin)
+	assert.NoErrorf(t, err, "Unexpected error %v", err)
+
+	testquery = "SELECT role_id, role_name FROM test;"
+	assert.NoError(t, p.executeExec("postgres", testquery, admin))
+	
+	testquery = "SELECT role_id, role_name, role_unknown FROM test;"
+	assert.Error(t, p.executeExec("postgres", testquery, admin))
+}
+
 func TestPostgresCreateUser(t *testing.T) {
 	admin := getPostgresAdmin()
 	p := testPostgres()
