@@ -22,11 +22,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Setup GO
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.go_version }}
+
       - name: Check Code Style
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.49.0 ## https://github.com/golangci/golangci-lint/releases
-          args: --timeout 3m0s
+          version: v1.52.2 ## https://github.com/golangci/golangci-lint/releases
+          args: --timeout 5m0s
 
   unit-test:
     runs-on: ubuntu-latest

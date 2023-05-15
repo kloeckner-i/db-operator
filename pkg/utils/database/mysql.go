@@ -25,8 +25,8 @@ import (
 	"github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/mysql"
 
 	// do not delete
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/db-operator/db-operator/pkg/utils/kci"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/sirupsen/logrus"
 )
 

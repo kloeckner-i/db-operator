@@ -135,6 +135,7 @@ func TestGCSBackupCronGenericWithOwnerReference(t *testing.T) {
 	assert.Equal(t, funcCronObject.OwnerReferences[0].Name, ownership[0].Name, "Name in the OwnerReference is wrong")
 	assert.Equal(t, funcCronObject.OwnerReferences[0].UID, ownership[0].UID, "UID in the OwnerReference is wrong")
 }
+
 func TestGetResourceRequirements(t *testing.T) {
 	os.Setenv("CONFIG_PATH", "./test/backup_config.yaml")
 	conf := config.LoadConfig()

@@ -156,7 +156,6 @@ func (db *Database) InstanceAccessSecretName() string {
 
 // ConvertTo converts this v1alpha1 to v1beta1. (upgrade)
 func (db *Database) ConvertTo(dstRaw conversion.Hub) error {
-
 	dst := dstRaw.(*v1beta1.Database)
 	dst.ObjectMeta = db.ObjectMeta
 

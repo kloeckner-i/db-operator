@@ -26,8 +26,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var testDbcred = database.Credentials{Name: "testdb", Username: "testuser", Password: "password"}
-var ownership = []metav1.OwnerReference{}
+var (
+	testDbcred = database.Credentials{Name: "testdb", Username: "testuser", Password: "password"}
+	ownership  = []metav1.OwnerReference{}
+)
 
 func TestDeterminPostgresType(t *testing.T) {
 	postgresDbCr := newPostgresTestDbCr(newPostgresTestDbInstanceCr())
@@ -133,8 +135,8 @@ func TestPsqlDefaultTemplatedSecretGeneratationWithProxy(t *testing.T) {
 	postgresDbCr.Status.ProxyStatus.ServiceName = c.DatabaseHost
 
 	protocol := "postgresql"
-	expectedData := map[string]string{
-		"CONNECTION_STRING": fmt.Sprintf("%s://%s:%s@%s:%d/%s", protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName),
+	expectedData := map[string][]byte{
+		"CONNECTION_STRING": []byte(fmt.Sprintf("%s://%s:%s@%s:%d/%s", protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName)),
 	}
 
 	connString, err := generateTemplatedSecrets(postgresDbCr, testDbcred)
@@ -158,8 +160,8 @@ func TestPsqlDefaultTemplatedSecretGeneratationWithoutProxy(t *testing.T) {
 	}
 
 	protocol := "postgresql"
-	expectedData := map[string]string{
-		"CONNECTION_STRING": fmt.Sprintf("%s://%s:%s@%s:%d/%s", protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName),
+	expectedData := map[string][]byte{
+		"CONNECTION_STRING": []byte(fmt.Sprintf("%s://%s:%s@%s:%d/%s", protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName)),
 	}
 
 	connString, err := generateTemplatedSecrets(postgresDbCr, testDbcred)
@@ -180,8 +182,8 @@ func TestMysqlDefaultTemlatedSecretGeneratationWithoutProxy(t *testing.T) {
 		DatabaseName: testDbcred.Name,
 	}
 	protocol := "mysql"
-	expectedData := map[string]string{
-		"CONNECTION_STRING": fmt.Sprintf("%s://%s:%s@%s:%d/%s", protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName),
+	expectedData := map[string][]byte{
+		"CONNECTION_STRING": []byte(fmt.Sprintf("%s://%s:%s@%s:%d/%s", protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName)),
 	}
 
 	connString, err := generateTemplatedSecrets(mysqlDbCr, testDbcred)
@@ -190,25 +192,6 @@ func TestMysqlDefaultTemlatedSecretGeneratationWithoutProxy(t *testing.T) {
 		t.Fail()
 	}
 	assert.Equal(t, connString, expectedData, "generated connections string is wrong")
-}
-
-func TestAddingTemplatedSecretsToSecret(t *testing.T) {
-	instance := newPostgresTestDbInstanceCr()
-	postgresDbCr := newPostgresTestDbCr(instance)
-	secretData := map[string][]byte{
-		"POSTGRES_DB":       []byte("postgres"),
-		"POSTGRES_USER":     []byte("root"),
-		"POSTGRES_PASSWORD": []byte("qwertyu9"),
-	}
-
-	connectionString := "it's a dummy connection string"
-
-	secret := addTemplatedSecretToSecret(postgresDbCr, secretData, "TMPL", connectionString, ownership)
-	secretData["CONNECTION_STRING"] = []byte(connectionString)
-	if val, ok := secret.Data["TMPL"]; ok {
-		assert.Equal(t, string(val), connectionString, "connections string in a secret contains unexpected values")
-		return
-	}
 }
 
 func TestPsqlCustomSecretGeneratation(t *testing.T) {
@@ -230,17 +213,17 @@ func TestPsqlCustomSecretGeneratation(t *testing.T) {
 		DatabaseName: testDbcred.Name,
 	}
 	protocol := "postgresql"
-	expectedData := map[string]string{
-		"CHECK_1": fmt.Sprintf("%s%s://%s:%s@%s:%d/%s%s", prefix, protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName, postfix),
-		"CHECK_2": fmt.Sprintf("%s://%s:%s@%s:%d/%s", protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName),
+	expectedData := map[string][]byte{
+		"CHECK_1": []byte(fmt.Sprintf("%s%s://%s:%s@%s:%d/%s%s", prefix, protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName, postfix)),
+		"CHECK_2": []byte(fmt.Sprintf("%s://%s:%s@%s:%d/%s", protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName)),
 	}
 
-	connString, err := generateTemplatedSecrets(postgresDbCr, testDbcred)
+	templatedSecrets, err := generateTemplatedSecrets(postgresDbCr, testDbcred)
 	if err != nil {
 		t.Logf("unexpected error: %s", err)
 		t.Fail()
 	}
-	assert.Equal(t, connString, expectedData, "generated connections string is wrong")
+	assert.Equal(t, templatedSecrets, expectedData, "generated connections string is wrong")
 }
 
 func TestWrongTemplatedSecretGeneratation(t *testing.T) {
@@ -281,8 +264,8 @@ func TestBlockedTempatedKeysGeneratation(t *testing.T) {
 		Data: map[string][]byte{},
 	}
 
-	newSecret := fillTemplatedSecretData(postgresDbCr, dummySecret.Data, sercretData, ownership)
-	assert.Equal(t, newSecret.Data, expectedData, "generated connections string is wrong")
+	newSecret := appendTemplatedSecretData(postgresDbCr, dummySecret.Data, sercretData, ownership)
+	assert.Equal(t, newSecret, expectedData, "generated connections string is wrong")
 }
 
 func TestObsoleteFieldsRemoving(t *testing.T) {
@@ -311,8 +294,8 @@ func TestObsoleteFieldsRemoving(t *testing.T) {
 		},
 	}
 
-	newSecret := fillTemplatedSecretData(postgresDbCr, dummySecret.Data, sercretData, ownership)
+	newSecret := appendTemplatedSecretData(postgresDbCr, dummySecret.Data, sercretData, ownership)
 	newSecret = removeObsoleteSecret(postgresDbCr, dummySecret.Data, sercretData, ownership)
 
-	assert.Equal(t, newSecret.Data, expectedData, "generated connections string is wrong")
+	assert.Equal(t, newSecret, expectedData, "generated connections string is wrong")
 }

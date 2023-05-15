@@ -46,9 +46,9 @@ func TestConfigMapBuilderWithOwnerReference(t *testing.T) {
 	ownership := []metav1.OwnerReference{}
 	ownership = append(ownership, metav1.OwnerReference{
 		APIVersion: "api-version",
-		Kind: "kind",
-		Name: "name",
-		UID: "uid",
+		Kind:       "kind",
+		Name:       "name",
+		UID:        "uid",
 	})
 	om := metav1.ObjectMeta{Namespace: "TestNS"}
 	s := v1alpha1.DatabaseSpec{SecretName: "TestSec"}
@@ -92,9 +92,9 @@ func TestSecretBuilderWithOwnerReference(t *testing.T) {
 
 	ownership = append(ownership, metav1.OwnerReference{
 		APIVersion: "api-version",
-		Kind: "kind",
-		Name: "name",
-		UID: "uid",
+		Kind:       "kind",
+		Name:       "name",
+		UID:        "uid",
 	})
 
 	owner := v1alpha1.Database{ObjectMeta: o}

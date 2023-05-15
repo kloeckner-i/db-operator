@@ -593,13 +593,14 @@ func (r *DatabaseReconciler) createTemplatedSecrets(ctx context.Context, dbcr *k
 		return err
 	}
 	// Adding values
-	newSecret := fillTemplatedSecretData(dbcr, databaseSecret.Data, dbSecrets, ownership)
-	if err = r.Update(ctx, newSecret, &client.UpdateOptions{}); err != nil {
-		return err
+	newSecretData := appendTemplatedSecretData(dbcr, databaseSecret.Data, dbSecrets, ownership)
+	newSecretData = removeObsoleteSecret(dbcr, newSecretData, dbSecrets, ownership)
+
+	for key, value := range newSecretData {
+		databaseSecret.Data[key] = value
 	}
 
-	newSecret = removeObsoleteSecret(dbcr, databaseSecret.Data, dbSecrets, ownership)
-	if err = r.Update(ctx, newSecret, &client.UpdateOptions{}); err != nil {
+	if err = r.Update(ctx, databaseSecret, &client.UpdateOptions{}); err != nil {
 		return err
 	}
 

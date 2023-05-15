@@ -26,7 +26,6 @@ import (
 	"github.com/db-operator/db-operator/pkg/utils/database"
 	"github.com/db-operator/db-operator/pkg/utils/kci"
 	"github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/strings/slices"
 )
@@ -238,8 +237,8 @@ func generateDatabaseSecretData(dbcr *kciv1beta1.Database) (map[string][]byte, e
 	}
 }
 
-func generateTemplatedSecrets(dbcr *kciv1beta1.Database, databaseCred database.Credentials) (secrets map[string]string, err error) {
-	secrets = map[string]string{}
+func generateTemplatedSecrets(dbcr *kciv1beta1.Database, databaseCred database.Credentials) (secrets map[string][]byte, err error) {
+	secrets = map[string][]byte{}
 	templates := map[string]string{}
 	if len(dbcr.Spec.SecretsTemplates) > 0 {
 		templates = dbcr.Spec.SecretsTemplates
@@ -276,24 +275,32 @@ func generateTemplatedSecrets(dbcr *kciv1beta1.Database, databaseCred database.C
 
 	logrus.Infof("DB: namespace=%s, name=%s creating secrets from templates", dbcr.Namespace, dbcr.Name)
 	for key, value := range templates {
-		var tmpl string = value
-		t, err := template.New("secret").Parse(tmpl)
-		if err != nil {
-			return nil, err
-		}
+		if slices.Contains(getBlockedTempatedKeys(), key) {
+			logrus.Warnf("DB: namespace=%s, name=%s %s can't be used for templating, because it's used for default secret created by operator",
+				dbcr.Namespace,
+				dbcr.Name,
+				key,
+			)
+		} else {
+			var tmpl string = value
+			t, err := template.New("secret").Parse(tmpl)
+			if err != nil {
+				return nil, err
+			}
 
-		var secretBytes bytes.Buffer
-		err = t.Execute(&secretBytes, dbData)
-		if err != nil {
-			return nil, err
+			var secretBytes bytes.Buffer
+			err = t.Execute(&secretBytes, dbData)
+			if err != nil {
+				return nil, err
+			}
+			templatedSecret := secretBytes.String()
+			secrets[key] = []byte(templatedSecret)
 		}
-		connString := secretBytes.String()
-		secrets[key] = connString
 	}
 	return secrets, nil
 }
 
-func fillTemplatedSecretData(dbcr *kciv1beta1.Database, secretData map[string][]byte, newSecretFields map[string]string, ownership []metav1.OwnerReference) (newSecret *v1.Secret) {
+func appendTemplatedSecretData(dbcr *kciv1beta1.Database, secretData map[string][]byte, newSecretFields map[string][]byte, ownership []metav1.OwnerReference) map[string][]byte {
 	blockedTempatedKeys := getBlockedTempatedKeys()
 	for key, value := range newSecretFields {
 		if slices.Contains(blockedTempatedKeys, key) {
@@ -303,18 +310,13 @@ func fillTemplatedSecretData(dbcr *kciv1beta1.Database, secretData map[string][]
 				key,
 			)
 		} else {
-			newSecret = addTemplatedSecretToSecret(dbcr, secretData, key, value, ownership)
+			secretData[key] = value
 		}
 	}
-	return
+	return secretData
 }
 
-func addTemplatedSecretToSecret(dbcr *kciv1beta1.Database, secretData map[string][]byte, secretName string, secretValue string, ownership []metav1.OwnerReference) *v1.Secret {
-	secretData[secretName] = []byte(secretValue)
-	return kci.SecretBuilder(dbcr.Spec.SecretName, dbcr.GetNamespace(), secretData, ownership)
-}
-
-func removeObsoleteSecret(dbcr *kciv1beta1.Database, secretData map[string][]byte, newSecretFields map[string]string, ownership []metav1.OwnerReference) *v1.Secret {
+func removeObsoleteSecret(dbcr *kciv1beta1.Database, secretData map[string][]byte, newSecretFields map[string][]byte, ownership []metav1.OwnerReference) map[string][]byte {
 	blockedTempatedKeys := getBlockedTempatedKeys()
 
 	for key := range secretData {
@@ -326,6 +328,5 @@ func removeObsoleteSecret(dbcr *kciv1beta1.Database, secretData map[string][]byt
 			}
 		}
 	}
-
-	return kci.SecretBuilder(dbcr.Spec.SecretName, dbcr.GetNamespace(), secretData, ownership)
+	return secretData
 }

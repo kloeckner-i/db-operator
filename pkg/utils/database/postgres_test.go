@@ -84,7 +84,7 @@ func TestPostgresCreateDatabaseTemplate(t *testing.T) {
 
 	testquery = "SELECT role_id, role_name FROM test;"
 	assert.NoError(t, p.executeExec("postgres", testquery, admin))
-	
+
 	testquery = "SELECT role_id, role_name, role_unknown FROM test;"
 	assert.Error(t, p.executeExec("postgres", testquery, admin))
 }
