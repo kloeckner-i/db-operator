@@ -2,6 +2,7 @@
 # Temporary Build Files
 build/_output
 build/_test
+db-operator
 
 # Secret file for local testing
 secrets-local.yaml
