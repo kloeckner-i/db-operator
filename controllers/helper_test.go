@@ -22,7 +22,7 @@ import (
 	"testing"
 
 	"bou.ke/monkey"
-	kciv1beta1 "github.com/db-operator/db-operator/api/v1beta1"
+	kindav1beta11 "github.com/db-operator/db-operator/api/v1beta1"
 	"github.com/db-operator/db-operator/pkg/test"
 	"github.com/db-operator/db-operator/pkg/utils/kci"
 	"github.com/stretchr/testify/assert"
@@ -36,32 +36,32 @@ const (
 	TestNamespace  = "TestNS"
 )
 
-func newPostgresTestDbInstanceCr() kciv1beta1.DbInstance {
+func newPostgresTestDbInstanceCr() kindav1beta11.DbInstance {
 	info := make(map[string]string)
 	info["DB_PORT"] = "5432"
 	info["DB_CONN"] = "postgres"
-	return kciv1beta1.DbInstance{
-		Spec: kciv1beta1.DbInstanceSpec{
+	return kindav1beta11.DbInstance{
+		Spec: kindav1beta11.DbInstanceSpec{
 			Engine: "postgres",
-			DbInstanceSource: kciv1beta1.DbInstanceSource{
-				Generic: &kciv1beta1.GenericInstance{
+			DbInstanceSource: kindav1beta11.DbInstanceSource{
+				Generic: &kindav1beta11.GenericInstance{
 					Host: test.GetPostgresHost(),
 					Port: test.GetPostgresPort(),
 				},
 			},
 		},
-		Status: kciv1beta1.DbInstanceStatus{Info: info},
+		Status: kindav1beta11.DbInstanceStatus{Info: info},
 	}
 }
 
-func newPostgresTestDbCr(instanceRef kciv1beta1.DbInstance) *kciv1beta1.Database {
+func newPostgresTestDbCr(instanceRef kindav1beta11.DbInstance) *kindav1beta11.Database {
 	o := metav1.ObjectMeta{Namespace: TestNamespace}
-	s := kciv1beta1.DatabaseSpec{SecretName: TestSecretName}
+	s := kindav1beta11.DatabaseSpec{SecretName: TestSecretName}
 
-	db := kciv1beta1.Database{
+	db := kindav1beta11.Database{
 		ObjectMeta: o,
 		Spec:       s,
-		Status: kciv1beta1.DatabaseStatus{
+		Status: kindav1beta11.DatabaseStatus{
 			InstanceRef: &instanceRef,
 		},
 	}
@@ -69,29 +69,29 @@ func newPostgresTestDbCr(instanceRef kciv1beta1.DbInstance) *kciv1beta1.Database
 	return &db
 }
 
-func newMysqlTestDbCr() *kciv1beta1.Database {
+func newMysqlTestDbCr() *kindav1beta11.Database {
 	o := metav1.ObjectMeta{Namespace: "TestNS"}
-	s := kciv1beta1.DatabaseSpec{SecretName: "TestSec"}
+	s := kindav1beta11.DatabaseSpec{SecretName: "TestSec"}
 
 	info := make(map[string]string)
 	info["DB_PORT"] = "3306"
 	info["DB_CONN"] = "mysql"
 
-	db := kciv1beta1.Database{
+	db := kindav1beta11.Database{
 		ObjectMeta: o,
 		Spec:       s,
-		Status: kciv1beta1.DatabaseStatus{
-			InstanceRef: &kciv1beta1.DbInstance{
-				Spec: kciv1beta1.DbInstanceSpec{
+		Status: kindav1beta11.DatabaseStatus{
+			InstanceRef: &kindav1beta11.DbInstance{
+				Spec: kindav1beta11.DbInstanceSpec{
 					Engine: "mysql",
-					DbInstanceSource: kciv1beta1.DbInstanceSource{
-						Generic: &kciv1beta1.GenericInstance{
+					DbInstanceSource: kindav1beta11.DbInstanceSource{
+						Generic: &kindav1beta11.GenericInstance{
 							Host: test.GetMysqlHost(),
 							Port: test.GetMysqlPort(),
 						},
 					},
 				},
-				Status: kciv1beta1.DbInstanceStatus{Info: info},
+				Status: kindav1beta11.DbInstanceStatus{Info: info},
 			},
 		},
 	}
@@ -162,9 +162,9 @@ func testAdminSecret(namespace, secretName string) (*corev1.Secret, error) {
 }
 
 func TestSpecChanged(t *testing.T) {
-	dbin := &kciv1beta1.DbInstance{}
-	before := kciv1beta1.DbInstanceSpec{
-		AdminUserSecret: kciv1beta1.NamespacedName{
+	dbin := &kindav1beta11.DbInstance{}
+	before := kindav1beta11.DbInstanceSpec{
+		AdminUserSecret: kindav1beta11.NamespacedName{
 			Namespace: "test",
 			Name:      "secret1",
 		},
@@ -177,8 +177,8 @@ func TestSpecChanged(t *testing.T) {
 	nochange := isDBInstanceSpecChanged(ctx, dbin)
 	assert.Equal(t, nochange, false, "expected false")
 
-	after := kciv1beta1.DbInstanceSpec{
-		AdminUserSecret: kciv1beta1.NamespacedName{
+	after := kindav1beta11.DbInstanceSpec{
+		AdminUserSecret: kindav1beta11.NamespacedName{
 			Namespace: "test",
 			Name:      "secret2",
 		},
@@ -189,10 +189,10 @@ func TestSpecChanged(t *testing.T) {
 }
 
 func TestConfigChanged(t *testing.T) {
-	dbin := &kciv1beta1.DbInstance{}
-	dbin.Spec.Google = &kciv1beta1.GoogleInstance{
+	dbin := &kindav1beta11.DbInstance{}
+	dbin.Spec.Google = &kindav1beta11.GoogleInstance{
 		InstanceName: "test",
-		ConfigmapName: kciv1beta1.NamespacedName{
+		ConfigmapName: kindav1beta11.NamespacedName{
 			Namespace: "testNS",
 			Name:      "test",
 		},
@@ -213,7 +213,7 @@ func TestConfigChanged(t *testing.T) {
 }
 
 func TestAddChecksumStatus(t *testing.T) {
-	dbin := &kciv1beta1.DbInstance{}
+	dbin := &kindav1beta11.DbInstance{}
 	addDBInstanceChecksumStatus(context.Background(), dbin)
 	checksums := dbin.Status.Checksums
 	assert.NotEqual(t, checksums, map[string]string{}, "annotation should have checksum")

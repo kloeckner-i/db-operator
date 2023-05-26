@@ -28,8 +28,8 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
-	kcirocksv1alpha1 "github.com/db-operator/db-operator/api/v1alpha1"
-	kcirocksv1beta1 "github.com/db-operator/db-operator/api/v1beta1"
+	kindarocksv1alpha1 "github.com/db-operator/db-operator/api/v1alpha1"
+	kindarocksv1beta1 "github.com/db-operator/db-operator/api/v1beta1"
 	"github.com/db-operator/db-operator/controllers"
 	"github.com/db-operator/db-operator/pkg/config"
 	"github.com/db-operator/db-operator/pkg/utils/thirdpartyapi"
@@ -49,8 +49,8 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(kcirocksv1alpha1.AddToScheme(scheme))
-	utilruntime.Must(kcirocksv1beta1.AddToScheme(scheme))
+	utilruntime.Must(kindarocksv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(kindarocksv1beta1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 
 	thirdpartyapi.AppendToScheme(scheme)
@@ -122,11 +122,11 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Database")
 		os.Exit(1)
 	}
-	if err = (&kcirocksv1beta1.Database{}).SetupWebhookWithManager(mgr); err != nil {
+	if err = (&kindarocksv1beta1.Database{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "Database")
 		os.Exit(1)
 	}
-	if err = (&kcirocksv1beta1.DbInstance{}).SetupWebhookWithManager(mgr); err != nil {
+	if err = (&kindarocksv1beta1.DbInstance{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "DbInstance")
 		os.Exit(1)
 	}

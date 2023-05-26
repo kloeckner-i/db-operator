@@ -19,7 +19,7 @@ package controllers
 import (
 	"strings"
 
-	kciv1beta1 "github.com/db-operator/db-operator/api/v1beta1"
+	kindav1beta11 "github.com/db-operator/db-operator/api/v1beta1"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -92,7 +92,7 @@ func isWatchedNamespace(watchNamespaces []string, ro runtime.Object) bool {
 	}
 	// define object's namespace
 	objectNamespace := ""
-	database, isDatabase := ro.(*kciv1beta1.Database)
+	database, isDatabase := ro.(*kindav1beta11.Database)
 	if isDatabase {
 		objectNamespace = database.Namespace
 	} else {
@@ -115,7 +115,7 @@ func isWatchedNamespace(watchNamespaces []string, ro runtime.Object) bool {
 }
 
 func isDatabase(ro runtime.Object) bool {
-	_, isDatabase := ro.(*kciv1beta1.Database)
+	_, isDatabase := ro.(*kindav1beta11.Database)
 	return isDatabase
 }
 
@@ -129,7 +129,7 @@ func isObjectUpdated(e event.UpdateEvent) bool {
 		return false
 	}
 	// if object kind is a Database check that 'metadata.generation' field ('spec' section) has been changed
-	_, isDatabase := e.ObjectNew.(*kciv1beta1.Database)
+	_, isDatabase := e.ObjectNew.(*kindav1beta11.Database)
 	if isDatabase {
 		return e.ObjectNew.GetGeneration() != e.ObjectOld.GetGeneration()
 	}
