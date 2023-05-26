@@ -1,0 +1,27 @@
+# permissions for end users to view dbusers.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: dbuser-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: db-operator
+    app.kubernetes.io/part-of: db-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: dbuser-viewer-role
+rules:
+- apiGroups:
+  - kinda.rocks
+  resources:
+  - dbusers
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - kinda.rocks
+  resources:
+  - dbusers/status
+  verbs:
+  - get
