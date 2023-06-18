@@ -20,7 +20,7 @@ import (
 	"errors"
 	"fmt"
 
-	kciv1beta1 "github.com/db-operator/db-operator/api/v1beta1"
+	kindav1beta1 "github.com/db-operator/db-operator/api/v1beta1"
 	"github.com/db-operator/db-operator/pkg/config"
 	"github.com/db-operator/db-operator/pkg/utils/kci"
 	"github.com/sirupsen/logrus"
@@ -33,7 +33,7 @@ import (
 // GCSBackupCron builds kubernetes cronjob object
 // to create database backup regularly with defined schedule from dbcr
 // this job will database dump and upload to google bucket storage for backup
-func GCSBackupCron(conf *config.Config, dbcr *kciv1beta1.Database, ownership []metav1.OwnerReference) (*batchv1.CronJob, error) {
+func GCSBackupCron(conf *config.Config, dbcr *kindav1beta1.Database, ownership []metav1.OwnerReference) (*batchv1.CronJob, error) {
 	cronJobSpec, err := buildCronJobSpec(conf, dbcr)
 	if err != nil {
 		return nil, err
@@ -54,7 +54,7 @@ func GCSBackupCron(conf *config.Config, dbcr *kciv1beta1.Database, ownership []m
 	}, nil
 }
 
-func buildCronJobSpec(conf *config.Config, dbcr *kciv1beta1.Database) (batchv1.CronJobSpec, error) {
+func buildCronJobSpec(conf *config.Config, dbcr *kindav1beta1.Database) (batchv1.CronJobSpec, error) {
 	jobTemplate, err := buildJobTemplate(conf, dbcr)
 	if err != nil {
 		return batchv1.CronJobSpec{}, err
@@ -66,7 +66,7 @@ func buildCronJobSpec(conf *config.Config, dbcr *kciv1beta1.Database) (batchv1.C
 	}, nil
 }
 
-func buildJobTemplate(conf *config.Config, dbcr *kciv1beta1.Database) (batchv1.JobTemplateSpec, error) {
+func buildJobTemplate(conf *config.Config, dbcr *kindav1beta1.Database) (batchv1.JobTemplateSpec, error) {
 	ActiveDeadlineSeconds := int64(conf.Backup.ActiveDeadlineSeconds)
 	BackoffLimit := int32(3)
 	instance, err := dbcr.GetInstanceRef()
@@ -147,7 +147,7 @@ func getResourceRequirements(conf *config.Config) v1.ResourceRequirements {
 	return resourceRequirements
 }
 
-func postgresBackupContainer(conf *config.Config, dbcr *kciv1beta1.Database) (v1.Container, error) {
+func postgresBackupContainer(conf *config.Config, dbcr *kindav1beta1.Database) (v1.Container, error) {
 	env, err := postgresEnvVars(conf, dbcr)
 	if err != nil {
 		return v1.Container{}, err
@@ -163,7 +163,7 @@ func postgresBackupContainer(conf *config.Config, dbcr *kciv1beta1.Database) (v1
 	}, nil
 }
 
-func mysqlBackupContainer(conf *config.Config, dbcr *kciv1beta1.Database) (v1.Container, error) {
+func mysqlBackupContainer(conf *config.Config, dbcr *kindav1beta1.Database) (v1.Container, error) {
 	env, err := mysqlEnvVars(dbcr)
 	if err != nil {
 		return v1.Container{}, err
@@ -192,7 +192,7 @@ func volumeMounts() []v1.VolumeMount {
 	}
 }
 
-func volumes(dbcr *kciv1beta1.Database) []v1.Volume {
+func volumes(dbcr *kindav1beta1.Database) []v1.Volume {
 	return []v1.Volume{
 		{
 			Name: "gcloud-secret",
@@ -213,7 +213,7 @@ func volumes(dbcr *kciv1beta1.Database) []v1.Volume {
 	}
 }
 
-func postgresEnvVars(conf *config.Config, dbcr *kciv1beta1.Database) ([]v1.EnvVar, error) {
+func postgresEnvVars(conf *config.Config, dbcr *kindav1beta1.Database) ([]v1.EnvVar, error) {
 	instance, err := dbcr.GetInstanceRef()
 	if err != nil {
 		logrus.Errorf("can not build backup environment variables - %s", err)
@@ -262,7 +262,7 @@ func postgresEnvVars(conf *config.Config, dbcr *kciv1beta1.Database) ([]v1.EnvVa
 	return envList, nil
 }
 
-func mysqlEnvVars(dbcr *kciv1beta1.Database) ([]v1.EnvVar, error) {
+func mysqlEnvVars(dbcr *kindav1beta1.Database) ([]v1.EnvVar, error) {
 	instance, err := dbcr.GetInstanceRef()
 	if err != nil {
 		logrus.Errorf("can not build backup environment variables - %s", err)
@@ -307,7 +307,7 @@ func mysqlEnvVars(dbcr *kciv1beta1.Database) ([]v1.EnvVar, error) {
 	}, nil
 }
 
-func getBackupHost(dbcr *kciv1beta1.Database) (string, error) {
+func getBackupHost(dbcr *kindav1beta1.Database) (string, error) {
 	host := ""
 
 	instance, err := dbcr.GetInstanceRef()
@@ -333,3 +333,4 @@ func getBackupHost(dbcr *kciv1beta1.Database) (string, error) {
 		return host, errors.New("unknown backend type")
 	}
 }
+

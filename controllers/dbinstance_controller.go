@@ -21,7 +21,7 @@ import (
 	"errors"
 	"time"
 
-	kciv1beta1 "github.com/db-operator/db-operator/api/v1beta1"
+	kindav1beta1 "github.com/db-operator/db-operator/api/v1beta1"
 	"github.com/db-operator/db-operator/pkg/config"
 	"github.com/db-operator/db-operator/pkg/utils/database"
 	"github.com/db-operator/db-operator/pkg/utils/dbinstance"
@@ -74,7 +74,7 @@ func (r *DbInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	reconcileResult := reconcile.Result{RequeueAfter: reconcilePeriod}
 
 	// Fetch the DbInstance custom resource
-	dbin := &kciv1beta1.DbInstance{}
+	dbin := &kindav1beta1.DbInstance{}
 	err := r.Get(ctx, req.NamespacedName, dbin)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
@@ -147,11 +147,11 @@ func (r *DbInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 // SetupWithManager sets up the controller with the Manager.
 func (r *DbInstanceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&kciv1beta1.DbInstance{}).
+		For(&kindav1beta1.DbInstance{}).
 		Complete(r)
 }
 
-func (r *DbInstanceReconciler) create(ctx context.Context, dbin *kciv1beta1.DbInstance) error {
+func (r *DbInstanceReconciler) create(ctx context.Context, dbin *kindav1beta1.DbInstance) error {
 	secret, err := kci.GetSecretResource(ctx, dbin.Spec.AdminUserSecret.ToKubernetesType())
 	if err != nil {
 		logrus.Errorf("Instance: name=%s failed to get instance admin user secret %s/%s", dbin.Name, dbin.Spec.AdminUserSecret.Namespace, dbin.Spec.AdminUserSecret.Name)
@@ -219,8 +219,8 @@ func (r *DbInstanceReconciler) create(ctx context.Context, dbin *kciv1beta1.DbIn
 	return nil
 }
 
-func (r *DbInstanceReconciler) broadcast(ctx context.Context, dbin *kciv1beta1.DbInstance) error {
-	dbList := &kciv1beta1.DatabaseList{}
+func (r *DbInstanceReconciler) broadcast(ctx context.Context, dbin *kindav1beta1.DbInstance) error {
+	dbList := &kindav1beta1.DatabaseList{}
 	err := r.List(ctx, dbList)
 	if err != nil {
 		return err
@@ -243,7 +243,7 @@ func (r *DbInstanceReconciler) broadcast(ctx context.Context, dbin *kciv1beta1.D
 	return nil
 }
 
-func (r *DbInstanceReconciler) createProxy(ctx context.Context, dbin *kciv1beta1.DbInstance, ownership []metav1.OwnerReference) error {
+func (r *DbInstanceReconciler) createProxy(ctx context.Context, dbin *kindav1beta1.DbInstance, ownership []metav1.OwnerReference) error {
 	proxyInterface, err := determineProxyTypeForInstance(r.Conf, dbin)
 	if err != nil {
 		if err == ErrNoProxySupport {

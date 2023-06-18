@@ -21,40 +21,40 @@ import (
 	"testing"
 
 	"bou.ke/monkey"
-	kciv1beta1 "github.com/db-operator/db-operator/api/v1beta1"
+	kindav1beta1 "github.com/db-operator/db-operator/api/v1beta1"
 	"github.com/db-operator/db-operator/pkg/config"
 	"github.com/db-operator/db-operator/pkg/utils/proxy"
 	"github.com/stretchr/testify/assert"
 )
 
-func makeGsqlInstance() kciv1beta1.DbInstance {
+func makeGsqlInstance() kindav1beta1.DbInstance {
 	info := make(map[string]string)
 	info["DB_CONN"] = "test-conn"
 	info["DB_PORT"] = "1234"
-	dbInstance := kciv1beta1.DbInstance{
-		Spec: kciv1beta1.DbInstanceSpec{
-			DbInstanceSource: kciv1beta1.DbInstanceSource{
-				Google: &kciv1beta1.GoogleInstance{},
+	dbInstance := kindav1beta1.DbInstance{
+		Spec: kindav1beta1.DbInstanceSpec{
+			DbInstanceSource: kindav1beta1.DbInstanceSource{
+				Google: &kindav1beta1.GoogleInstance{},
 			},
 		},
-		Status: kciv1beta1.DbInstanceStatus{
+		Status: kindav1beta1.DbInstanceStatus{
 			Info: info,
 		},
 	}
 	return dbInstance
 }
 
-func makeGenericInstance() kciv1beta1.DbInstance {
+func makeGenericInstance() kindav1beta1.DbInstance {
 	info := make(map[string]string)
 	info["DB_CONN"] = "test-conn"
 	info["DB_PORT"] = "1234"
-	dbInstance := kciv1beta1.DbInstance{
-		Spec: kciv1beta1.DbInstanceSpec{
-			DbInstanceSource: kciv1beta1.DbInstanceSource{
-				Generic: &kciv1beta1.GenericInstance{},
+	dbInstance := kindav1beta1.DbInstance{
+		Spec: kindav1beta1.DbInstanceSpec{
+			DbInstanceSource: kindav1beta1.DbInstanceSource{
+				Generic: &kindav1beta1.GenericInstance{},
 			},
 		},
-		Status: kciv1beta1.DbInstanceStatus{
+		Status: kindav1beta1.DbInstanceStatus{
 			Info: info,
 		},
 	}

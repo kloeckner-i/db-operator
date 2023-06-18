@@ -2,7 +2,6 @@
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
-  creationTimestamp: null
   name: mutating-webhook-configuration
 webhooks:
 - admissionReviewVersions:
@@ -11,7 +10,7 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /mutate-kci-rocks-v1beta1-database
+      path: /mutate-kinda-rocks-v1beta1-database
   failurePolicy: Fail
   name: mdatabase.kb.io
   rules:
@@ -31,7 +30,7 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /mutate-kci-rocks-v1beta1-dbinstance
+      path: /mutate-kinda-rocks-v1beta1-dbinstance
   failurePolicy: Fail
   name: mdbinstance.kb.io
   rules:
@@ -49,7 +48,6 @@ webhooks:
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
-  creationTimestamp: null
   name: validating-webhook-configuration
 webhooks:
 - admissionReviewVersions:
@@ -58,7 +56,7 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /validate-kci-rocks-v1beta1-database
+      path: /validate-kinda-rocks-v1beta1-database
   failurePolicy: Fail
   name: vdatabase.kb.io
   rules:
@@ -78,7 +76,7 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /validate-kci-rocks-v1beta1-dbinstance
+      path: /validate-kinda-rocks-v1beta1-dbinstance
   failurePolicy: Fail
   name: vdbinstance.kb.io
   rules:

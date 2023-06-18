@@ -21,19 +21,19 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 
-	kciv1beta1 "github.com/db-operator/db-operator/api/v1beta1"
+	kindav1beta1 "github.com/db-operator/db-operator/api/v1beta1"
 	"github.com/db-operator/db-operator/pkg/utils/kci"
 	crdv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
-func isDBChanged(dbcr *kciv1beta1.Database, databaseSecret *corev1.Secret) bool {
+func isDBChanged(dbcr *kindav1beta1.Database, databaseSecret *corev1.Secret) bool {
 	annotations := dbcr.ObjectMeta.GetAnnotations()
 
 	return annotations["checksum/spec"] != kci.GenerateChecksum(dbcr.Spec) ||
 		annotations["checksum/secret"] != generateChecksumSecretValue(databaseSecret)
 }
 
-func addDBChecksum(dbcr *kciv1beta1.Database, databaseSecret *corev1.Secret) {
+func addDBChecksum(dbcr *kindav1beta1.Database, databaseSecret *corev1.Secret) {
 	annotations := dbcr.ObjectMeta.GetAnnotations()
 	if len(annotations) == 0 {
 		annotations = make(map[string]string)
@@ -51,7 +51,7 @@ func generateChecksumSecretValue(databaseSecret *corev1.Secret) string {
 	return kci.GenerateChecksum(databaseSecret.Data)
 }
 
-func isDBInstanceSpecChanged(ctx context.Context, dbin *kciv1beta1.DbInstance) bool {
+func isDBInstanceSpecChanged(ctx context.Context, dbin *kindav1beta1.DbInstance) bool {
 	checksums := dbin.Status.Checksums
 	if checksums["spec"] != kci.GenerateChecksum(dbin.Spec) {
 		return true
@@ -67,7 +67,7 @@ func isDBInstanceSpecChanged(ctx context.Context, dbin *kciv1beta1.DbInstance) b
 	return false
 }
 
-func addDBInstanceChecksumStatus(ctx context.Context, dbin *kciv1beta1.DbInstance) {
+func addDBInstanceChecksumStatus(ctx context.Context, dbin *kindav1beta1.DbInstance) {
 	checksums := dbin.Status.Checksums
 	if len(checksums) == 0 {
 		checksums = make(map[string]string)

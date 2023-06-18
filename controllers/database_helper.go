@@ -22,7 +22,7 @@ import (
 	"strconv"
 	"text/template"
 
-	kciv1beta1 "github.com/db-operator/db-operator/api/v1beta1"
+	kindav1beta1 "github.com/db-operator/db-operator/api/v1beta1"
 	"github.com/db-operator/db-operator/pkg/utils/database"
 	"github.com/db-operator/db-operator/pkg/utils/kci"
 	"github.com/sirupsen/logrus"
@@ -53,7 +53,7 @@ func getBlockedTempatedKeys() []string {
 	return []string{fieldMysqlDB, fieldMysqlPassword, fieldMysqlUser, fieldPostgresDB, fieldPostgresUser, fieldPostgressPassword}
 }
 
-func determinDatabaseType(dbcr *kciv1beta1.Database, dbCred database.Credentials) (database.Database, error) {
+func determinDatabaseType(dbcr *kindav1beta1.Database, dbCred database.Credentials) (database.Database, error) {
 	instance, err := dbcr.GetInstanceRef()
 	if err != nil {
 		logrus.Errorf("could not get instance ref %s - %s", dbcr.Name, err)
@@ -125,7 +125,7 @@ func determinDatabaseType(dbcr *kciv1beta1.Database, dbCred database.Credentials
 	}
 }
 
-func parseTemplatedSecretsData(dbcr *kciv1beta1.Database, data map[string][]byte) (database.Credentials, error) {
+func parseTemplatedSecretsData(dbcr *kindav1beta1.Database, data map[string][]byte) (database.Credentials, error) {
 	cred, err := parseDatabaseSecretData(dbcr, data)
 	if err != nil {
 		return cred, err
@@ -148,7 +148,7 @@ func parseTemplatedSecretsData(dbcr *kciv1beta1.Database, data map[string][]byte
 	return cred, nil
 }
 
-func parseDatabaseSecretData(dbcr *kciv1beta1.Database, data map[string][]byte) (database.Credentials, error) {
+func parseDatabaseSecretData(dbcr *kindav1beta1.Database, data map[string][]byte) (database.Credentials, error) {
 	cred := database.Credentials{}
 	engine, err := dbcr.GetEngineType()
 	if err != nil {
@@ -201,7 +201,7 @@ func parseDatabaseSecretData(dbcr *kciv1beta1.Database, data map[string][]byte) 
 	}
 }
 
-func generateDatabaseSecretData(dbcr *kciv1beta1.Database) (map[string][]byte, error) {
+func generateDatabaseSecretData(dbcr *kindav1beta1.Database) (map[string][]byte, error) {
 	const (
 		// https://dev.mysql.com/doc/refman/5.7/en/identifier-length.html
 		mysqlDBNameLengthLimit = 63
@@ -237,7 +237,7 @@ func generateDatabaseSecretData(dbcr *kciv1beta1.Database) (map[string][]byte, e
 	}
 }
 
-func generateTemplatedSecrets(dbcr *kciv1beta1.Database, databaseCred database.Credentials) (secrets map[string][]byte, err error) {
+func generateTemplatedSecrets(dbcr *kindav1beta1.Database, databaseCred database.Credentials) (secrets map[string][]byte, err error) {
 	secrets = map[string][]byte{}
 	templates := map[string]string{}
 	if len(dbcr.Spec.SecretsTemplates) > 0 {
@@ -300,7 +300,7 @@ func generateTemplatedSecrets(dbcr *kciv1beta1.Database, databaseCred database.C
 	return secrets, nil
 }
 
-func appendTemplatedSecretData(dbcr *kciv1beta1.Database, secretData map[string][]byte, newSecretFields map[string][]byte, ownership []metav1.OwnerReference) map[string][]byte {
+func appendTemplatedSecretData(dbcr *kindav1beta1.Database, secretData map[string][]byte, newSecretFields map[string][]byte, ownership []metav1.OwnerReference) map[string][]byte {
 	blockedTempatedKeys := getBlockedTempatedKeys()
 	for key, value := range newSecretFields {
 		if slices.Contains(blockedTempatedKeys, key) {
@@ -316,7 +316,7 @@ func appendTemplatedSecretData(dbcr *kciv1beta1.Database, secretData map[string]
 	return secretData
 }
 
-func removeObsoleteSecret(dbcr *kciv1beta1.Database, secretData map[string][]byte, newSecretFields map[string][]byte, ownership []metav1.OwnerReference) map[string][]byte {
+func removeObsoleteSecret(dbcr *kindav1beta1.Database, secretData map[string][]byte, newSecretFields map[string][]byte, ownership []metav1.OwnerReference) map[string][]byte {
 	blockedTempatedKeys := getBlockedTempatedKeys()
 
 	for key := range secretData {

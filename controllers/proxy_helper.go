@@ -23,7 +23,7 @@ import (
 	"strconv"
 	"strings"
 
-	kciv1beta1 "github.com/db-operator/db-operator/api/v1beta1"
+	kindav1beta1 "github.com/db-operator/db-operator/api/v1beta1"
 	"github.com/db-operator/db-operator/pkg/config"
 	"github.com/db-operator/db-operator/pkg/utils/kci"
 	proxy "github.com/db-operator/db-operator/pkg/utils/proxy"
@@ -38,7 +38,7 @@ var (
 	ErrNoProxySupport = errors.New("no proxy supported backend type")
 )
 
-func determineProxyTypeForDB(conf *config.Config, dbcr *kciv1beta1.Database) (proxy.Proxy, error) {
+func determineProxyTypeForDB(conf *config.Config, dbcr *kindav1beta1.Database) (proxy.Proxy, error) {
 	logrus.Debugf("DB: namespace=%s, name=%s - determinProxyType", dbcr.Namespace, dbcr.Name)
 	backend, err := dbcr.GetBackendType()
 	if err != nil {
@@ -96,7 +96,7 @@ func determineProxyTypeForDB(conf *config.Config, dbcr *kciv1beta1.Database) (pr
 	}
 }
 
-func determineProxyTypeForInstance(conf *config.Config, dbin *kciv1beta1.DbInstance) (proxy.Proxy, error) {
+func determineProxyTypeForInstance(conf *config.Config, dbin *kindav1beta1.DbInstance) (proxy.Proxy, error) {
 	logrus.Debugf("Instance: name=%s - determinProxyType", dbin.Name)
 	operatorNamespace, err := getOperatorNamespace()
 	if err != nil {
