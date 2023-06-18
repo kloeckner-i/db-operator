@@ -1,4 +1,4 @@
-FROM golang:1.18.10-alpine3.17 as builder
+FROM golang:1.20.5-alpine3.18 as builder
 
 RUN apk update && apk upgrade && \
     apk add --no-cache bash build-base
@@ -16,8 +16,8 @@ COPY . .
 ARG GOARCH
 RUN GOOS=linux GOARCH=$GOARCH CGO_ENABLED=0 go build -tags build -o /usr/local/bin/db-operator main.go
 
-FROM alpine:3.15
-LABEL maintainer="dev@kloeckner-i.com"
+FROM alpine:3.18
+LABEL org.opencontainers.image.authors="Nikolai Rodionov<allanger@zohomail.com>"
 
 ENV USER_UID=1001
 ENV USER_NAME=db-operator
