@@ -46,4 +46,15 @@ resources:
     defaulting: true
     validation: true
     webhookVersion: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kinda.rocks
+  kind: DbUser
+  path: github.com/db-operator/db-operator/api/v1beta1
+  version: v1beta1
+  webhooks:
+    validation: true
+    webhookVersion: v1
 version: "3"

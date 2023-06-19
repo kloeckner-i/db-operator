@@ -90,3 +90,23 @@ webhooks:
     resources:
     - dbinstances
   sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-kinda-rocks-v1beta1-dbuser
+  failurePolicy: Fail
+  name: vdbuser.kb.io
+  rules:
+  - apiGroups:
+    - kinda.rocks
+    apiVersions:
+    - v1beta1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - dbusers
+  sideEffects: None

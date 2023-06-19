@@ -1,0 +1,12 @@
+apiVersion: kinda.rocks/v1beta1
+kind: DbUser
+metadata:
+  labels:
+    app.kubernetes.io/name: dbuser
+    app.kubernetes.io/instance: dbuser-sample
+    app.kubernetes.io/part-of: db-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: db-operator
+  name: dbuser-sample
+spec:
+  # TODO(user): Add fields here

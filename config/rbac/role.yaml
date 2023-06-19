@@ -56,3 +56,29 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - kinda.rocks
+  resources:
+  - dbusers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - kinda.rocks
+  resources:
+  - dbusers/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - kinda.rocks
+  resources:
+  - dbusers/status
+  verbs:
+  - get
+  - patch
+  - update
