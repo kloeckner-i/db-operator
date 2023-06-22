@@ -17,6 +17,8 @@
 package v1beta1
 
 import (
+	"fmt"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -51,6 +53,14 @@ func (r *DbUser) ValidateUpdate(old runtime.Object) error {
 	dbuserlog.Info("validate update", "name", r.Name)
 	if err := IsAccessTypeSupported(r.Spec.AccessType); err != nil {
 		return err
+	}
+	oldUser, ok := old.(*DbUser)
+	if !ok {
+		return fmt.Errorf("couldn't get the previous version of %s", r.Name)
+	}
+
+	if oldUser.Spec.Username != r.Spec.Username {
+		return fmt.Errorf("the field `spec.username` is immutable, please set a value back to %s", oldUser.Spec.Username)
 	}
 
 	return nil
