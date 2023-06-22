@@ -21,6 +21,11 @@ build_arm: $(SRC) ## build db-operator docker image for arm
 	@docker build --platform=linux/arm64 --build-arg GOARCH=arm64 -t my-db-operator:v1.0.0-dev .
 	@docker save my-db-operator > my-image.tar
 
+build_nctl: $(SRC) ## build db-operator docker image
+	@nerdctl build --build-arg GOARCH=amd64 -t my-db-operator:v1.0.0-dev --namespace k8s.io .
+	@nerdctl save --namespace k8s.io my-db-operator:v1.0.0-dev -o my-image.tar
+
+
 addexamples: ## add examples via kubectl create -f examples/
 	cd ./examples/; ls | while read line; do kubectl apply -f $$line; done
 
@@ -31,6 +36,14 @@ test: $(SRC) ## run go unit test
 	sleep 10
 	go test -count=1 -tags tests ./... -v -cover
 	docker-compose down
+
+test-nctl: $(SRC) ## run go unit test
+	nerdctl compose down
+	nerdctl compose up -d
+	nerdctl compose restart sqladmin
+	sleep 20
+	go test -count=1 -tags tests ./... -v -cover
+	nerdctl compose down
 
 lint: $(SRC) ## lint go code
 	@go mod tidy
