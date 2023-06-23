@@ -227,7 +227,7 @@ Possible phases and meanings
 
 ### PostgreSQL
 
-PostgreSQL extensions listed under `spec.extensions` will be enabled by DB Operator.
+PostgreSQL extensions listed under `spec.postgres.extensions` will be enabled by DB Operator.
 DB Operator execute `CREATE EXTENSION IF NOT EXISTS` on the target database.
 
 ```YAML
@@ -239,10 +239,11 @@ spec:
   secretName: example-db-credentials
   instance: example-gsql
   deletionProtected: false
-  extensions:
-    - pgcrypto
-    - uuid-ossp
-    - plpgsql
+  postgres:
+    extensions:
+      - pgcrypto
+      - uuid-ossp
+      - plpgsql
 ```
 When monitoring is enabled on DbInstance spec, `pg_stat_statements` extension will be enabled.
 If below error occurs during database creation, the module must be loaded by adding pg_stat_statements to shared_preload_libraries in postgresql.conf on the server side.
