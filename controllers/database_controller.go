@@ -290,7 +290,11 @@ func (r *DatabaseReconciler) createDatabase(ctx context.Context, dbcr *kindav1be
 	databaseSecret, err := r.getDatabaseSecret(ctx, dbcr)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			secretData, err := generateDatabaseSecretData(dbcr)
+			engine, err := dbcr.GetEngineType()
+			if err != nil {
+				return err
+			}
+			secretData, err := generateDatabaseSecretData(dbcr.ObjectMeta, engine)
 			if err != nil {
 				logrus.Errorf("can not generate credentials for database - %s", err)
 				return err

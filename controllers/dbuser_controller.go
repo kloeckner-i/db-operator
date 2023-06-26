@@ -111,10 +111,16 @@ func (r *DbUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	},
 	)
 
+
+	engine, err := dbcr.GetEngineType()
+	if err != nil {
+		return r.manageError(ctx, dbucr, err, false)
+  }
+
 	userSecret, err := r.getDbUserSecret(ctx, dbucr)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			secretData, err := generateDatabaseSecretData(dbcr)
+			secretData, err := generateDatabaseSecretData(dbcr.ObjectMeta, engine)
 			if err != nil {
 				logrus.Errorf("can not generate credentials for database - %s", err)
 				return r.manageError(ctx, dbucr, err, false)

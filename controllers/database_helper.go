@@ -201,7 +201,7 @@ func parseDatabaseSecretData(dbcr *kindav1beta1.Database, data map[string][]byte
 	}
 }
 
-func generateDatabaseSecretData(dbcr *kindav1beta1.Database) (map[string][]byte, error) {
+	func generateDatabaseSecretData(dbcr metav1.ObjectMeta, engine string) (map[string][]byte, error) {
 	const (
 		// https://dev.mysql.com/doc/refman/5.7/en/identifier-length.html
 		mysqlDBNameLengthLimit = 63
@@ -209,10 +209,6 @@ func generateDatabaseSecretData(dbcr *kindav1beta1.Database) (map[string][]byte,
 		mysqlUserLengthLimit = 32
 	)
 
-	engine, err := dbcr.GetEngineType()
-	if err != nil {
-		return nil, err
-	}
 	dbName := dbcr.Namespace + "-" + dbcr.Name
 	dbUser := dbcr.Namespace + "-" + dbcr.Name
 	dbPassword := kci.GeneratePass()
