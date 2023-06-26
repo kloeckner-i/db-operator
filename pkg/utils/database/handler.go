@@ -25,6 +25,16 @@ func CreateDatabase(db Database, admin AdminCredentials) error {
 	return nil
 }
 
+// DeleteDatabase executes queries to delete database and user
+func DeleteDatabase(db Database, admin AdminCredentials) error {
+	err := db.deleteDatabase(admin)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // CreateOrUpdateUser executes queries to create or update user
 func CreateOrUpdateUser(db Database, dbuser *DatabaseUser, admin AdminCredentials) error {
 	err := db.createOrUpdateUser(admin, dbuser)
@@ -36,7 +46,7 @@ func CreateOrUpdateUser(db Database, dbuser *DatabaseUser, admin AdminCredential
 
 // CreateUser executes queries to a create user
 func CreateUser(db Database, dbuser *DatabaseUser, admin AdminCredentials) error {
-	err := db.createOrUpdateUser(admin, dbuser)
+	err := db.createUser(admin, dbuser)
 	if err != nil {
 		return err
 	}
@@ -48,16 +58,6 @@ func UpdateUser(db Database, dbuser *DatabaseUser, admin AdminCredentials) error
 	if err != nil {
 		return err
 	}
-	return nil
-}
-
-// DeleteDatabase executes queries to delete database and user
-func DeleteDatabase(db Database, admin AdminCredentials) error {
-	err := db.deleteDatabase(admin)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 

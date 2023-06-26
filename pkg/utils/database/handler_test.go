@@ -52,14 +52,14 @@ func TestCreateMysql(t *testing.T) {
 	admin := getMysqlAdmin()
 	t.Log(m.Database)
 	err := CreateDatabase(m, admin)
-	// TODO(@allanger): This test is actually passing, 
+	// TODO(@allanger): This test is actually passing,
 	//   so I guess that the problem was the username, but no database,
 	//   so I need to check it out
 	//
 	// assert.Errorf(t, err, "Should get error %v", err)
 	// m.Database = "testdb"
 	// err = CreateDatabase(m, admin)
-	
+
 	assert.NoErrorf(t, err, "Unexpected error %v", err)
 
 	err = CreateUser(m, dbu, admin)

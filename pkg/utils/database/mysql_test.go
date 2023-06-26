@@ -132,7 +132,7 @@ func TestMysqlGetCredentials(t *testing.T) {
 }
 
 func TestMysqlParseAdminCredentials(t *testing.T) {
-	m, _:= testMysql()
+	m, _ := testMysql()
 
 	invalidData := make(map[string][]byte)
 	invalidData["unknownkey"] = []byte("wrong")

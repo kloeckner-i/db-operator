@@ -48,14 +48,14 @@ type AdminCredentials struct {
 
 // Database is interface for CRUD operate of different types of databases
 type Database interface {
-	createDatabase(admin AdminCredentials) error
-	createOrUpdateUser(admin AdminCredentials, user *DatabaseUser) error
-	createUser(admin AdminCredentials, user *DatabaseUser) error
-	updateUser(admin AdminCredentials, user *DatabaseUser) error
-	deleteDatabase(admin AdminCredentials) error
-	deleteUser(admin AdminCredentials, user *DatabaseUser) error
 	CheckStatus(user *DatabaseUser) error
 	GetCredentials(user *DatabaseUser) Credentials
 	ParseAdminCredentials(data map[string][]byte) (AdminCredentials, error)
 	GetDatabaseAddress() DatabaseAddress
+	createDatabase(admin AdminCredentials) error
+	deleteDatabase(admin AdminCredentials) error
+	createOrUpdateUser(admin AdminCredentials, user *DatabaseUser) error
+	createUser(admin AdminCredentials, user *DatabaseUser) error
+	updateUser(admin AdminCredentials, user *DatabaseUser) error
+	deleteUser(admin AdminCredentials, user *DatabaseUser) error
 }

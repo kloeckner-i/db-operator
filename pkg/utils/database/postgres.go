@@ -50,6 +50,8 @@ type Postgres struct {
 
 const postgresDefaultSSLMode = "disable"
 
+// Internal helpers, these functions are not part for the `Database` interface
+
 func (p Postgres) sslMode() string {
 	if !p.SSLEnabled {
 		return "disable"
@@ -110,6 +112,99 @@ func (p Postgres) isUserExist(admin AdminCredentials, user *DatabaseUser) bool {
 	return p.isRowExist("postgres", check, admin.Username, admin.Password)
 }
 
+func (p Postgres) isRowExist(database, query, user, password string) bool {
+	db, err := p.getDbConn(database, user, password)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+	defer db.Close()
+
+	var name string
+	err = db.QueryRow(query).Scan(&name)
+	if err != nil {
+		logrus.Debugf("failed executing query %s - %s", query, err)
+		return false
+	}
+	return true
+}
+
+func (p Postgres) dropPublicSchema(admin AdminCredentials) error {
+	if p.Monitoring {
+		return fmt.Errorf("can not drop public schema when monitoring is enabled on instance level")
+	}
+
+	drop := "DROP SCHEMA IF EXISTS public;"
+	if err := p.executeExec(p.Database, drop, admin); err != nil {
+		logrus.Errorf("failed to drop the schema Public: %s", err)
+		return err
+	}
+	return nil
+}
+
+func (p Postgres) createSchemas(admin AdminCredentials) error {
+	for _, s := range p.Schemas {
+		createSchema := fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", s)
+		if err := p.executeExec(p.Database, createSchema, admin); err != nil {
+			logrus.Errorf("failed to create schema %s, %s", s, err)
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (p Postgres) checkSchemas(user *DatabaseUser) error {
+	if p.DropPublicSchema {
+		query := "SELECT 1 FROM pg_catalog.pg_namespace WHERE nspname = 'public';"
+		if p.isRowExist(p.Database, query, user.Username, user.Password) {
+			return fmt.Errorf("schema public still exists")
+		}
+	}
+	for _, s := range p.Schemas {
+		query := fmt.Sprintf("SELECT 1 FROM pg_catalog.pg_namespace WHERE nspname = '%s';", s)
+		if !p.isRowExist(p.Database, query, user.Username, user.Password) {
+			return fmt.Errorf("couldn't find schema %s in database %s", s, p.Database)
+		}
+	}
+	return nil
+}
+
+func (p Postgres) addExtensions(admin AdminCredentials) error {
+	for _, ext := range p.Extensions {
+		query := fmt.Sprintf("CREATE EXTENSION IF NOT EXISTS \"%s\";", ext)
+		err := p.executeExec(p.Database, query, admin)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (p Postgres) enableMonitoring(admin AdminCredentials) error {
+	monitoringExtension := "pg_stat_statements"
+
+	query := fmt.Sprintf("CREATE EXTENSION IF NOT EXISTS \"%s\";", monitoringExtension)
+	err := p.executeExec(p.Database, query, admin)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p Postgres) checkExtensions(user *DatabaseUser) error {
+	for _, ext := range p.Extensions {
+		query := fmt.Sprintf("SELECT 1 FROM pg_extension WHERE extname = '%s';", ext)
+		if !p.isRowExist(p.Database, query, user.Username, user.Password) {
+			return fmt.Errorf("couldn't find extension %s in database %s", ext, p.Database)
+		}
+	}
+
+	return nil
+}
+
+// Functions that implement the `Database` interface
+
 // CheckStatus checks status of postgres database
 // if the connection to database works
 func (p Postgres) CheckStatus(user *DatabaseUser) error {
@@ -134,20 +229,59 @@ func (p Postgres) CheckStatus(user *DatabaseUser) error {
 	return nil
 }
 
-func (p Postgres) isRowExist(database, query, user, password string) bool {
-	db, err := p.getDbConn(database, user, password)
-	if err != nil {
-		logrus.Fatal(err)
+// GetCredentials returns credentials of the postgres database
+func (p Postgres) GetCredentials(user *DatabaseUser) Credentials {
+	return Credentials{
+		Name:     p.Database,
+		Username: user.Username,
+		Password: user.Password,
 	}
-	defer db.Close()
+}
 
-	var name string
-	err = db.QueryRow(query).Scan(&name)
-	if err != nil {
-		logrus.Debugf("failed executing query %s - %s", query, err)
-		return false
+// ParseAdminCredentials parse admin username and password of postgres database from secret data
+// If "user" key is not defined, take "postgres" as admin user by default
+func (p Postgres) ParseAdminCredentials(data map[string][]byte) (AdminCredentials, error) {
+	cred := AdminCredentials{}
+
+	_, ok := data["user"]
+	if ok {
+		cred.Username = string(data["user"])
+	} else {
+		// default admin username is "postgres"
+		cred.Username = "postgres"
 	}
-	return true
+
+	// if "password" key is defined in data, take value as password
+	_, ok = data["password"]
+	if ok {
+		cred.Password = string(data["password"])
+		return cred, nil
+	}
+
+	// take value of "postgresql-password" key as password if "password" key is not defined in data
+	// it's compatible with secret created by stable postgres chart
+	_, ok = data["postgresql-password"]
+	if ok {
+		cred.Password = string(data["postgresql-password"])
+		return cred, nil
+	}
+
+	// take value of "postgresql-password" key as password if "postgresql-password" and "password" key is not defined in data
+	// it's compatible with secret created by stable postgres chart
+	_, ok = data["postgresql-postgres-password"]
+	if ok {
+		cred.Password = string(data["postgresql-postgres-password"])
+		return cred, nil
+	}
+
+	return cred, errors.New("can not find postgres admin credentials")
+}
+
+func (p Postgres) GetDatabaseAddress() DatabaseAddress {
+	return DatabaseAddress{
+		Host: p.Host,
+		Port: p.Port,
+	}
 }
 
 func (p Postgres) createDatabase(admin AdminCredentials) error {
@@ -195,6 +329,35 @@ func (p Postgres) createDatabase(admin AdminCredentials) error {
 		}
 	}
 
+	return nil
+}
+
+func (p Postgres) deleteDatabase(admin AdminCredentials) error {
+	revoke := fmt.Sprintf("REVOKE CONNECT ON DATABASE \"%s\" FROM PUBLIC, \"%s\";", p.Database, admin.Username)
+	delete := fmt.Sprintf("DROP DATABASE \"%s\";", p.Database)
+
+	if p.isDbExist(admin) {
+		err := p.executeExec("postgres", revoke, admin)
+		if err != nil {
+			logrus.Errorf("failed revoking connection on database %s - %s", revoke, err)
+			return err
+		}
+
+		err = kci.Retry(3, 5*time.Second, func() error {
+			err := p.executeExec("postgres", delete, admin)
+			if err != nil {
+				// This error will result in a retry
+				logrus.Debugf("failed error: %s...retry...", err)
+				return err
+			}
+
+			return nil
+		})
+		if err != nil {
+			logrus.Debugf("retry failed  %s", err)
+			return err
+		}
+	}
 	return nil
 }
 
@@ -295,76 +458,6 @@ func (p Postgres) updateUser(admin AdminCredentials, user *DatabaseUser) error {
 	return nil
 }
 
-func (p Postgres) dropPublicSchema(admin AdminCredentials) error {
-	if p.Monitoring {
-		return fmt.Errorf("can not drop public schema when monitoring is enabled on instance level")
-	}
-
-	drop := "DROP SCHEMA IF EXISTS public;"
-	if err := p.executeExec(p.Database, drop, admin); err != nil {
-		logrus.Errorf("failed to drop the schema Public: %s", err)
-		return err
-	}
-	return nil
-}
-
-func (p Postgres) createSchemas(admin AdminCredentials) error {
-	for _, s := range p.Schemas {
-		createSchema := fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", s)
-		if err := p.executeExec(p.Database, createSchema, admin); err != nil {
-			logrus.Errorf("failed to create schema %s, %s", s, err)
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (p Postgres) checkSchemas(user *DatabaseUser) error {
-	if p.DropPublicSchema {
-		query := "SELECT 1 FROM pg_catalog.pg_namespace WHERE nspname = 'public';"
-		if p.isRowExist(p.Database, query, user.Username, user.Password) {
-			return fmt.Errorf("schema public still exists")
-		}
-	}
-	for _, s := range p.Schemas {
-		query := fmt.Sprintf("SELECT 1 FROM pg_catalog.pg_namespace WHERE nspname = '%s';", s)
-		if !p.isRowExist(p.Database, query, user.Username, user.Password) {
-			return fmt.Errorf("couldn't find schema %s in database %s", s, p.Database)
-		}
-	}
-	return nil
-}
-
-func (p Postgres) deleteDatabase(admin AdminCredentials) error {
-	revoke := fmt.Sprintf("REVOKE CONNECT ON DATABASE \"%s\" FROM PUBLIC, \"%s\";", p.Database, admin.Username)
-	delete := fmt.Sprintf("DROP DATABASE \"%s\";", p.Database)
-
-	if p.isDbExist(admin) {
-		err := p.executeExec("postgres", revoke, admin)
-		if err != nil {
-			logrus.Errorf("failed revoking connection on database %s - %s", revoke, err)
-			return err
-		}
-
-		err = kci.Retry(3, 5*time.Second, func() error {
-			err := p.executeExec("postgres", delete, admin)
-			if err != nil {
-				// This error will result in a retry
-				logrus.Debugf("failed error: %s...retry...", err)
-				return err
-			}
-
-			return nil
-		})
-		if err != nil {
-			logrus.Debugf("retry failed  %s", err)
-			return err
-		}
-	}
-	return nil
-}
-
 func (p Postgres) deleteUser(admin AdminCredentials, user *DatabaseUser) error {
 	delete := fmt.Sprintf("DROP USER \"%s\";", user.Username)
 
@@ -382,93 +475,4 @@ func (p Postgres) deleteUser(admin AdminCredentials, user *DatabaseUser) error {
 		}
 	}
 	return nil
-}
-
-// GetCredentials returns credentials of the postgres database
-func (p Postgres) GetCredentials(user *DatabaseUser) Credentials {
-	return Credentials{
-		Name:     p.Database,
-		Username: user.Username,
-		Password: user.Password,
-	}
-}
-
-func (p Postgres) addExtensions(admin AdminCredentials) error {
-	for _, ext := range p.Extensions {
-		query := fmt.Sprintf("CREATE EXTENSION IF NOT EXISTS \"%s\";", ext)
-		err := p.executeExec(p.Database, query, admin)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (p Postgres) enableMonitoring(admin AdminCredentials) error {
-	monitoringExtension := "pg_stat_statements"
-
-	query := fmt.Sprintf("CREATE EXTENSION IF NOT EXISTS \"%s\";", monitoringExtension)
-	err := p.executeExec(p.Database, query, admin)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (p Postgres) checkExtensions(user *DatabaseUser) error {
-	for _, ext := range p.Extensions {
-		query := fmt.Sprintf("SELECT 1 FROM pg_extension WHERE extname = '%s';", ext)
-		if !p.isRowExist(p.Database, query, user.Username, user.Password) {
-			return fmt.Errorf("couldn't find extension %s in database %s", ext, p.Database)
-		}
-	}
-
-	return nil
-}
-
-func (p Postgres) GetDatabaseAddress() DatabaseAddress {
-	return DatabaseAddress{
-		Host: p.Host,
-		Port: p.Port,
-	}
-}
-
-// ParseAdminCredentials parse admin username and password of postgres database from secret data
-// If "user" key is not defined, take "postgres" as admin user by default
-func (p Postgres) ParseAdminCredentials(data map[string][]byte) (AdminCredentials, error) {
-	cred := AdminCredentials{}
-
-	_, ok := data["user"]
-	if ok {
-		cred.Username = string(data["user"])
-	} else {
-		// default admin username is "postgres"
-		cred.Username = "postgres"
-	}
-
-	// if "password" key is defined in data, take value as password
-	_, ok = data["password"]
-	if ok {
-		cred.Password = string(data["password"])
-		return cred, nil
-	}
-
-	// take value of "postgresql-password" key as password if "password" key is not defined in data
-	// it's compatible with secret created by stable postgres chart
-	_, ok = data["postgresql-password"]
-	if ok {
-		cred.Password = string(data["postgresql-password"])
-		return cred, nil
-	}
-
-	// take value of "postgresql-password" key as password if "postgresql-password" and "password" key is not defined in data
-	// it's compatible with secret created by stable postgres chart
-	_, ok = data["postgresql-postgres-password"]
-	if ok {
-		cred.Password = string(data["postgresql-postgres-password"])
-		return cred, nil
-	}
-
-	return cred, errors.New("can not find postgres admin credentials")
 }
