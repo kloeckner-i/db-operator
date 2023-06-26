@@ -158,16 +158,21 @@ func (r *DbUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		// failed to parse database admin secret
 		return r.manageError(ctx, dbucr, err, false)
 	}
+
+	dbuser.AccessType = dbucr.Spec.AccessType
+	dbuser.Password = creds.Password
+	// TODO(@allanger): It should use the secret, and should not be hardcoded
+	dbuser.Username = fmt.Sprintf("%s-%s", dbucr.GetObjectMeta().GetNamespace(), dbucr.GetObjectMeta().GetName())
 	//Init the DbUser struct depending on a type
 	if !dbucr.Status.Status {
 		if !dbucr.Status.Created {
-			r.Log.Info(fmt.Sprintf("creating a user: %s", dbucr.Spec.Username))
+			r.Log.Info(fmt.Sprintf("creating a user: %s", dbucr.GetObjectMeta().GetName()))
 			if err := database.CreateUser(db, dbuser, adminCred); err != nil {
 				return r.manageError(ctx, dbucr, err, false)
 			}
 			dbucr.Status.Created = true
 		} else {
-			r.Log.Info(fmt.Sprintf("updating a user %s", dbucr.Spec.Username))
+			r.Log.Info(fmt.Sprintf("updating a user %s", dbucr.GetObjectMeta().GetName()))
 			if err := database.UpdateUser(db, dbuser, adminCred); err != nil {
 				return r.manageError(ctx, dbucr, err, false)
 			}

@@ -46,14 +46,10 @@ spec:
               secretName:
                 description: SecretName name that should be used to save user's credentials
                 type: string
-              username:
-                description: Username to use for creating a user
-                type: string
             required:
             - accessType
             - databaseRef
             - secretName
-            - username
             type: object
           status:
             description: DbUserStatus defines the observed state of DbUser
@@ -67,14 +63,11 @@ spec:
                 type: string
               status:
                 type: boolean
-              user:
-                type: string
             required:
             - created
             - database
             - phase
             - status
-            - user
             type: object
         type: object
     served: true

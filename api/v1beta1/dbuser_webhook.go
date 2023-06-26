@@ -54,13 +54,9 @@ func (r *DbUser) ValidateUpdate(old runtime.Object) error {
 	if err := IsAccessTypeSupported(r.Spec.AccessType); err != nil {
 		return err
 	}
-	oldUser, ok := old.(*DbUser)
+	_, ok := old.(*DbUser)
 	if !ok {
 		return fmt.Errorf("couldn't get the previous version of %s", r.Name)
-	}
-
-	if oldUser.Spec.Username != r.Spec.Username {
-		return fmt.Errorf("the field `spec.username` is immutable, please set a value back to %s", oldUser.Spec.Username)
 	}
 
 	return nil

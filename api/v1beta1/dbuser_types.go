@@ -27,8 +27,6 @@ type DbUserSpec struct {
 	// DatabaseRef should contain a name of a Database to create a user there
 	// Database should be in the same namespace with the user
 	DatabaseRef string `json:"databaseRef"`
-	// Username to use for creating a user
-	Username string `json:"username"`
 	// AccessType that should be given to a user
 	// Currently only readOnly and readWrite are supported by the operator
 	AccessType string `json:"accessType"`
@@ -41,7 +39,6 @@ type DbUserStatus struct {
 	Phase        string `json:"phase"`
 	Status       bool   `json:"status"`
 	DatabaseName string `json:"database"`
-	UserName     string `json:"user"`
 	// It's required to let the operator update users
 	Created bool `json:"created"`
 }
