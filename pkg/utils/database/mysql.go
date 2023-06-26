@@ -44,6 +44,8 @@ type Mysql struct {
 
 const mysqlDefaultSSLMode = "preferred"
 
+// Internal helpers, these functions are not part for the `Database` interface
+
 func (m Mysql) sslMode() string {
 	if !m.SSLEnabled {
 		return "false"
@@ -58,27 +60,6 @@ func (m Mysql) sslMode() string {
 	}
 
 	return mysqlDefaultSSLMode
-}
-
-// CheckStatus checks status of mysql database
-// if the connection to database works
-func (m Mysql) CheckStatus(user *DatabaseUser) error {
-	db, err := m.getDbConn(user.Username, user.Password)
-	if err != nil {
-		return err
-	}
-
-	if err := db.Ping(); err != nil {
-		db.Close()
-		return fmt.Errorf("db conn test failed - could not establish a connection: %v", err)
-	}
-
-	check := fmt.Sprintf("USE %s", m.Database)
-	if _, err := db.Exec(check); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (m Mysql) getDbConn(user, password string) (*sql.DB, error) {
@@ -119,6 +100,104 @@ func (m Mysql) executeQuery(query string, admin AdminCredentials) error {
 	rows.Close()
 
 	return nil
+}
+
+func (m Mysql) isRowExist(query string, admin AdminCredentials) bool {
+	db, err := m.getDbConn(admin.Username, admin.Password)
+	if err != nil {
+		logrus.Fatalf("failed to get db connection: %s", err)
+	}
+
+	var result string
+	err = db.QueryRow(query).Scan(&result)
+	if err != nil {
+		logrus.Debug(err)
+		return false
+	}
+
+	return true
+}
+
+func (m Mysql) isUserExist(admin AdminCredentials, user *DatabaseUser) bool {
+	check := fmt.Sprintf("SELECT User FROM mysql.user WHERE user='%s';", user.Username)
+
+	if m.isRowExist(check, admin) {
+		logrus.Debug("user exists")
+		return true
+	}
+
+	logrus.Debug("user doesn't exists")
+	return false
+}
+
+// Functions that implement the `Database` interface
+
+// CheckStatus checks status of mysql database
+// if the connection to database works
+func (m Mysql) CheckStatus(user *DatabaseUser) error {
+	db, err := m.getDbConn(user.Username, user.Password)
+	if err != nil {
+		return err
+	}
+
+	if err := db.Ping(); err != nil {
+		db.Close()
+		return fmt.Errorf("db conn test failed - could not establish a connection: %v", err)
+	}
+
+	check := fmt.Sprintf("USE %s", m.Database)
+	if _, err := db.Exec(check); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// GetCredentials returns credentials of the mysql database
+func (m Mysql) GetCredentials(user *DatabaseUser) Credentials {
+	return Credentials{
+		Name:     m.Database,
+		Username: user.Username,
+		Password: user.Password,
+	}
+}
+
+// ParseAdminCredentials parse admin username and password of mysql database from secret data
+// If "user" key is not defined, take "root" as admin user by default
+func (m Mysql) ParseAdminCredentials(data map[string][]byte) (AdminCredentials, error) {
+	cred := AdminCredentials{}
+
+	_, ok := data["user"]
+	if ok {
+		cred.Username = string(data["user"])
+	} else {
+		// default admin username is "root"
+		cred.Username = "root"
+	}
+
+	// if "password" key is defined in data, take value as password
+	_, ok = data["password"]
+	if ok {
+		cred.Password = string(data["password"])
+		return cred, nil
+	}
+
+	// take value of "mysql-root-password" key as password if "password" key is not defined in data
+	// it's compatible with secret created by stable mysql chart
+	_, ok = data["mysql-root-password"]
+	if ok {
+		cred.Password = string(data["mysql-root-password"])
+		return cred, nil
+	}
+
+	return cred, errors.New("can not find mysql admin credentials")
+}
+
+func (m Mysql) GetDatabaseAddress() DatabaseAddress {
+	return DatabaseAddress{
+		Host: m.Host,
+		Port: m.Port,
+	}
 }
 
 func (m Mysql) createDatabase(admin AdminCredentials) error {
@@ -232,79 +311,4 @@ func (m Mysql) deleteUser(admin AdminCredentials, user *DatabaseUser) error {
 	}
 
 	return nil
-}
-
-func (m Mysql) isRowExist(query string, admin AdminCredentials) bool {
-	db, err := m.getDbConn(admin.Username, admin.Password)
-	if err != nil {
-		logrus.Fatalf("failed to get db connection: %s", err)
-	}
-
-	var result string
-	err = db.QueryRow(query).Scan(&result)
-	if err != nil {
-		logrus.Debug(err)
-		return false
-	}
-
-	return true
-}
-
-func (m Mysql) isUserExist(admin AdminCredentials, user *DatabaseUser) bool {
-	check := fmt.Sprintf("SELECT User FROM mysql.user WHERE user='%s';", user.Username)
-
-	if m.isRowExist(check, admin) {
-		logrus.Debug("user exists")
-		return true
-	}
-
-	logrus.Debug("user doesn't exists")
-	return false
-}
-
-// GetCredentials returns credentials of the mysql database
-func (m Mysql) GetCredentials(user *DatabaseUser) Credentials {
-	return Credentials{
-		Name:     m.Database,
-		Username: user.Username,
-		Password: user.Password,
-	}
-}
-
-func (m Mysql) GetDatabaseAddress() DatabaseAddress {
-	return DatabaseAddress{
-		Host: m.Host,
-		Port: m.Port,
-	}
-}
-
-// ParseAdminCredentials parse admin username and password of mysql database from secret data
-// If "user" key is not defined, take "root" as admin user by default
-func (m Mysql) ParseAdminCredentials(data map[string][]byte) (AdminCredentials, error) {
-	cred := AdminCredentials{}
-
-	_, ok := data["user"]
-	if ok {
-		cred.Username = string(data["user"])
-	} else {
-		// default admin username is "root"
-		cred.Username = "root"
-	}
-
-	// if "password" key is defined in data, take value as password
-	_, ok = data["password"]
-	if ok {
-		cred.Password = string(data["password"])
-		return cred, nil
-	}
-
-	// take value of "mysql-root-password" key as password if "password" key is not defined in data
-	// it's compatible with secret created by stable mysql chart
-	_, ok = data["mysql-root-password"]
-	if ok {
-		cred.Password = string(data["mysql-root-password"])
-		return cred, nil
-	}
-
-	return cred, errors.New("can not find mysql admin credentials")
 }
