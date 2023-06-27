@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/db-operator/db-operator/pkg/utils/database"
+	"github.com/db-operator/db-operator/pkg/utils/sectmpl"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -123,7 +124,7 @@ func TestUnitPsqlDefaultTemplatedSecretGeneratationWithProxy(t *testing.T) {
 	postgresDbCr := newPostgresTestDbCr(instance)
 	postgresDbCr.Status.ProxyStatus.Status = true
 
-	c := SecretsTemplatesFields{
+	c := sectmpl.SecretsTemplatesFields{
 		DatabaseHost: "postgres",
 		DatabasePort: 5432,
 		UserName:     testDbcred.Username,
@@ -139,7 +140,8 @@ func TestUnitPsqlDefaultTemplatedSecretGeneratationWithProxy(t *testing.T) {
 		"CONNECTION_STRING": []byte(fmt.Sprintf("%s://%s:%s@%s:%d/%s", protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName)),
 	}
 
-	connString, err := generateTemplatedSecrets(postgresDbCr, testDbcred)
+	db, _, _ := determinDatabaseType(postgresDbCr, testDbcred)
+	connString, err := sectmpl.GenerateTemplatedSecrets(postgresDbCr, testDbcred, db.GetDatabaseAddress())
 	if err != nil {
 		t.Logf("Unexpected error: %s", err)
 		t.Fail()
@@ -151,7 +153,7 @@ func TestUnitPsqlDefaultTemplatedSecretGeneratationWithoutProxy(t *testing.T) {
 	instance := newPostgresTestDbInstanceCr()
 	postgresDbCr := newPostgresTestDbCr(instance)
 
-	c := SecretsTemplatesFields{
+	c := sectmpl.SecretsTemplatesFields{
 		DatabaseHost: "postgres",
 		DatabasePort: 5432,
 		UserName:     testDbcred.Username,
@@ -164,7 +166,8 @@ func TestUnitPsqlDefaultTemplatedSecretGeneratationWithoutProxy(t *testing.T) {
 		"CONNECTION_STRING": []byte(fmt.Sprintf("%s://%s:%s@%s:%d/%s", protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName)),
 	}
 
-	connString, err := generateTemplatedSecrets(postgresDbCr, testDbcred)
+	db, _, _ := determinDatabaseType(postgresDbCr, testDbcred)
+	connString, err := sectmpl.GenerateTemplatedSecrets(postgresDbCr, testDbcred, db.GetDatabaseAddress())
 	if err != nil {
 		t.Logf("Unexpected error: %s", err)
 		t.Fail()
@@ -174,7 +177,7 @@ func TestUnitPsqlDefaultTemplatedSecretGeneratationWithoutProxy(t *testing.T) {
 
 func TestUnitMysqlDefaultTemlatedSecretGeneratationWithoutProxy(t *testing.T) {
 	mysqlDbCr := newMysqlTestDbCr()
-	c := SecretsTemplatesFields{
+	c := sectmpl.SecretsTemplatesFields{
 		DatabaseHost: "mysql",
 		DatabasePort: 3306,
 		UserName:     testDbcred.Username,
@@ -186,7 +189,8 @@ func TestUnitMysqlDefaultTemlatedSecretGeneratationWithoutProxy(t *testing.T) {
 		"CONNECTION_STRING": []byte(fmt.Sprintf("%s://%s:%s@%s:%d/%s", protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName)),
 	}
 
-	connString, err := generateTemplatedSecrets(mysqlDbCr, testDbcred)
+	db, _, _ := determinDatabaseType(mysqlDbCr, testDbcred)
+	connString, err := sectmpl.GenerateTemplatedSecrets(mysqlDbCr, testDbcred, db.GetDatabaseAddress())
 	if err != nil {
 		t.Logf("Unexpected error: %s", err)
 		t.Fail()
@@ -205,7 +209,7 @@ func TestUnitPsqlCustomSecretGeneratation(t *testing.T) {
 		"CHECK_2": "{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}",
 	}
 
-	c := SecretsTemplatesFields{
+	c := sectmpl.SecretsTemplatesFields{
 		DatabaseHost: "postgres",
 		DatabasePort: 5432,
 		UserName:     testDbcred.Username,
@@ -218,7 +222,8 @@ func TestUnitPsqlCustomSecretGeneratation(t *testing.T) {
 		"CHECK_2": []byte(fmt.Sprintf("%s://%s:%s@%s:%d/%s", protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName)),
 	}
 
-	templatedSecrets, err := generateTemplatedSecrets(postgresDbCr, testDbcred)
+	db, _, _ := determinDatabaseType(postgresDbCr, testDbcred)
+	templatedSecrets, err := sectmpl.GenerateTemplatedSecrets(postgresDbCr, testDbcred, db.GetDatabaseAddress())
 	if err != nil {
 		t.Logf("unexpected error: %s", err)
 		t.Fail()
@@ -234,8 +239,9 @@ func TestUnitWrongTemplatedSecretGeneratation(t *testing.T) {
 		"TMPL": "{{ .Protocol }}://{{ .User }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}",
 	}
 
-	_, err := generateTemplatedSecrets(postgresDbCr, testDbcred)
-	errSubstr := "can't evaluate field User in type controllers.SecretsTemplatesFields"
+	db, _, _ := determinDatabaseType(postgresDbCr, testDbcred)
+	_, err := sectmpl.GenerateTemplatedSecrets(postgresDbCr, testDbcred, db.GetDatabaseAddress())
+	errSubstr := "can't evaluate field User in type sectmpl.SecretsTemplatesFields"
 
 	assert.Contains(t, err.Error(), errSubstr, "the error doesn't contain expected substring")
 }
@@ -245,7 +251,7 @@ func TestUnitBlockedTempatedKeysGeneratation(t *testing.T) {
 	postgresDbCr := newPostgresTestDbCr(instance)
 
 	postgresDbCr.Spec.SecretsTemplates = map[string]string{}
-	untemplatedFields := []string{fieldMysqlDB, fieldMysqlPassword, fieldMysqlUser, fieldPostgresDB, fieldPostgresUser, fieldPostgressPassword}
+	untemplatedFields := []string{sectmpl.FieldMysqlDB, sectmpl.FieldMysqlPassword, sectmpl.FieldMysqlUser, sectmpl.FieldPostgresDB, sectmpl.FieldPostgresUser, sectmpl.FieldPostgressPassword}
 	for _, key := range untemplatedFields {
 		postgresDbCr.Spec.SecretsTemplates[key] = "DUMMY"
 	}
@@ -253,8 +259,8 @@ func TestUnitBlockedTempatedKeysGeneratation(t *testing.T) {
 	expectedData := map[string][]byte{
 		"TMPL": []byte("DUMMY"),
 	}
-
-	sercretData, err := generateTemplatedSecrets(postgresDbCr, testDbcred)
+	db, _, _ := determinDatabaseType(postgresDbCr, testDbcred)
+	sercretData, err := sectmpl.GenerateTemplatedSecrets(postgresDbCr, testDbcred, db.GetDatabaseAddress())
 	if err != nil {
 		t.Logf("unexpected error: %s", err)
 		t.Fail()
@@ -264,7 +270,7 @@ func TestUnitBlockedTempatedKeysGeneratation(t *testing.T) {
 		Data: map[string][]byte{},
 	}
 
-	newSecret := appendTemplatedSecretData(postgresDbCr, dummySecret.Data, sercretData, ownership)
+	newSecret := sectmpl.AppendTemplatedSecretData(postgresDbCr, dummySecret.Data, sercretData, ownership)
 	assert.Equal(t, newSecret, expectedData, "generated connections string is wrong")
 }
 
@@ -273,7 +279,7 @@ func TestUnitObsoleteFieldsRemoving(t *testing.T) {
 	postgresDbCr := newPostgresTestDbCr(instance)
 
 	postgresDbCr.Spec.SecretsTemplates = map[string]string{}
-	untemplatedFields := []string{fieldMysqlDB, fieldMysqlPassword, fieldMysqlUser, fieldPostgresDB, fieldPostgresUser, fieldPostgressPassword}
+	untemplatedFields := []string{sectmpl.FieldMysqlDB, sectmpl.FieldMysqlPassword, sectmpl.FieldMysqlUser, sectmpl.FieldPostgresDB, sectmpl.FieldPostgresUser, sectmpl.FieldPostgressPassword}
 	for _, key := range untemplatedFields {
 		postgresDbCr.Spec.SecretsTemplates[key] = "DUMMY"
 	}
@@ -282,7 +288,8 @@ func TestUnitObsoleteFieldsRemoving(t *testing.T) {
 		"TMPL": []byte("DUMMY"),
 	}
 
-	sercretData, err := generateTemplatedSecrets(postgresDbCr, testDbcred)
+	db, _, _ := determinDatabaseType(postgresDbCr, testDbcred)
+	sercretData, err := sectmpl.GenerateTemplatedSecrets(postgresDbCr, testDbcred, db.GetDatabaseAddress())
 	if err != nil {
 		t.Logf("unexpected error: %s", err)
 		t.Fail()
@@ -294,8 +301,8 @@ func TestUnitObsoleteFieldsRemoving(t *testing.T) {
 		},
 	}
 
-	newSecret := appendTemplatedSecretData(postgresDbCr, dummySecret.Data, sercretData, ownership)
-	newSecret = removeObsoleteSecret(postgresDbCr, dummySecret.Data, sercretData, ownership)
+	newSecret := sectmpl.AppendTemplatedSecretData(postgresDbCr, dummySecret.Data, sercretData, ownership)
+	newSecret = sectmpl.RemoveObsoleteSecret(postgresDbCr, dummySecret.Data, sercretData, ownership)
 
 	assert.Equal(t, newSecret, expectedData, "generated connections string is wrong")
 }

@@ -17,41 +17,15 @@
 package controllers
 
 import (
-	"bytes"
 	"errors"
 	"strconv"
-	"text/template"
 
 	kindav1beta1 "github.com/db-operator/db-operator/api/v1beta1"
 	"github.com/db-operator/db-operator/pkg/utils/database"
 	"github.com/db-operator/db-operator/pkg/utils/kci"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/strings/slices"
 )
-
-// SecretsTemplatesFields defines default fields that can be used to generate secrets with db creds
-type SecretsTemplatesFields struct {
-	Protocol     string
-	DatabaseHost string
-	DatabasePort int32
-	UserName     string
-	Password     string
-	DatabaseName string
-}
-
-const (
-	fieldPostgresDB        = "POSTGRES_DB"
-	fieldPostgresUser      = "POSTGRES_USER"
-	fieldPostgressPassword = "POSTGRES_PASSWORD"
-	fieldMysqlDB           = "DB"
-	fieldMysqlUser         = "USER"
-	fieldMysqlPassword     = "PASSWORD"
-)
-
-func getBlockedTempatedKeys() []string {
-	return []string{fieldMysqlDB, fieldMysqlPassword, fieldMysqlUser, fieldPostgresDB, fieldPostgresUser, fieldPostgressPassword}
-}
 
 func determinDatabaseType(dbcr *kindav1beta1.Database, dbCred database.Credentials) (database.Database, *database.DatabaseUser, error) {
 	instance, err := dbcr.GetInstanceRef()
@@ -123,29 +97,6 @@ func determinDatabaseType(dbcr *kindav1beta1.Database, dbCred database.Credentia
 		err := errors.New("not supported engine type")
 		return nil, nil, err
 	}
-}
-
-func parseTemplatedSecretsData(dbcr *kindav1beta1.Database, data map[string][]byte) (database.Credentials, error) {
-	cred, err := parseDatabaseSecretData(dbcr, data)
-	if err != nil {
-		return cred, err
-	}
-	cred.TemplatedSecrets = map[string]string{}
-	for key := range dbcr.Spec.SecretsTemplates {
-		// Here we can see if there are obsolete entries in the secret data
-		if secret, ok := data[key]; ok {
-			delete(data, key)
-			cred.TemplatedSecrets[key] = string(secret)
-		} else {
-			logrus.Infof("DB: namespace=%s, name=%s %s key does not exist in secret data",
-				dbcr.Namespace,
-				dbcr.Name,
-				key,
-			)
-		}
-	}
-
-	return cred, nil
 }
 
 func parseDatabaseSecretData(dbcr *kindav1beta1.Database, data map[string][]byte) (database.Credentials, error) {
@@ -231,98 +182,4 @@ func parseDatabaseSecretData(dbcr *kindav1beta1.Database, data map[string][]byte
 	default:
 		return nil, errors.New("not supported engine type")
 	}
-}
-
-func generateTemplatedSecrets(dbcr *kindav1beta1.Database, databaseCred database.Credentials) (secrets map[string][]byte, err error) {
-	secrets = map[string][]byte{}
-	templates := map[string]string{}
-	if len(dbcr.Spec.SecretsTemplates) > 0 {
-		templates = dbcr.Spec.SecretsTemplates
-	} else {
-		const tmpl = "{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}"
-		templates["CONNECTION_STRING"] = tmpl
-	}
-	// The string that's going to be generated if the default template is used:
-	// "postgresql://user:password@host:port/database"
-	dbData := SecretsTemplatesFields{
-		DatabaseHost: dbcr.Status.ProxyStatus.ServiceName,
-		DatabasePort: dbcr.Status.ProxyStatus.SQLPort,
-		UserName:     databaseCred.Username,
-		Password:     databaseCred.Password,
-		DatabaseName: databaseCred.Name,
-	}
-
-	// If proxy is not used, set a real database address
-	if !dbcr.Status.ProxyStatus.Status {
-		db, _, err := determinDatabaseType(dbcr, databaseCred)
-		if err != nil {
-			return nil, err
-		}
-		dbAddress := db.GetDatabaseAddress()
-		dbData.DatabaseHost = dbAddress.Host
-		dbData.DatabasePort = int32(dbAddress.Port)
-	}
-	// If engine is 'postgres', the protocol should be postgresql
-	if dbcr.Status.InstanceRef.Spec.Engine == "postgres" {
-		dbData.Protocol = "postgresql"
-	} else {
-		dbData.Protocol = dbcr.Status.InstanceRef.Spec.Engine
-	}
-
-	logrus.Infof("DB: namespace=%s, name=%s creating secrets from templates", dbcr.Namespace, dbcr.Name)
-	for key, value := range templates {
-		if slices.Contains(getBlockedTempatedKeys(), key) {
-			logrus.Warnf("DB: namespace=%s, name=%s %s can't be used for templating, because it's used for default secret created by operator",
-				dbcr.Namespace,
-				dbcr.Name,
-				key,
-			)
-		} else {
-			var tmpl string = value
-			t, err := template.New("secret").Parse(tmpl)
-			if err != nil {
-				return nil, err
-			}
-
-			var secretBytes bytes.Buffer
-			err = t.Execute(&secretBytes, dbData)
-			if err != nil {
-				return nil, err
-			}
-			templatedSecret := secretBytes.String()
-			secrets[key] = []byte(templatedSecret)
-		}
-	}
-	return secrets, nil
-}
-
-func appendTemplatedSecretData(dbcr *kindav1beta1.Database, secretData map[string][]byte, newSecretFields map[string][]byte, ownership []metav1.OwnerReference) map[string][]byte {
-	blockedTempatedKeys := getBlockedTempatedKeys()
-	for key, value := range newSecretFields {
-		if slices.Contains(blockedTempatedKeys, key) {
-			logrus.Warnf("DB: namespace=%s, name=%s %s can't be used for templating, because it's used for default secret created by operator",
-				dbcr.Namespace,
-				dbcr.Name,
-				key,
-			)
-		} else {
-			secretData[key] = value
-		}
-	}
-	return secretData
-}
-
-func removeObsoleteSecret(dbcr *kindav1beta1.Database, secretData map[string][]byte, newSecretFields map[string][]byte, ownership []metav1.OwnerReference) map[string][]byte {
-	blockedTempatedKeys := getBlockedTempatedKeys()
-
-	for key := range secretData {
-		if _, ok := newSecretFields[key]; !ok {
-			// Check if is a untemplatead secret, so it's not removed accidentally
-			if !slices.Contains(blockedTempatedKeys, key) {
-				logrus.Infof("DB: namespace=%s, name=%s removing an obsolete field: %s", dbcr.Namespace, dbcr.Name, key)
-				delete(secretData, key)
-			}
-		}
-	}
-	return secretData
 }

@@ -33,6 +33,7 @@ import (
 	"github.com/db-operator/db-operator/pkg/utils/database"
 	"github.com/db-operator/db-operator/pkg/utils/kci"
 	"github.com/db-operator/db-operator/pkg/utils/proxy"
+	"github.com/db-operator/db-operator/pkg/utils/sectmpl"
 	"github.com/go-logr/logr"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -596,18 +597,29 @@ func (r *DatabaseReconciler) createTemplatedSecrets(ctx context.Context, dbcr *k
 		return err
 	}
 
-	databaseCred, err := parseTemplatedSecretsData(dbcr, databaseSecret.Data)
+	cred, err := parseDatabaseSecretData(dbcr, databaseSecret.Data)
 	if err != nil {
 		return err
 	}
 
-	dbSecrets, err := generateTemplatedSecrets(dbcr, databaseCred)
+	databaseCred, err := sectmpl.ParseTemplatedSecretsData(dbcr, cred, databaseSecret.Data)
+	if err != nil {
+		return err
+	}
+
+	db, _, err := determinDatabaseType(dbcr, databaseCred)
+	if err != nil {
+		// failed to determine database type
+		return err
+	}
+
+	dbSecrets, err := sectmpl.GenerateTemplatedSecrets(dbcr, databaseCred, db.GetDatabaseAddress())
 	if err != nil {
 		return err
 	}
 	// Adding values
-	newSecretData := appendTemplatedSecretData(dbcr, databaseSecret.Data, dbSecrets, ownership)
-	newSecretData = removeObsoleteSecret(dbcr, newSecretData, dbSecrets, ownership)
+	newSecretData := sectmpl.AppendTemplatedSecretData(dbcr, databaseSecret.Data, dbSecrets, ownership)
+	newSecretData = sectmpl.RemoveObsoleteSecret(dbcr, newSecretData, dbSecrets, ownership)
 
 	for key, value := range newSecretData {
 		databaseSecret.Data[key] = value

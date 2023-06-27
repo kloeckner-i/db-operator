@@ -32,7 +32,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	kindarocksv1beta1 "github.com/db-operator/db-operator/api/v1beta1"
 	kindav1beta1 "github.com/db-operator/db-operator/api/v1beta1"
 	"github.com/db-operator/db-operator/pkg/utils/database"
 	"github.com/db-operator/db-operator/pkg/utils/kci"
@@ -67,7 +66,7 @@ func (r *DbUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	reconcilePeriod := r.Interval * time.Second
 	reconcileResult := reconcile.Result{RequeueAfter: reconcilePeriod}
 
-	dbucr := &kindarocksv1beta1.DbUser{}
+	dbucr := &kindav1beta1.DbUser{}
 	err := r.Get(ctx, req.NamespacedName, dbucr)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
@@ -88,7 +87,7 @@ func (r *DbUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}()
 
 	// Get the DB by the reference provided in the manifest
-	dbcr := &kindarocksv1beta1.Database{}
+	dbcr := &kindav1beta1.Database{}
 	if err := r.Get(ctx, types.NamespacedName{Namespace: req.Namespace, Name: dbucr.Spec.DatabaseRef}, dbcr); err != nil {
 		return r.manageError(ctx, dbucr, err, false)
 	}
@@ -111,11 +110,10 @@ func (r *DbUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	},
 	)
 
-
 	engine, err := dbcr.GetEngineType()
 	if err != nil {
 		return r.manageError(ctx, dbucr, err, false)
-  }
+	}
 
 	userSecret, err := r.getDbUserSecret(ctx, dbucr)
 	if err != nil {
@@ -192,7 +190,7 @@ func (r *DbUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 // SetupWithManager sets up the controller with the Manager.
 func (r *DbUserReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&kindarocksv1beta1.DbUser{}).
+		For(&kindav1beta1.DbUser{}).
 		Complete(r)
 }
 
@@ -203,11 +201,11 @@ func isDbUserChanged(dbucr *kindav1beta1.DbUser, userSecret *corev1.Secret) bool
 		annotations["checksum/secret"] != generateChecksumSecretValue(userSecret)
 }
 
-func (r *DbUserReconciler) deleteDbUser(context.Context, *kindarocksv1beta1.DbUser) error {
+func (r *DbUserReconciler) deleteDbUser(context.Context, *kindav1beta1.DbUser) error {
 	return nil
 }
 
-func (r *DbUserReconciler) getDbUserSecret(ctx context.Context, dbucr *kindarocksv1beta1.DbUser) (*corev1.Secret, error) {
+func (r *DbUserReconciler) getDbUserSecret(ctx context.Context, dbucr *kindav1beta1.DbUser) (*corev1.Secret, error) {
 	secret := &corev1.Secret{}
 	key := types.NamespacedName{
 		Namespace: dbucr.Namespace,
