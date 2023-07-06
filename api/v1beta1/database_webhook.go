@@ -17,7 +17,11 @@
 package v1beta1
 
 import (
+	"fmt"
+	"regexp"
+
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/strings/slices"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -54,7 +58,11 @@ var _ webhook.Validator = &Database{}
 func (r *Database) ValidateCreate() error {
 	databaselog.Info("validate create", "name", r.Name)
 
-	// TODO(user): fill in your validation logic upon object creation.
+	err := ValidateSecretTemplates(r.Spec.SecretsTemplates)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -62,7 +70,29 @@ func (r *Database) ValidateCreate() error {
 func (r *Database) ValidateUpdate(old runtime.Object) error {
 	databaselog.Info("validate update", "name", r.Name)
 
-	// TODO(user): fill in your validation logic upon object update.
+	err := ValidateSecretTemplates(r.Spec.SecretsTemplates)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func ValidateSecretTemplates(templates map[string]string) error {
+	for _, template := range templates {
+		allowedFields := []string{".Protocol", ".DatabaseHost", ".DatabasePort", ".UserName", ".Password", ".DatabaseName"}
+		// This regexp is getting fields from mustache templates so then they can be compared to allowed fields
+		reg := "{{\\s*([\\w\\.]+)\\s*}}"
+		r, _ := regexp.Compile(reg)
+		fields := r.FindAllStringSubmatch(template, -1)
+		fmt.Println(fields)
+		for _, field := range fields {
+			if !slices.Contains(allowedFields, field[1]) {
+				err := fmt.Errorf("%v is a field that is not allowed for templating, please use one of these: %v", field[1], allowedFields)
+				return err
+			}
+		}
+	}
 	return nil
 }
 
