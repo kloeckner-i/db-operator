@@ -75,6 +75,17 @@ func (r *Database) ValidateUpdate(old runtime.Object) error {
 		return err
 	}
 
+	// Ensure fields are immutable
+	immutableErr := "cannot change %s, the field is immutable"
+	oldDatabase, _ := old.(*Database)
+	if r.Spec.Instance != oldDatabase.Spec.Instance {
+		return fmt.Errorf(immutableErr, "spec.instance")
+	}
+
+	if r.Spec.Postgres.Template != oldDatabase.Spec.Postgres.Template {
+		return fmt.Errorf(immutableErr, "spec.postgres.template")
+	}
+
 	return nil
 }
 
