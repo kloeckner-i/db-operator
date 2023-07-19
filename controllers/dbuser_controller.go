@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 kloeckner.i GmbH
+ * Copyright 2023 Nikolai Rodionov (allanger)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,14 +48,6 @@ type DbUserReconciler struct {
 	Recorder record.EventRecorder
 }
 
-const (
-	dbUserPhaseCreate            = "Creating"
-	dbUserPhaseSecretsTemplating = "SecretsTemplating"
-	dbUserPhaseFinish            = "Finishing"
-	dbUserPhaseReady             = "Ready"
-	dbUserPhaseDelete            = "Deleting"
-)
-
 //+kubebuilder:rbac:groups=kinda.rocks,resources=dbusers,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=kinda.rocks,resources=dbusers/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=kinda.rocks,resources=dbusers/finalizers,verbs=update
@@ -93,14 +85,6 @@ func (r *DbUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 
 	// Check if DbUser is marked to be deleted
-	if dbucr.GetDeletionTimestamp() != nil {
-		dbucr.Status.Phase = dbUserPhaseDelete
-		if containsString(dbucr.ObjectMeta.Finalizers, "dbuser."+dbucr.Name) {
-			if err := r.deleteDbUser(ctx, dbucr); err != nil {
-				logrus.Errorf("DBUser: namespace=%s, name=%s failed deleting a user - %s", dbucr.Namespace, dbucr.Name, err)
-			}
-		}
-	}
 	ownership := []metav1.OwnerReference{}
 	ownership = append(ownership, metav1.OwnerReference{
 		APIVersion: dbucr.APIVersion,
@@ -118,7 +102,8 @@ func (r *DbUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	userSecret, err := r.getDbUserSecret(ctx, dbucr)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			secretData, err := generateDatabaseSecretData(dbcr.ObjectMeta, engine)
+			dbName := fmt.Sprintf("%s-%s", dbucr.Namespace, dbucr.Spec.DatabaseRef)
+			secretData, err := generateDatabaseSecretData(dbucr.ObjectMeta, engine, dbName)
 			if err != nil {
 				logrus.Errorf("can not generate credentials for database - %s", err)
 				return r.manageError(ctx, dbucr, err, false)
@@ -150,7 +135,6 @@ func (r *DbUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		// failed to determine database type
 		return r.manageError(ctx, dbucr, err, false)
 	}
-
 	adminSecretResource, err := r.getAdminSecret(ctx, dbcr)
 	if err != nil {
 		// failed to get admin secret
@@ -165,23 +149,46 @@ func (r *DbUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 	dbuser.AccessType = dbucr.Spec.AccessType
 	dbuser.Password = creds.Password
-	// TODO(@allanger): It should use the secret, and should not be hardcoded
 	dbuser.Username = fmt.Sprintf("%s-%s", dbucr.GetObjectMeta().GetNamespace(), dbucr.GetObjectMeta().GetName())
-	//Init the DbUser struct depending on a type
-	if !dbucr.Status.Status {
-		if !dbucr.Status.Created {
-			r.Log.Info(fmt.Sprintf("creating a user: %s", dbucr.GetObjectMeta().GetName()))
-			if err := database.CreateUser(db, dbuser, adminCred); err != nil {
-				return r.manageError(ctx, dbucr, err, false)
-			}
-			dbucr.Status.Created = true
-		} else {
-			r.Log.Info(fmt.Sprintf("updating a user %s", dbucr.GetObjectMeta().GetName()))
-			if err := database.UpdateUser(db, dbuser, adminCred); err != nil {
-				return r.manageError(ctx, dbucr, err, false)
-			}
-		}
 
+	if dbucr.GetDeletionTimestamp() != nil {
+		if containsString(dbucr.ObjectMeta.Finalizers, "dbuser."+dbucr.Name) {
+			if err := database.DeleteUser(db, dbuser, adminCred); err != nil {
+				logrus.Errorf("DBUser: namespace=%s, name=%s failed deleting a user - %s", dbucr.Namespace, dbucr.Name, err)
+				return r.manageError(ctx, dbucr, err, false)
+			}
+			kci.RemoveFinalizer(&dbucr.ObjectMeta, "dbuser."+dbucr.Name)
+			err = r.Update(ctx, dbucr)
+			if err != nil {
+				logrus.Errorf("error resource updating - %s", err)
+				return r.manageError(ctx, dbucr, err, false)
+			}
+
+		}
+	} else {
+
+		//Init the DbUser struct depending on a type
+		if !dbucr.Status.Status {
+			if !dbucr.Status.Created {
+				r.Log.Info(fmt.Sprintf("creating a user: %s", dbucr.GetObjectMeta().GetName()))
+				if err := database.CreateUser(db, dbuser, adminCred); err != nil {
+					return r.manageError(ctx, dbucr, err, false)
+				}
+				kci.AddFinalizer(&dbucr.ObjectMeta, "dbuser."+dbucr.Name)
+				err = r.Update(ctx, dbucr)
+				if err != nil {
+					logrus.Errorf("error resource updating - %s", err)
+					return r.manageError(ctx, dbucr, err, false)
+				}
+				dbucr.Status.Created = true
+			} else {
+				r.Log.Info(fmt.Sprintf("updating a user %s", dbucr.GetObjectMeta().GetName()))
+				if err := database.UpdateUser(db, dbuser, adminCred); err != nil {
+					return r.manageError(ctx, dbucr, err, false)
+				}
+			}
+
+		}
 	}
 
 	return reconcileResult, nil
@@ -199,10 +206,6 @@ func isDbUserChanged(dbucr *kindav1beta1.DbUser, userSecret *corev1.Secret) bool
 
 	return annotations["checksum/spec"] != kci.GenerateChecksum(dbucr.Spec) ||
 		annotations["checksum/secret"] != generateChecksumSecretValue(userSecret)
-}
-
-func (r *DbUserReconciler) deleteDbUser(context.Context, *kindav1beta1.DbUser) error {
-	return nil
 }
 
 func (r *DbUserReconciler) getDbUserSecret(ctx context.Context, dbucr *kindav1beta1.DbUser) (*corev1.Secret, error) {

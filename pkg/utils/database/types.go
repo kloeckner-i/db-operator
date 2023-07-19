@@ -16,6 +16,12 @@
 
 package database
 
+const (
+	ACCESS_TYPE_READONLY  = "readOnly"
+	ACCESS_TYPE_READWRITE = "readWrite"
+	ACCESS_TYPE_MAINUSER  = "main"
+)
+
 // Credentials contains credentials to connect database
 type Credentials struct {
 	Name             string
@@ -31,7 +37,7 @@ type DatabaseUser struct {
 }
 
 func (user *DatabaseUser) SetAccessType(accessType string) {
-	user.AccessType = "readOnly"
+	user.AccessType = accessType
 }
 
 // DatabaseAddress contains host and port of a database instance
@@ -58,4 +64,5 @@ type Database interface {
 	createUser(admin AdminCredentials, user *DatabaseUser) error
 	updateUser(admin AdminCredentials, user *DatabaseUser) error
 	deleteUser(admin AdminCredentials, user *DatabaseUser) error
+	setUserPermission(admin AdminCredentials, user *DatabaseUser) error
 }

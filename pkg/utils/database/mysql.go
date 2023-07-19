@@ -300,6 +300,10 @@ func (m Mysql) updateUser(admin AdminCredentials, user *DatabaseUser) error {
 	return nil
 }
 
+func (m Mysql) setUserPermission(admin AdminCredentials, user *DatabaseUser) error {
+	return nil
+}
+
 func (m Mysql) deleteUser(admin AdminCredentials, user *DatabaseUser) error {
 	delete := fmt.Sprintf("DROP USER `%s`;", user.Username)
 

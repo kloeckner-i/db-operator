@@ -295,7 +295,7 @@ func (r *DatabaseReconciler) createDatabase(ctx context.Context, dbcr *kindav1be
 			if err != nil {
 				return err
 			}
-			secretData, err := generateDatabaseSecretData(dbcr.ObjectMeta, engine)
+			secretData, err := generateDatabaseSecretData(dbcr.ObjectMeta, engine, "")
 			if err != nil {
 				logrus.Errorf("can not generate credentials for database - %s", err)
 				return err
@@ -323,6 +323,7 @@ func (r *DatabaseReconciler) createDatabase(ctx context.Context, dbcr *kindav1be
 		// failed to determine database type
 		return err
 	}
+	dbuser.AccessType = database.ACCESS_TYPE_MAINUSER
 
 	adminSecretResource, err := r.getAdminSecret(ctx, dbcr)
 	if err != nil {

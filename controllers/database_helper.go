@@ -79,6 +79,7 @@ func determinDatabaseType(dbcr *kindav1beta1.Database, dbCred database.Credentia
 			DropPublicSchema: dbcr.Spec.Postgres.DropPublicSchema,
 			Schemas:          dbcr.Spec.Postgres.Schemas,
 			Template:         dbcr.Spec.Postgres.Template,
+			MainUser:         dbcr.Status.UserName,
 		}
 		return db, dbuser, nil
 
@@ -152,16 +153,20 @@ func parseDatabaseSecretData(dbcr *kindav1beta1.Database, data map[string][]byte
 	}
 }
 
-	func generateDatabaseSecretData(dbcr metav1.ObjectMeta, engine string) (map[string][]byte, error) {
+// If dbName is empty, it will be generated, that should be used for database resources.
+// In case this function is called by dbuser controller, dbName should be taken from the
+// `Spec.DatabaseRef` field, so it will ba passed as the last argument
+func generateDatabaseSecretData(objectMeta metav1.ObjectMeta, engine, dbName string) (map[string][]byte, error) {
 	const (
 		// https://dev.mysql.com/doc/refman/5.7/en/identifier-length.html
 		mysqlDBNameLengthLimit = 63
 		// https://dev.mysql.com/doc/refman/5.7/en/replication-features-user-names.html
 		mysqlUserLengthLimit = 32
 	)
-
-	dbName := dbcr.Namespace + "-" + dbcr.Name
-	dbUser := dbcr.Namespace + "-" + dbcr.Name
+	if len(dbName) == 0 {
+		dbName = objectMeta.Namespace + "-" + objectMeta.Name
+	}
+	dbUser := objectMeta.Namespace + "-" + objectMeta.Name
 	dbPassword := kci.GeneratePass()
 
 	switch engine {

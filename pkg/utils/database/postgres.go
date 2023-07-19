@@ -46,6 +46,10 @@ type Postgres struct {
 	DropPublicSchema bool
 	Schemas          []string
 	Template         string
+	// A user that is created with the Database
+	//  it's required to set default priveleges
+	//  for read only users
+	MainUser string
 }
 
 const postgresDefaultSSLMode = "disable"
@@ -363,7 +367,6 @@ func (p Postgres) deleteDatabase(admin AdminCredentials) error {
 
 func (p Postgres) createOrUpdateUser(admin AdminCredentials, user *DatabaseUser) error {
 	create := fmt.Sprintf("CREATE USER \"%s\" WITH ENCRYPTED PASSWORD '%s' NOSUPERUSER;", user.Username, user.Password)
-	grant := fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE \"%s\" TO \"%s\";", p.Database, user.Username)
 	update := fmt.Sprintf("ALTER ROLE \"%s\" WITH ENCRYPTED PASSWORD '%s';", user.Username, user.Password)
 
 	if !p.isUserExist(admin, user) {
@@ -380,25 +383,14 @@ func (p Postgres) createOrUpdateUser(admin AdminCredentials, user *DatabaseUser)
 		}
 	}
 
-	err := p.executeExec("postgres", grant, admin)
-	if err != nil {
-		logrus.Errorf("failed granting postgres user %s - %s", grant, err)
+	if err := p.setUserPermission(admin, user); err != nil {
 		return err
-	}
-
-	for _, s := range p.Schemas {
-		grantUserAccess := fmt.Sprintf("GRANT ALL ON SCHEMA \"%s\" TO \"%s\"", s, user.Username)
-		if err := p.executeExec(p.Database, grantUserAccess, admin); err != nil {
-			logrus.Errorf("failed to grant usage access to %s on schema %s: %s", user.Username, s, err)
-			return err
-		}
 	}
 	return nil
 }
 
 func (p Postgres) createUser(admin AdminCredentials, user *DatabaseUser) error {
 	create := fmt.Sprintf("CREATE USER \"%s\" WITH ENCRYPTED PASSWORD '%s' NOSUPERUSER;", user.Username, user.Password)
-	grant := fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE \"%s\" TO \"%s\";", p.Database, user.Username)
 
 	if !p.isUserExist(admin, user) {
 		err := p.executeExec("postgres", create, admin)
@@ -411,25 +403,15 @@ func (p Postgres) createUser(admin AdminCredentials, user *DatabaseUser) error {
 		return err
 	}
 
-	err := p.executeExec("postgres", grant, admin)
-	if err != nil {
-		logrus.Errorf("failed granting postgres user %s - %s", grant, err)
+	if err := p.setUserPermission(admin, user); err != nil {
 		return err
 	}
 
-	for _, s := range p.Schemas {
-		grantUserAccess := fmt.Sprintf("GRANT ALL ON SCHEMA \"%s\" TO \"%s\"", s, user.Username)
-		if err := p.executeExec(p.Database, grantUserAccess, admin); err != nil {
-			logrus.Errorf("failed to grant usage access to %s on schema %s: %s", user.Username, s, err)
-			return err
-		}
-	}
 	return nil
 }
 
 func (p Postgres) updateUser(admin AdminCredentials, user *DatabaseUser) error {
 	update := fmt.Sprintf("ALTER ROLE \"%s\" WITH ENCRYPTED PASSWORD '%s';", user.Username, user.Password)
-	grant := fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE \"%s\" TO \"%s\";", p.Database, user.Username)
 
 	if !p.isUserExist(admin, user) {
 		err := fmt.Errorf("user doesn't exist yet: %s", user.Username)
@@ -442,25 +424,110 @@ func (p Postgres) updateUser(admin AdminCredentials, user *DatabaseUser) error {
 		}
 	}
 
-	err := p.executeExec("postgres", grant, admin)
-	if err != nil {
-		logrus.Errorf("failed granting postgres user %s - %s", grant, err)
+	if err := p.setUserPermission(admin, user); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p Postgres) setUserPermission(admin AdminCredentials, user *DatabaseUser) error {
+	schemas := p.Schemas
+	if !p.DropPublicSchema {
+		schemas = append(schemas, "public")
+	}
+
+	switch user.AccessType {
+	case ACCESS_TYPE_MAINUSER:
+		grant := fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE \"%s\" TO \"%s\";", p.Database, user.Username)
+		err := p.executeExec("postgres", grant, admin)
+		if err != nil {
+			logrus.Errorf("failed granting postgres user %s - %s", grant, err)
+			return err
+		}
+		for _, s := range p.Schemas {
+			grantUserAccess := fmt.Sprintf("GRANT ALL ON SCHEMA \"%s\" TO \"%s\"", s, user.Username)
+			if err := p.executeExec(p.Database, grantUserAccess, admin); err != nil {
+				logrus.Errorf("failed to grant usage access to %s on schema %s: %s", user.Username, s, err)
+				return err
+			}
+		}
+	case ACCESS_TYPE_READWRITE:
+		for _, s := range schemas {
+			grantUsage := fmt.Sprintf("GRANT USAGE ON SCHEMA \"%s\" TO \"%s\"", s, user.Username)
+			grantTables := fmt.Sprintf("GRANT SELECT, INSERT, DELETE ON ALL TABLES IN SCHEMA \"%s\" TO \"%s\"", s, user.Username)
+			alter := fmt.Sprintf("ALTER DEFAULT PRIVILEGES FOR ROLE \"%s\" IN SCHEMA \"%s\" GRANT SELECT, INSERT, DELETE, UPDATE ON TABLES TO \"%s\";", p.MainUser, s, user.Username)
+			err := p.executeExec(p.Database, grantUsage, admin)
+			if err != nil {
+				logrus.Errorf("failed updating postgres user %s - %s", grantTables, err)
+				return err
+			}
+			err = p.executeExec(p.Database, grantTables, admin)
+			if err != nil {
+				logrus.Errorf("failed updating postgres user %s - %s", grantTables, err)
+				return err
+			}
+			err = p.executeExec(p.Database, alter, admin)
+			if err != nil {
+				logrus.Errorf("failed updating postgres user %s - %s", alter, err)
+				return err
+			}
+		}
+	case ACCESS_TYPE_READONLY:
+		for _, s := range schemas {
+			grantUsage := fmt.Sprintf("GRANT USAGE ON SCHEMA \"%s\" TO \"%s\"", s, user.Username)
+			grantTables := fmt.Sprintf("GRANT SELECT ON ALL TABLES IN SCHEMA \"%s\" TO \"%s\"", s, user.Username)
+			alter := fmt.Sprintf("ALTER DEFAULT PRIVILEGES FOR ROLE \"%s\" IN SCHEMA \"%s\" GRANT SELECT ON TABLES TO \"%s\";", p.MainUser, s, user.Username)
+			err := p.executeExec(p.Database, grantUsage, admin)
+			if err != nil {
+				logrus.Errorf("failed updating postgres user %s - %s", grantTables, err)
+				return err
+			}
+			err = p.executeExec(p.Database, grantTables, admin)
+			if err != nil {
+				logrus.Errorf("failed updating postgres user %s - %s", grantTables, err)
+				return err
+			}
+			err = p.executeExec(p.Database, alter, admin)
+			if err != nil {
+				logrus.Errorf("failed updating postgres user %s - %s", alter, err)
+				return err
+			}
+		}
+	default:
+		err := fmt.Errorf("unknown access type: %s", user.AccessType)
 		return err
 	}
 
-	for _, s := range p.Schemas {
-		grantUserAccess := fmt.Sprintf("GRANT ALL ON SCHEMA \"%s\" TO \"%s\"", s, user.Username)
-		if err := p.executeExec(p.Database, grantUserAccess, admin); err != nil {
-			logrus.Errorf("failed to grant usage access to %s on schema %s: %s", user.Username, s, err)
-			return err
-		}
-	}
 	return nil
 }
 
 func (p Postgres) deleteUser(admin AdminCredentials, user *DatabaseUser) error {
 	delete := fmt.Sprintf("DROP USER \"%s\";", user.Username)
 
+	if user.AccessType != ACCESS_TYPE_MAINUSER && p.isUserExist(admin, user) {
+		schemas := p.Schemas
+		if !p.DropPublicSchema {
+			schemas = append(schemas, "public")
+		}
+		for _, schema := range schemas {
+			revokeDefaults := fmt.Sprintf("ALTER DEFAULT PRIVILEGES FOR ROLE \"%s\" IN SCHEMA \"%s\" REVOKE ALL ON TABLES FROM \"%s\";", p.MainUser, schema, user.Username)
+			if err := p.executeExec(p.Database, revokeDefaults, admin); err != nil {
+				logrus.Errorf("failed removing default proveleges from \"%s\" on schema %s: %s", user.Username, schema, err)
+				return err
+			}
+			revokeAll := fmt.Sprintf("REVOKE ALL ON SCHEMA \"%s\" FROM \"%s\";", schema, user.Username)
+			if err := p.executeExec(p.Database, revokeAll, admin); err != nil {
+				logrus.Errorf("failed revoking proveleges frmm %s on schema %s: %s", user.Username, schema, err)
+				return err
+			}
+			dropOwned := fmt.Sprintf("DROP OWNED BY \"%s\";", user.Username)
+			if err := p.executeExec(p.Database, dropOwned, admin); err != nil {
+				logrus.Errorf("failed revoking proveleges frmm %s on schema %s: %s", user.Username, schema, err)
+				return err
+			}
+
+		}
+	}
 	if p.isUserExist(admin, user) {
 		logrus.Debugf("deleting user %s", user.Username)
 		err := p.executeExec("postgres", delete, admin)
