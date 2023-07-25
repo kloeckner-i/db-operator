@@ -25,7 +25,7 @@ import (
 )
 
 func testMysql() (*Mysql, *DatabaseUser) {
-	return &Mysql{"local", test.GetMysqlHost(), test.GetMysqlPort(), "testdb", false, false}, &DatabaseUser{Username: "testuser", Password: "testpwd"}
+	return &Mysql{"local", test.GetMysqlHost(), test.GetMysqlPort(), "testdb", false, false}, &DatabaseUser{Username: "testuser", Password: "testpwd", AccessType: ACCESS_TYPE_MAINUSER}
 }
 
 func getMysqlAdmin() AdminCredentials {
@@ -93,6 +93,18 @@ func TestMysqlCreateOrUpdateUser(t *testing.T) {
 	assert.Equal(t, true, m.isUserExist(admin, dbu))
 }
 
+func TestMysqlDeleteUser(t *testing.T) {
+	admin := getMysqlAdmin()
+	m, dbu := testMysql()
+
+	err := m.deleteUser(admin, dbu)
+	assert.NoError(t, err)
+
+	err = m.deleteUser(admin, dbu)
+	assert.NoError(t, err)
+	assert.Equal(t, false, m.isUserExist(admin, dbu))
+}
+
 func TestMysqlDeleteDatabase(t *testing.T) {
 	admin := getMysqlAdmin()
 	m, _ := testMysql()
@@ -108,18 +120,6 @@ func TestMysqlDeleteDatabase(t *testing.T) {
 	check := fmt.Sprintf("USE %s", m.Database)
 	_, err = db.Exec(check)
 	assert.Error(t, err)
-}
-
-func TestMysqlDeleteUser(t *testing.T) {
-	admin := getMysqlAdmin()
-	m, dbu := testMysql()
-
-	err := m.deleteUser(admin, dbu)
-	assert.NoError(t, err)
-
-	err = m.deleteUser(admin, dbu)
-	assert.NoError(t, err)
-	assert.Equal(t, false, m.isUserExist(admin, dbu))
 }
 
 func TestMysqlGetCredentials(t *testing.T) {

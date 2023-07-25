@@ -39,6 +39,7 @@ func testPostgres() (*Postgres, *DatabaseUser) {
 		&DatabaseUser{
 			Username: "testuser",
 			Password: "testpassword",
+			AccessType: ACCESS_TYPE_MAINUSER,
 		}
 }
 
@@ -188,6 +189,14 @@ func TestPostgresSchemas(t *testing.T) {
 	assert.NoError(t, p.checkSchemas(dbu))
 }
 
+func TestPostgresDeleteUser(t *testing.T) {
+	admin := getPostgresAdmin()
+	p, dbu := testPostgres()
+
+	err := p.deleteUser(admin, dbu)
+	assert.NoErrorf(t, err, "Unexpected error %v", err)
+}
+
 func TestPostgresDeleteDatabase(t *testing.T) {
 	admin := getPostgresAdmin()
 	p, _ := testPostgres()
@@ -196,14 +205,6 @@ func TestPostgresDeleteDatabase(t *testing.T) {
 	assert.NoErrorf(t, err, "Unexpected error %v", err)
 
 	err = p.deleteDatabase(admin)
-	assert.NoErrorf(t, err, "Unexpected error %v", err)
-}
-
-func TestPostgresDeleteUser(t *testing.T) {
-	admin := getPostgresAdmin()
-	p, dbu := testPostgres()
-
-	err := p.deleteUser(admin, dbu)
 	assert.NoErrorf(t, err, "Unexpected error %v", err)
 }
 
