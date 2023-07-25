@@ -233,7 +233,6 @@ func (m Mysql) deleteDatabase(admin AdminCredentials) error {
 
 func (m Mysql) createOrUpdateUser(admin AdminCredentials, user *DatabaseUser) error {
 	create := fmt.Sprintf("CREATE USER `%s` IDENTIFIED BY '%s';", user.Username, user.Password)
-	grant := fmt.Sprintf("GRANT ALL PRIVILEGES ON `%s`.* TO '%s'@'%%';", m.Database, user.Username)
 	update := fmt.Sprintf("ALTER USER `%s` IDENTIFIED BY '%s';", user.Username, user.Password)
 
 	if !m.isUserExist(admin, user) {
@@ -248,8 +247,7 @@ func (m Mysql) createOrUpdateUser(admin AdminCredentials, user *DatabaseUser) er
 		}
 	}
 
-	err := m.executeQuery(grant, admin)
-	if err != nil {
+	if err := m.setUserPermission(admin, user); err != nil {
 		return err
 	}
 
@@ -258,7 +256,6 @@ func (m Mysql) createOrUpdateUser(admin AdminCredentials, user *DatabaseUser) er
 
 func (m Mysql) createUser(admin AdminCredentials, user *DatabaseUser) error {
 	create := fmt.Sprintf("CREATE USER `%s` IDENTIFIED BY '%s';", user.Username, user.Password)
-	grant := fmt.Sprintf("GRANT ALL PRIVILEGES ON `%s`.* TO '%s'@'%%';", m.Database, user.Username)
 
 	if !m.isUserExist(admin, user) {
 		err := m.executeQuery(create, admin)
@@ -270,8 +267,7 @@ func (m Mysql) createUser(admin AdminCredentials, user *DatabaseUser) error {
 		return err
 	}
 
-	err := m.executeQuery(grant, admin)
-	if err != nil {
+	if err := m.setUserPermission(admin, user); err != nil {
 		return err
 	}
 
@@ -280,7 +276,6 @@ func (m Mysql) createUser(admin AdminCredentials, user *DatabaseUser) error {
 
 func (m Mysql) updateUser(admin AdminCredentials, user *DatabaseUser) error {
 	update := fmt.Sprintf("ALTER USER `%s` IDENTIFIED BY '%s';", user.Username, user.Password)
-	grant := fmt.Sprintf("GRANT ALL PRIVILEGES ON `%s`.* TO '%s'@'%%';", m.Database, user.Username)
 
 	if !m.isUserExist(admin, user) {
 		err := fmt.Errorf("user doesn't exist yet: %s", user.Username)
@@ -292,8 +287,7 @@ func (m Mysql) updateUser(admin AdminCredentials, user *DatabaseUser) error {
 		}
 	}
 
-	err := m.executeQuery(grant, admin)
-	if err != nil {
+	if err := m.setUserPermission(admin, user); err != nil {
 		return err
 	}
 
@@ -301,6 +295,29 @@ func (m Mysql) updateUser(admin AdminCredentials, user *DatabaseUser) error {
 }
 
 func (m Mysql) setUserPermission(admin AdminCredentials, user *DatabaseUser) error {
+	switch user.AccessType {
+	case ACCESS_TYPE_MAINUSER:
+		grant := fmt.Sprintf("GRANT ALL PRIVILEGES ON `%s`.* TO '%s'@'%%';", m.Database, user.Username)
+		err := m.executeQuery(grant, admin)
+		if err != nil {
+			return err
+		}
+	case ACCESS_TYPE_READONLY:
+		grant := fmt.Sprintf("GRANT ALL SELECT ON `%s`.* TO '%s'@'%%';", m.Database, user.Username)
+		err := m.executeQuery(grant, admin)
+		if err != nil {
+			return err
+		}
+	case ACCESS_TYPE_READWRITE:
+		grant := fmt.Sprintf("GRANT ALL SELECT, UPDATE, INSERT, DELETE ON `%s`.* TO '%s'@'%%';", m.Database, user.Username)
+		err := m.executeQuery(grant, admin)
+		if err != nil {
+			return err
+		}
+	default:
+		err := fmt.Errorf("unknown access type: %s", user.AccessType)
+		return err
+	}
 	return nil
 }
 
