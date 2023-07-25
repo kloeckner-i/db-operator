@@ -187,6 +187,7 @@ func (r *DbUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 					return r.manageError(ctx, dbucr, err, false)
 				}
 			}
+			dbucr.Status.DatabaseName = dbucr.Spec.DatabaseRef
 
 		}
 	}

@@ -15,7 +15,28 @@ spec:
     singular: dbuser
   scope: Namespaced
   versions:
-  - name: v1beta1
+  - additionalPrinterColumns:
+    - description: current dbuser status
+      jsonPath: .status.status
+      name: Status
+      type: boolean
+    - description: current dbuser phase
+      jsonPath: .status.phase
+      name: Phase
+      type: string
+    - description: To which database user should have access
+      jsonPath: .spec.databaseRef
+      name: DatabaseName
+      type: string
+    - description: A type of access the user has
+      jsonPath: .spec.accessType
+      name: AccessType
+      type: string
+    - description: time since creation of resosurce
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1beta1
     schema:
       openAPIV3Schema:
         description: DbUser is the Schema for the dbusers API
