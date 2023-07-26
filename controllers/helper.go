@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -85,6 +86,15 @@ func addDBInstanceChecksumStatus(ctx context.Context, dbin *kindav1beta1.DbInsta
 func containsString(slice []string, s string) bool {
 	for _, item := range slice {
 		if item == s {
+			return true
+		}
+	}
+	return false
+}
+
+func containsSubString(slice []string, s string) bool {
+	for _, item := range slice {
+		if strings.Contains(item, s) {
 			return true
 		}
 	}

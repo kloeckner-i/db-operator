@@ -48,6 +48,14 @@ type DbUserReconciler struct {
 	Recorder record.EventRecorder
 }
 
+// Phases
+const (
+	DBUCR_PHASE_CREATING = "creating"
+	DBUCR_PHASE_UPDATING = "updating"
+	DBUCR_PHASE_DELETING = "deleting"
+	DBUCR_PHASE_READY    = "ready"
+)
+
 //+kubebuilder:rbac:groups=kinda.rocks,resources=dbusers,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=kinda.rocks,resources=dbusers/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=kinda.rocks,resources=dbusers/finalizers,verbs=update
@@ -152,6 +160,7 @@ func (r *DbUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	dbuser.Username = fmt.Sprintf("%s-%s", dbucr.GetObjectMeta().GetNamespace(), dbucr.GetObjectMeta().GetName())
 
 	if dbucr.GetDeletionTimestamp() != nil {
+		dbucr.Status.Phase = DBUCR_PHASE_DELETING
 		if containsString(dbucr.ObjectMeta.Finalizers, "dbuser."+dbucr.Name) {
 			if err := database.DeleteUser(db, dbuser, adminCred); err != nil {
 				logrus.Errorf("DBUser: namespace=%s, name=%s failed deleting a user - %s", dbucr.Namespace, dbucr.Name, err)
@@ -163,13 +172,24 @@ func (r *DbUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 				logrus.Errorf("error resource updating - %s", err)
 				return r.manageError(ctx, dbucr, err, false)
 			}
+			kci.RemoveFinalizer(&dbcr.ObjectMeta, "dbuser."+dbucr.Name)
+			err = r.Update(ctx, dbcr)
+			if err != nil {
+				logrus.Errorf("error resource updating - %s", err)
+				return r.manageError(ctx, dbucr, err, false)
+			}
 
 		}
 	} else {
+		if !dbcr.Status.Status {
+			err := fmt.Errorf("database %s is not ready yet", dbcr.Name)
+			return r.manageError(ctx, dbucr, err, true)
+		}
 
 		//Init the DbUser struct depending on a type
 		if !dbucr.Status.Status {
 			if !dbucr.Status.Created {
+				dbucr.Status.Phase = DBUCR_PHASE_CREATING
 				r.Log.Info(fmt.Sprintf("creating a user: %s", dbucr.GetObjectMeta().GetName()))
 				if err := database.CreateUser(db, dbuser, adminCred); err != nil {
 					return r.manageError(ctx, dbucr, err, false)
@@ -180,15 +200,23 @@ func (r *DbUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 					logrus.Errorf("error resource updating - %s", err)
 					return r.manageError(ctx, dbucr, err, false)
 				}
+				kci.AddFinalizer(&dbcr.ObjectMeta, "dbuser."+dbucr.Name)
+				err = r.Update(ctx, dbcr)
+				if err != nil {
+					logrus.Errorf("error resource updating - %s", err)
+					return r.manageError(ctx, dbucr, err, false)
+				}
 				dbucr.Status.Created = true
 			} else {
+				dbucr.Status.Phase = DBUCR_PHASE_UPDATING
 				r.Log.Info(fmt.Sprintf("updating a user %s", dbucr.GetObjectMeta().GetName()))
 				if err := database.UpdateUser(db, dbuser, adminCred); err != nil {
 					return r.manageError(ctx, dbucr, err, false)
 				}
 			}
+			dbucr.Status.Status = true
+			dbucr.Status.Phase = DBUCR_PHASE_READY
 			dbucr.Status.DatabaseName = dbucr.Spec.DatabaseRef
-
 		}
 	}
 

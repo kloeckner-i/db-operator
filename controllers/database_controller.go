@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"strconv"
 	"time"
@@ -123,6 +124,11 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		// Run finalization logic for database. If the
 		// finalization logic fails, don't remove the finalizer so
 		// that we can retry during the next reconciliation.
+		if containsSubString(dbcr.ObjectMeta.Finalizers, "dbuser.") {
+			err := fmt.Errorf("database can't be removed, while there are DbUser referencing it")
+			logrus.Error(err)
+			return r.manageError(ctx, dbcr, err, true)
+		}
 		if containsString(dbcr.ObjectMeta.Finalizers, "db."+dbcr.Name) {
 			err := r.deleteDatabase(ctx, dbcr)
 			if err != nil {
