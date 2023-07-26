@@ -104,6 +104,19 @@ func (p Postgres) executeExec(database, query string, admin AdminCredentials) er
 	return err
 }
 
+// TODO(@allanger): Create a DatabaseUser interface, so executeExec and executeExecAsUser are just one function
+func (p Postgres) executeExecAsUser(database, query string, user *DatabaseUser) error {
+	db, err := p.getDbConn(database, user.Username, user.Password)
+	if err != nil {
+		logrus.Fatalf("failed to open db connection: %s", err)
+	}
+
+	defer db.Close()
+	_, err = db.Exec(query)
+
+	return err
+}
+
 func (p Postgres) isDbExist(admin AdminCredentials) bool {
 	check := fmt.Sprintf("SELECT 1 FROM pg_database WHERE datname = '%s';", p.Database)
 
@@ -454,7 +467,7 @@ func (p Postgres) setUserPermission(admin AdminCredentials, user *DatabaseUser) 
 	case ACCESS_TYPE_READWRITE:
 		for _, s := range schemas {
 			grantUsage := fmt.Sprintf("GRANT USAGE ON SCHEMA \"%s\" TO \"%s\"", s, user.Username)
-			grantTables := fmt.Sprintf("GRANT SELECT, INSERT, DELETE ON ALL TABLES IN SCHEMA \"%s\" TO \"%s\"", s, user.Username)
+			grantTables := fmt.Sprintf("GRANT SELECT, INSERT, DELETE, UPDATE ON ALL TABLES IN SCHEMA \"%s\" TO \"%s\"", s, user.Username)
 			alter := fmt.Sprintf("ALTER DEFAULT PRIVILEGES FOR ROLE \"%s\" IN SCHEMA \"%s\" GRANT SELECT, INSERT, DELETE, UPDATE ON TABLES TO \"%s\";", p.MainUser, s, user.Username)
 			err := p.executeExec(p.Database, grantUsage, admin)
 			if err != nil {

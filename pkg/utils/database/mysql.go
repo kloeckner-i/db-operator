@@ -102,6 +102,23 @@ func (m Mysql) executeQuery(query string, admin AdminCredentials) error {
 	return nil
 }
 
+// TODO(@allanger): Create a DatabaseUser interface, so executeQuery and executeQueryAsUser are just one function
+func (m Mysql) executeQueryAsUser(query string, user *DatabaseUser) error {
+	db, err := m.getDbConn(user.Username, user.Password)
+	if err != nil {
+		logrus.Fatalf("failed to get db connection: %s", err)
+	}
+
+	rows, err := db.Query(query)
+	if err != nil {
+		logrus.Debugf("failed to execute query: %s", err)
+		return err
+	}
+	rows.Close()
+
+	return nil
+}
+
 func (m Mysql) isRowExist(query string, admin AdminCredentials) bool {
 	db, err := m.getDbConn(admin.Username, admin.Password)
 	if err != nil {
@@ -303,13 +320,13 @@ func (m Mysql) setUserPermission(admin AdminCredentials, user *DatabaseUser) err
 			return err
 		}
 	case ACCESS_TYPE_READONLY:
-		grant := fmt.Sprintf("GRANT ALL SELECT ON `%s`.* TO '%s'@'%%';", m.Database, user.Username)
+		grant := fmt.Sprintf("GRANT SELECT ON `%s`.* TO '%s'@'%%';", m.Database, user.Username)
 		err := m.executeQuery(grant, admin)
 		if err != nil {
 			return err
 		}
 	case ACCESS_TYPE_READWRITE:
-		grant := fmt.Sprintf("GRANT ALL SELECT, UPDATE, INSERT, DELETE ON `%s`.* TO '%s'@'%%';", m.Database, user.Username)
+		grant := fmt.Sprintf("GRANT SELECT, UPDATE, INSERT, DELETE ON `%s`.* TO '%s'@'%%';", m.Database, user.Username)
 		err := m.executeQuery(grant, admin)
 		if err != nil {
 			return err

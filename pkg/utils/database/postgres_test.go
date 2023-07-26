@@ -35,10 +35,11 @@ func testPostgres() (*Postgres, *DatabaseUser) {
 			SkipCAVerify:     false,
 			DropPublicSchema: false,
 			Schemas:          []string{},
+			MainUser:         "testuser",
 		},
 		&DatabaseUser{
-			Username: "testuser",
-			Password: "testpassword",
+			Username:   "testuser",
+			Password:   "testpassword",
 			AccessType: ACCESS_TYPE_MAINUSER,
 		}
 }
@@ -106,6 +107,164 @@ func TestPostgresCreateUser(t *testing.T) {
 
 	err = p.createOrUpdateUser(admin, dbu)
 	assert.Error(t, err, "Should get error")
+}
+
+func TestPostgresReadOnlyUserLifecycle(t *testing.T) {
+	// Test if it's created
+	admin := getPostgresAdmin()
+	p, dbu := testPostgres()
+	p.Database = "readonlytest"
+	p.Schemas = []string{"permtest"}
+	assert.NoError(t, p.createDatabase(admin))
+	assert.NoError(t, p.createSchemas(admin))
+	assert.NoError(t, p.setUserPermission(admin, dbu))
+	readonlyUser := &DatabaseUser{
+		Username:   "readonly",
+		Password:   "123123",
+		AccessType: ACCESS_TYPE_READONLY,
+	}
+
+	createTable := `CREATE TABLE permtest.test_1 (
+		role_id serial PRIMARY KEY,
+		role_name VARCHAR (255) UNIQUE NOT NULL
+	  );`
+	assert.NoError(t, p.executeExecAsUser(p.Database, createTable, dbu))
+
+	err := p.createUser(admin, readonlyUser)
+	assert.NoErrorf(t, err, "Unexpected error %v", err)
+
+	// Test that it can't be created again
+	err = p.createUser(admin, readonlyUser)
+	assert.Error(t, err, "Was expecting an error")
+
+	// Test that it can be updated
+	err = p.updateUser(admin, readonlyUser)
+	assert.NoErrorf(t, err, "Unexpected error %v", err)
+
+	// Test that it has only readonly access to current objects
+	createTable = `CREATE TABLE permtest.test_2 (
+		role_id serial PRIMARY KEY,
+		role_name VARCHAR (255) UNIQUE NOT NULL
+	  );`
+	assert.Error(t, p.executeExecAsUser(p.Database, createTable, readonlyUser))
+	assert.NoError(t, p.executeExecAsUser(p.Database, createTable, dbu))
+
+	insert := "INSERT INTO permtest.test_1 VALUES (1, 'test-1')"
+	assert.NoError(t, p.executeExecAsUser(p.Database, insert, dbu))
+	insert = "INSERT INTO permtest.test_2 VALUES (1, 'test-1')"
+	assert.NoError(t, p.executeExecAsUser(p.Database, insert, dbu))
+
+	selectQuery := "SELECT * FROM permtest.test_1"
+	assert.NoError(t, p.executeExecAsUser(p.Database, selectQuery, readonlyUser))
+	selectQuery = "SELECT * FROM permtest.test_2"
+	assert.NoError(t, p.executeExecAsUser(p.Database, selectQuery, readonlyUser))
+
+	insert = "INSERT INTO permtest.test_1 VALUES (2, 'test-2')"
+	assert.Error(t, p.executeExecAsUser(p.Database, insert, readonlyUser))
+	insert = "INSERT INTO permtest.test_2 VALUES (2, 'test-2')"
+	assert.Error(t, p.executeExecAsUser(p.Database, insert, readonlyUser))
+
+	update := "UPDATE permtest.test_1 SET role_name = 'test-1-new' WHERE role_id = 1"
+	assert.Error(t, p.executeExecAsUser(p.Database, update, readonlyUser))
+	update = "UPDATE permtest.test_2 SET role_name = 'test-1-new' WHERE role_id = 1"
+	assert.Error(t, p.executeExecAsUser(p.Database, update, readonlyUser))
+
+	delete := "DELETE FROM permtest.test_1 WHERE role_id = 1"
+	assert.Error(t, p.executeExecAsUser(p.Database, delete, readonlyUser))
+	delete = "DELETE FROM permtest.test_2 WHERE role_id = 1"
+	assert.Error(t, p.executeExecAsUser(p.Database, delete, readonlyUser))
+
+	drop := "DROP TABLE permtest.test_1"
+	assert.Error(t, p.executeExecAsUser(p.Database, drop, readonlyUser))
+	assert.NoError(t, p.executeExecAsUser(p.Database, drop, dbu))
+	drop = "DROP TABLE permtest.test_2"
+	assert.Error(t, p.executeExecAsUser(p.Database, drop, readonlyUser))
+	assert.NoError(t, p.executeExecAsUser(p.Database, drop, dbu))
+
+	// Test that it can be removed
+	err = p.deleteUser(admin, readonlyUser)
+	assert.NoErrorf(t, err, "Unexpected error %v", err)
+}
+
+func TestPostgresReadWriteUserLifecycle(t *testing.T) {
+	// Test if it's created
+	admin := getPostgresAdmin()
+	p, dbu := testPostgres()
+	p.Database = "readwritetest"
+	p.Schemas = []string{"permtest"}
+	assert.NoError(t, p.createDatabase(admin))
+	assert.NoError(t, p.createSchemas(admin))
+	assert.NoError(t, p.setUserPermission(admin, dbu))
+	readwriteUser := &DatabaseUser{
+		Username:   "readwrite",
+		Password:   "123123",
+		AccessType: ACCESS_TYPE_READWRITE,
+	}
+
+	createTable := `CREATE TABLE permtest.test_1 (
+		role_id serial PRIMARY KEY,
+		role_name VARCHAR (255) UNIQUE NOT NULL
+	  );`
+	assert.NoError(t, p.executeExecAsUser(p.Database, createTable, dbu))
+
+	err := p.createUser(admin, readwriteUser)
+	assert.NoErrorf(t, err, "Unexpected error %v", err)
+
+	// Test that it can't be created again
+	err = p.createUser(admin, readwriteUser)
+	assert.Error(t, err, "Was expecting an error")
+
+	// Test that it can be updated
+	err = p.updateUser(admin, readwriteUser)
+	assert.NoErrorf(t, err, "Unexpected error %v", err)
+
+	// Test that it has only readonly access to current objects
+	createTable = `CREATE TABLE permtest.test_2 (
+		role_id serial PRIMARY KEY,
+		role_name VARCHAR (255) UNIQUE NOT NULL
+	  );`
+	assert.Error(t, p.executeExecAsUser(p.Database, createTable, readwriteUser))
+	assert.NoError(t, p.executeExecAsUser(p.Database, createTable, dbu))
+
+	insert := "INSERT INTO permtest.test_1 VALUES (1, 'test-1')"
+	assert.NoError(t, p.executeExecAsUser(p.Database, insert, dbu))
+	insert = "INSERT INTO permtest.test_2 VALUES (1, 'test-1')"
+	assert.NoError(t, p.executeExecAsUser(p.Database, insert, dbu))
+	insert = "INSERT INTO permtest.test_1 VALUES (2, 'test-2')"
+	assert.NoError(t, p.executeExecAsUser(p.Database, insert, dbu))
+	insert = "INSERT INTO permtest.test_2 VALUES (2, 'test-2')"
+	assert.NoError(t, p.executeExecAsUser(p.Database, insert, dbu))
+
+	selectQuery := "SELECT * FROM permtest.test_1"
+	assert.NoError(t, p.executeExecAsUser(p.Database, selectQuery, readwriteUser))
+	selectQuery = "SELECT * FROM permtest.test_2"
+	assert.NoError(t, p.executeExecAsUser(p.Database, selectQuery, readwriteUser))
+
+	insert = "INSERT INTO permtest.test_1 VALUES (3, 'test-3')"
+	assert.NoError(t, p.executeExecAsUser(p.Database, insert, readwriteUser))
+	insert = "INSERT INTO permtest.test_2 VALUES (3, 'test-3')"
+	assert.NoError(t, p.executeExecAsUser(p.Database, insert, readwriteUser))
+
+	update := "UPDATE permtest.test_1 SET role_name = 'test-1-new' WHERE role_id = 1"
+	assert.NoError(t, p.executeExecAsUser(p.Database, update, readwriteUser))
+	update = "UPDATE permtest.test_2 SET role_name = 'test-1-new' WHERE role_id = 1"
+	assert.NoError(t, p.executeExecAsUser(p.Database, update, readwriteUser))
+
+	delete := "DELETE FROM permtest.test_1 WHERE role_id = 2"
+	assert.NoError(t, p.executeExecAsUser(p.Database, delete, readwriteUser))
+	delete = "DELETE FROM permtest.test_2 WHERE role_id = 2"
+	assert.NoError(t, p.executeExecAsUser(p.Database, delete, readwriteUser))
+
+	drop := "DROP TABLE permtest.test_1"
+	assert.Error(t, p.executeExecAsUser(p.Database, drop, readwriteUser))
+	assert.NoError(t, p.executeExecAsUser(p.Database, drop, dbu))
+	drop = "DROP TABLE permtest.test_2"
+	assert.Error(t, p.executeExecAsUser(p.Database, drop, readwriteUser))
+	assert.NoError(t, p.executeExecAsUser(p.Database, drop, dbu))
+
+	// Test that it can be removed
+	err = p.deleteUser(admin, readwriteUser)
+	assert.NoErrorf(t, err, "Unexpected error %v", err)
 }
 
 func TestPublicSchema(t *testing.T) {
