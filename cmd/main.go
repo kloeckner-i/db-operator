@@ -30,7 +30,7 @@ import (
 
 	kindarocksv1alpha1 "github.com/db-operator/db-operator/api/v1alpha1"
 	kindarocksv1beta1 "github.com/db-operator/db-operator/api/v1beta1"
-	"github.com/db-operator/db-operator/controllers"
+	controllers "github.com/db-operator/db-operator/internal/controller"
 	"github.com/db-operator/db-operator/pkg/config"
 	"github.com/db-operator/db-operator/pkg/utils/thirdpartyapi"
 

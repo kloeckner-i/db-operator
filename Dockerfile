@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 
 ARG GOARCH
-RUN GOOS=linux GOARCH=$GOARCH CGO_ENABLED=0 go build -tags build -o /usr/local/bin/db-operator main.go
+RUN GOOS=linux GOARCH=$GOARCH CGO_ENABLED=0 go build -tags build -o /usr/local/bin/db-operator cmd/main.go
 
 FROM registry.hub.docker.com/library/alpine:3.18
 LABEL org.opencontainers.image.authors="Nikolai Rodionov<allanger@zohomail.com>"
