@@ -138,11 +138,11 @@ jobs:
           sudo apparmor_parser -R /etc/apparmor.d/usr.sbin.mysqld
       
       - name: Run the unit tests
-        run: ./scripts/test_database mysql ${{ matrix.image }} ././resources/test/docker-compose-mysql-tmpl.yml
+        run: ./scripts/test_database -d mysql -i ${{ matrix.image }} -f ./resources/test/docker-compose-mysql-tmpl.yml
 
   mariadb-test:
     runs-on: ubuntu-latest
-    continue-on-error: true  
+    continue-on-error: true
     needs: lint
     strategy:
       matrix:
@@ -184,7 +184,7 @@ jobs:
           sudo apparmor_parser -R /etc/apparmor.d/usr.sbin.mysqld
       
       - name: Run the unit tests
-        run: ./scripts/test_database mysql ${{ matrix.image }} ././resources/test/docker-compose-mariadb-tmpl.yml
+        run: ./scripts/test_database -d mysql -i ${{ matrix.image }} -f ./resources/test/docker-compose-mariadb-tmpl.yml
 
   postgres-test:
     runs-on: ubuntu-latest
@@ -221,5 +221,5 @@ jobs:
           go-version: ${{ env.go_version }}
       
       - name: Run the unit tests
-        run: ./scripts/test_database postgres ${{ matrix.image }} ././resources/test/docker-compose-postgres-tmpl.yml
+        run: ./scripts/test_database -d postgres -i ${{ matrix.image }} -f ./resources/test/docker-compose-postgres-tmpl.yml
 

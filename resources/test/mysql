@@ -1,9 +1,0 @@
-#! /usr/bin/env bash
-
-for MYSQL_IMAGE in $(cat mysql-versions); do
-	MYSQL_IMAGE=$MYSQL_IMAGE envsubst \
-		< docker-compose-mysql-tmpl.yml \
-		> docker-compose-mysql.yml
-	nerdctl compose -f docker-compose-mysql.yml up
-	nerdctl compose -f docker-compose-mysql.yml down
-done

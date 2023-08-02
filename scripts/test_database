@@ -1,31 +1,62 @@
 #! /usr/bin/env bash
 set -e
-if [ $# -lt 3 ]
-  then
+
+
+function usage() {
     cat <<EOF
-Please provide 3 arguments 
-	- a database type (mysql|postgres)
-	- image path (mysql:8)
-	- a path to a docker-compose tempalte
-EG:
-  ./scripts/test_database postgres postgres:11 ./resources/test/docker-compose-psql-tmpl.yaml
+    Please provide 3 arguments 
+    	- -d | a database type (mysql|postgres)
+    	- -i | image path (mysql:8)
+    	- -f | a path to a docker-compose tempalte
+    EG:
+      ./scripts/test_database -d postgres -i postgres:11 -f ./resources/test/docker-compose-psql-tmpl.yaml
 EOF
+    
+    exit 2
+}
+
+while getopts :d:i:f: FOUND
+do
+    case $FOUND in
+        d)  DATABASE="${OPTARG}"
+            ;;
+        i)  IMAGE="${OPTARG}"
+            ;;
+        f)  TMPL_PATH="${OPTARG}"
+            ;;
+        \:) usage
+            ;;
+        \?) usage 
+            ;;
+        esac >&2
+    done
+shift $(($OPTIND - 1))
+
+if ! [[ $DATABASE == "postgres" || $DATABASE == "mysql" ]]; then
+    echo "Database can't be recognized"
+    usage
 fi
 
-if ! [[ $1 == "postgres" || $1 == "mysql" ]]; then
-	echo "First argument should either be postgres or mysql"
-	exit 1;
+if  [ -z "$IMAGE" ]; then
+    echo "Image is not set"
+    usage
 fi
 
+if  [ -z "$TMPL_PATH" ]; then
+    echo "A path to a template is not set"
+    usage
+fi
 
-TARGET_COMPOSE="gen-docker-compose-$1.yml"
-IMAGE=$2 envsubst < "$3" > "$TARGET_COMPOSE"
+TARGET_COMPOSE="gen-docker-compose-$DATABASE.yml"
+
+export IMAGE
+envsubst < "$TMPL_PATH" > "$TARGET_COMPOSE"
 
 docker-compose -f "$TARGET_COMPOSE" down
 docker-compose -f "$TARGET_COMPOSE" up -d
 sleep 10
 
-go test -count=1 -tags tests -run "Test${1^}" ./... -v -cover
+go test -count=1 -tags tests -run "Test${DATABASE^}" ./... -v -cover
 docker-compose -f "$TARGET_COMPOSE" down
 rm -f "$TARGET_COMPOSE"
 
