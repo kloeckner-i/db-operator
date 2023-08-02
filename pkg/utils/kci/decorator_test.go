@@ -24,7 +24,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestConfigMapBuilder(t *testing.T) {
+func TestUnitConfigMapBuilder(t *testing.T) {
 	name := "test-configmap"
 	ownership := []metav1.OwnerReference{}
 	om := metav1.ObjectMeta{Namespace: "TestNS"}
@@ -41,7 +41,7 @@ func TestConfigMapBuilder(t *testing.T) {
 	assert.Equal(t, len(configmap.OwnerReferences), 0, "Unexpected size of an OwnerReference")
 }
 
-func TestConfigMapBuilderWithOwnerReference(t *testing.T) {
+func TestUnitConfigMapBuilderWithOwnerReference(t *testing.T) {
 	name := "test-configmap"
 	ownership := []metav1.OwnerReference{}
 	ownership = append(ownership, metav1.OwnerReference{
@@ -68,7 +68,7 @@ func TestConfigMapBuilderWithOwnerReference(t *testing.T) {
 	assert.Equal(t, configmap.OwnerReferences[0].UID, ownership[0].UID, "UID in the OwnerReference is wrong")
 }
 
-func TestSecretBuilder(t *testing.T) {
+func TestUnitSecretBuilder(t *testing.T) {
 	name := "test-secret"
 	o := metav1.ObjectMeta{Namespace: "TestNS"}
 	ownership := []metav1.OwnerReference{}
@@ -85,7 +85,7 @@ func TestSecretBuilder(t *testing.T) {
 	assert.Equal(t, len(secret.OwnerReferences), 0, "Unexpected size of an OwnerReference")
 }
 
-func TestSecretBuilderWithOwnerReference(t *testing.T) {
+func TestUnitSecretBuilderWithOwnerReference(t *testing.T) {
 	name := "test-secret"
 	o := metav1.ObjectMeta{Namespace: "TestNS"}
 	ownership := []metav1.OwnerReference{}

@@ -25,7 +25,7 @@ import (
 )
 
 // Verify we generate a valid password based on the default rule.
-func TestGeneratePass(t *testing.T) {
+func TestUnitGeneratePass(t *testing.T) {
 	generatedPassword := GeneratePass()
 
 	if assert.NotEmpty(t, generatedPassword) {

@@ -24,7 +24,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetServiceAccount(t *testing.T) {
+func TestUnitGetServiceAccount(t *testing.T) {
 	// positive test
 	os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "./test/serviceaccount.json")
 	serviceaccount := GetServiceAccount()

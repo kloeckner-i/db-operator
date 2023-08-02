@@ -24,7 +24,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestLoadConfig(t *testing.T) {
+func TestUnitLoadConfig(t *testing.T) {
 	os.Setenv("CONFIG_PATH", "./test/config_ok.yaml")
 	confLoad := LoadConfig()
 	confStatic := Config{}
@@ -34,7 +34,7 @@ func TestLoadConfig(t *testing.T) {
 	assert.EqualValues(t, confLoad.Backup.ActiveDeadlineSeconds, int64(600))
 }
 
-func TestLoadConfigFailCases(t *testing.T) {
+func TestUnitLoadConfigFailCases(t *testing.T) {
 	// rollback ExitFunc to default
 	defer func() { logrus.StandardLogger().ExitFunc = nil }()
 	fatalCalled := false
@@ -49,7 +49,7 @@ func TestLoadConfigFailCases(t *testing.T) {
 	assert.Equal(t, expectedFatal, fatalCalled)
 }
 
-func TestBackupResourceConfig(t *testing.T) {
+func TestUnitBackupResourceConfig(t *testing.T) {
 	os.Setenv("CONFIG_PATH", "./test/config_backup.yaml")
 	conf := LoadConfig()
 	assert.Equal(t, conf.Backup.Resource.Requests.Cpu, "50m")

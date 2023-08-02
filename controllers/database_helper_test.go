@@ -31,7 +31,7 @@ var (
 	ownership  = []metav1.OwnerReference{}
 )
 
-func TestDeterminPostgresType(t *testing.T) {
+func TestUnitDeterminPostgresType(t *testing.T) {
 	postgresDbCr := newPostgresTestDbCr(newPostgresTestDbInstanceCr())
 
 	db, _ := determinDatabaseType(postgresDbCr, testDbcred)
@@ -39,7 +39,7 @@ func TestDeterminPostgresType(t *testing.T) {
 	assert.Equal(t, ok, true, "expected true")
 }
 
-func TestDeterminMysqlType(t *testing.T) {
+func TestUnitDeterminMysqlType(t *testing.T) {
 	mysqlDbCr := newMysqlTestDbCr()
 
 	db, _ := determinDatabaseType(mysqlDbCr, testDbcred)
@@ -47,7 +47,7 @@ func TestDeterminMysqlType(t *testing.T) {
 	assert.Equal(t, ok, true, "expected true")
 }
 
-func TestParsePostgresSecretData(t *testing.T) {
+func TestUnitParsePostgresSecretData(t *testing.T) {
 	postgresDbCr := newPostgresTestDbCr(newPostgresTestDbInstanceCr())
 
 	invalidData := make(map[string][]byte)
@@ -68,7 +68,7 @@ func TestParsePostgresSecretData(t *testing.T) {
 	assert.Equal(t, string(validData["POSTGRES_PASSWORD"]), cred.Password, "expect same values")
 }
 
-func TestParseMysqlSecretData(t *testing.T) {
+func TestUnitParseMysqlSecretData(t *testing.T) {
 	mysqlDbCr := newMysqlTestDbCr()
 
 	invalidData := make(map[string][]byte)
@@ -89,7 +89,7 @@ func TestParseMysqlSecretData(t *testing.T) {
 	assert.Equal(t, string(validData["PASSWORD"]), cred.Password, "expect same values")
 }
 
-func TestMonitoringNotEnabled(t *testing.T) {
+func TestUnitMonitoringNotEnabled(t *testing.T) {
 	instance := newPostgresTestDbInstanceCr()
 	instance.Spec.Monitoring.Enabled = false
 	postgresDbCr := newPostgresTestDbCr(instance)
@@ -106,7 +106,7 @@ func TestMonitoringNotEnabled(t *testing.T) {
 	assert.Equal(t, found, false, "expected pg_stat_statement is not included in extension list")
 }
 
-func TestMonitoringEnabled(t *testing.T) {
+func TestUnitMonitoringEnabled(t *testing.T) {
 	instance := newPostgresTestDbInstanceCr()
 	instance.Spec.Monitoring.Enabled = false
 	postgresDbCr := newPostgresTestDbCr(instance)
@@ -118,7 +118,7 @@ func TestMonitoringEnabled(t *testing.T) {
 	assert.Equal(t, postgresInterface.Monitoring, true, "expected monitoring is true in postgres interface")
 }
 
-func TestPsqlDefaultTemplatedSecretGeneratationWithProxy(t *testing.T) {
+func TestUnitPsqlDefaultTemplatedSecretGeneratationWithProxy(t *testing.T) {
 	instance := newPostgresTestDbInstanceCr()
 	postgresDbCr := newPostgresTestDbCr(instance)
 	postgresDbCr.Status.ProxyStatus.Status = true
@@ -147,7 +147,7 @@ func TestPsqlDefaultTemplatedSecretGeneratationWithProxy(t *testing.T) {
 	assert.Equal(t, expectedData, connString, "generated connections string is wrong")
 }
 
-func TestPsqlDefaultTemplatedSecretGeneratationWithoutProxy(t *testing.T) {
+func TestUnitPsqlDefaultTemplatedSecretGeneratationWithoutProxy(t *testing.T) {
 	instance := newPostgresTestDbInstanceCr()
 	postgresDbCr := newPostgresTestDbCr(instance)
 
@@ -172,7 +172,7 @@ func TestPsqlDefaultTemplatedSecretGeneratationWithoutProxy(t *testing.T) {
 	assert.Equal(t, expectedData, connString, "generated connections string is wrong")
 }
 
-func TestMysqlDefaultTemlatedSecretGeneratationWithoutProxy(t *testing.T) {
+func TestUnitMysqlDefaultTemlatedSecretGeneratationWithoutProxy(t *testing.T) {
 	mysqlDbCr := newMysqlTestDbCr()
 	c := SecretsTemplatesFields{
 		DatabaseHost: "mysql",
@@ -194,7 +194,7 @@ func TestMysqlDefaultTemlatedSecretGeneratationWithoutProxy(t *testing.T) {
 	assert.Equal(t, connString, expectedData, "generated connections string is wrong")
 }
 
-func TestPsqlCustomSecretGeneratation(t *testing.T) {
+func TestUnitPsqlCustomSecretGeneratation(t *testing.T) {
 	instance := newPostgresTestDbInstanceCr()
 	postgresDbCr := newPostgresTestDbCr(instance)
 
@@ -226,7 +226,7 @@ func TestPsqlCustomSecretGeneratation(t *testing.T) {
 	assert.Equal(t, templatedSecrets, expectedData, "generated connections string is wrong")
 }
 
-func TestWrongTemplatedSecretGeneratation(t *testing.T) {
+func TestUnitWrongTemplatedSecretGeneratation(t *testing.T) {
 	instance := newPostgresTestDbInstanceCr()
 	postgresDbCr := newPostgresTestDbCr(instance)
 
@@ -240,7 +240,7 @@ func TestWrongTemplatedSecretGeneratation(t *testing.T) {
 	assert.Contains(t, err.Error(), errSubstr, "the error doesn't contain expected substring")
 }
 
-func TestBlockedTempatedKeysGeneratation(t *testing.T) {
+func TestUnitBlockedTempatedKeysGeneratation(t *testing.T) {
 	instance := newPostgresTestDbInstanceCr()
 	postgresDbCr := newPostgresTestDbCr(instance)
 
@@ -268,7 +268,7 @@ func TestBlockedTempatedKeysGeneratation(t *testing.T) {
 	assert.Equal(t, newSecret, expectedData, "generated connections string is wrong")
 }
 
-func TestObsoleteFieldsRemoving(t *testing.T) {
+func TestUnitObsoleteFieldsRemoving(t *testing.T) {
 	instance := newPostgresTestDbInstanceCr()
 	postgresDbCr := newPostgresTestDbCr(instance)
 

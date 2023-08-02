@@ -1,0 +1,10 @@
+---
+version: "3.3"
+services:
+  mysql:
+    image: "${MYSQL_IMAGE}"
+    platform: linux/amd64
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "test1234"

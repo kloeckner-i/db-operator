@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSecretTemplatesValidator(t *testing.T) {
+func TestUnitSecretTemplatesValidator(t *testing.T) {
 	validTemplates := map[string]string{
 		"TEMPLATE_1": "{{ .Protocol }} {{ .DatabaseHost }} {{ .DatabasePort }} {{ .UserName }} {{ .Password }} {{ .DatabaseName}}",
 		"TEMPLATE_2": "{{.Protocol }}",

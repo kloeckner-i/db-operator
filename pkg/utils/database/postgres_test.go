@@ -126,7 +126,7 @@ func TestDropPublicSchemaMonitoringTrue(t *testing.T) {
 	assert.Error(t, p.checkSchemas())
 }
 
-func TestDropPublicSchemaMonitoringFalse(t *testing.T) {
+func TestPostgresDropPublicSchemaMonitoringFalse(t *testing.T) {
 	p := testPostgres()
 	admin := getPostgresAdmin()
 	p.Monitoring = false
@@ -139,7 +139,7 @@ func TestDropPublicSchemaMonitoringFalse(t *testing.T) {
 	assert.NoError(t, p.createSchemas(admin))
 }
 
-func TestEnableMonitoring(t *testing.T) {
+func TestPostgresEnableMonitoring(t *testing.T) {
 	p := testPostgres()
 	admin := getPostgresAdmin()
 	p.Monitoring = true
