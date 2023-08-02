@@ -65,7 +65,7 @@ func TestGCSBackupCronGsql(t *testing.T) {
 	assert.Equal(t, "* * * * *", funcCronObject.Spec.Schedule)
 }
 
-func TestGCSBackupCronGeneric(t *testing.T) {
+func TestUnitGCSBackupCronGeneric(t *testing.T) {
 	ownership := []metav1.OwnerReference{}
 	dbcr := &kindav1beta1.Database{}
 	dbcr.Namespace = "TestNS"
@@ -102,7 +102,7 @@ func TestGCSBackupCronGeneric(t *testing.T) {
 	assert.Equal(t, len(funcCronObject.OwnerReferences), 0, "Unexpected size of an OwnerReference")
 }
 
-func TestGCSBackupCronGenericWithOwnerReference(t *testing.T) {
+func TestUnitGCSBackupCronGenericWithOwnerReference(t *testing.T) {
 	ownership := []metav1.OwnerReference{}
 	ownership = append(ownership, metav1.OwnerReference{
 		APIVersion: "api-version",
@@ -136,7 +136,7 @@ func TestGCSBackupCronGenericWithOwnerReference(t *testing.T) {
 	assert.Equal(t, funcCronObject.OwnerReferences[0].UID, ownership[0].UID, "UID in the OwnerReference is wrong")
 }
 
-func TestGetResourceRequirements(t *testing.T) {
+func TestUnitGetResourceRequirements(t *testing.T) {
 	os.Setenv("CONFIG_PATH", "./test/backup_config.yaml")
 	conf := config.LoadConfig()
 

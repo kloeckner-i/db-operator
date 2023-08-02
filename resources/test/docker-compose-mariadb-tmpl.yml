@@ -1,0 +1,10 @@
+---
+version: "3.3"
+services:
+  mariadb:
+    image: "${IMAGE}"
+    platform: linux/amd64
+    ports:
+      - "3306:3306"
+    environment:
+      MARIADB_ROOT_PASSWORD: "test1234"

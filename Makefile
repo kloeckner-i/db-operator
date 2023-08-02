@@ -25,7 +25,6 @@ build_nctl: $(SRC) ## build db-operator docker image
 	@nerdctl build --build-arg GOARCH=amd64 -t my-db-operator:v1.0.0-dev --namespace k8s.io .
 	@nerdctl save --namespace k8s.io my-db-operator:v1.0.0-dev -o my-image.tar
 
-
 addexamples: ## add examples via kubectl create -f examples/
 	cd ./examples/; ls | while read line; do kubectl apply -f $$line; done
 

@@ -1,0 +1,17 @@
+---
+version: "3.3"
+services:
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: "test1234"
+  sqladmin:
+    image: ghcr.io/db-operator/cloudish-sql:v1.0.1
+    ports:
+      - "8080:8080"
+    environment:
+      LOG_LEVEL: "DEBUG"
+    command:
+      - --db-address=postgres:5432

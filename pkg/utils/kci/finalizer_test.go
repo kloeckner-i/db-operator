@@ -23,7 +23,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestFinalizers(t *testing.T) {
+func TestUnitFinalizers(t *testing.T) {
 	md := metav1.ObjectMeta{}
 	addString1 := "db.test1"
 	addString2 := "db.test2"

@@ -124,3 +124,5 @@ my-image.tar
 /testbin
 
 secrets.yaml
+
+gen-docker-compose*

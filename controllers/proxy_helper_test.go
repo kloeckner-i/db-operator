@@ -65,7 +65,7 @@ func mockOperatorNamespace() (string, error) {
 	return "operator", nil
 }
 
-func TestDetermineProxyTypeForDBGoogleBackend(t *testing.T) {
+func TestUnitDetermineProxyTypeForDBGoogleBackend(t *testing.T) {
 	config := &config.Config{}
 	dbin := makeGsqlInstance()
 	db := newPostgresTestDbCr(dbin)
@@ -76,7 +76,7 @@ func TestDetermineProxyTypeForDBGoogleBackend(t *testing.T) {
 	assert.Equal(t, cloudProxy.AccessSecretName, db.InstanceAccessSecretName())
 }
 
-func TestDetermineProxyTypeForDBGenericBackend(t *testing.T) {
+func TestUnitDetermineProxyTypeForDBGenericBackend(t *testing.T) {
 	config := &config.Config{}
 	dbin := makeGenericInstance()
 	db := newPostgresTestDbCr(dbin)
@@ -84,7 +84,7 @@ func TestDetermineProxyTypeForDBGenericBackend(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestDetermineProxyTypeForGoogleInstance(t *testing.T) {
+func TestUnitDetermineProxyTypeForGoogleInstance(t *testing.T) {
 	os.Setenv("CONFIG_PATH", "../pkg/config/test/config_ok.yaml")
 	config := config.LoadConfig()
 	dbin := makeGsqlInstance()
@@ -104,7 +104,7 @@ func TestDetermineProxyTypeForGoogleInstance(t *testing.T) {
 	assert.Equal(t, cloudProxy.AccessSecretName, "test-client-secret")
 }
 
-func TestDetermineProxyTypeForGenericInstance(t *testing.T) {
+func TestUnitDetermineProxyTypeForGenericInstance(t *testing.T) {
 	config := &config.Config{}
 	dbin := makeGenericInstance()
 	_, err := determineProxyTypeForInstance(config, &dbin)

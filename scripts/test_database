@@ -1,0 +1,31 @@
+#! /usr/bin/env bash
+set -e
+if [ $# -lt 3 ]
+  then
+    cat <<EOF
+Please provide 3 arguments 
+	- a database type (mysql|postgres)
+	- image path (mysql:8)
+	- a path to a docker-compose tempalte
+EG:
+  ./scripts/test_database postgres postgres:11 ./resources/test/docker-compose-psql-tmpl.yaml
+EOF
+fi
+
+if ! [[ $1 == "postgres" || $1 == "mysql" ]]; then
+	echo "First argument should either be postgres or mysql"
+	exit 1;
+fi
+
+
+TARGET_COMPOSE="gen-docker-compose-$1.yml"
+IMAGE=$2 envsubst < "$3" > "$TARGET_COMPOSE"
+
+docker-compose -f "$TARGET_COMPOSE" down
+docker-compose -f "$TARGET_COMPOSE" up -d
+sleep 10
+
+go test -count=1 -tags tests -run "Test${1^}" ./... -v -cover
+docker-compose -f "$TARGET_COMPOSE" down
+rm -f "$TARGET_COMPOSE"
+

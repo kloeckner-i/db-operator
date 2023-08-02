@@ -1,0 +1,15 @@
+mysql:5.7
+mysql:8.0
+mariadb:10.1
+mariadb:10.2
+mariadb:10.3
+mariadb:10.4
+mariadb:10.5
+mariadb:10.6
+mariadb:10.7
+mariadb:10.8
+mariadb:10.9
+mariadb:10.10
+mariadb:10.11
+mariadb:11.0
+mariadb:11.1
