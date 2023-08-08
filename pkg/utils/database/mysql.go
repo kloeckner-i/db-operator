@@ -249,17 +249,12 @@ func (m Mysql) deleteDatabase(admin AdminCredentials) error {
 }
 
 func (m Mysql) createOrUpdateUser(admin AdminCredentials, user *DatabaseUser) error {
-	create := fmt.Sprintf("CREATE USER `%s` IDENTIFIED BY '%s';", user.Username, user.Password)
-	update := fmt.Sprintf("ALTER USER `%s` IDENTIFIED BY '%s';", user.Username, user.Password)
-
 	if !m.isUserExist(admin, user) {
-		err := m.executeQuery(create, admin)
-		if err != nil {
+		if err := m.createUser(admin, user); err != nil {
 			return err
 		}
 	} else {
-		err := m.executeQuery(update, admin)
-		if err != nil {
+		if err := m.updateUser(admin, user); err != nil {
 			return err
 		}
 	}

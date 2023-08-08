@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package sectmpl
+package templates
 
 import (
 	"bytes"

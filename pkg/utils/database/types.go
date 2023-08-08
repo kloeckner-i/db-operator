@@ -36,10 +36,6 @@ type DatabaseUser struct {
 	AccessType string
 }
 
-func (user *DatabaseUser) SetAccessType(accessType string) {
-	user.AccessType = accessType
-}
-
 // DatabaseAddress contains host and port of a database instance
 type DatabaseAddress struct {
 	Host string

@@ -379,19 +379,14 @@ func (p Postgres) deleteDatabase(admin AdminCredentials) error {
 }
 
 func (p Postgres) createOrUpdateUser(admin AdminCredentials, user *DatabaseUser) error {
-	create := fmt.Sprintf("CREATE USER \"%s\" WITH ENCRYPTED PASSWORD '%s' NOSUPERUSER;", user.Username, user.Password)
-	update := fmt.Sprintf("ALTER ROLE \"%s\" WITH ENCRYPTED PASSWORD '%s';", user.Username, user.Password)
-
 	if !p.isUserExist(admin, user) {
-		err := p.executeExec("postgres", create, admin)
-		if err != nil {
+		if err := p.createUser(admin, user); err != nil {
 			logrus.Errorf("failed creating postgres user - %s", err)
 			return err
 		}
 	} else {
-		err := p.executeExec("postgres", update, admin)
-		if err != nil {
-			logrus.Errorf("failed updating postgres user %s - %s", update, err)
+		if err := p.updateUser(admin, user); err != nil {
+			logrus.Errorf("failed updating postgres user - %s", err)
 			return err
 		}
 	}
@@ -468,7 +463,7 @@ func (p Postgres) setUserPermission(admin AdminCredentials, user *DatabaseUser) 
 		for _, s := range schemas {
 			grantUsage := fmt.Sprintf("GRANT USAGE ON SCHEMA \"%s\" TO \"%s\"", s, user.Username)
 			grantTables := fmt.Sprintf("GRANT SELECT, INSERT, DELETE, UPDATE ON ALL TABLES IN SCHEMA \"%s\" TO \"%s\"", s, user.Username)
-			alter := fmt.Sprintf("ALTER DEFAULT PRIVILEGES FOR ROLE \"%s\" IN SCHEMA \"%s\" GRANT SELECT, INSERT, DELETE, UPDATE ON TABLES TO \"%s\";", p.MainUser, s, user.Username)
+			defaultPrivileges := fmt.Sprintf("ALTER DEFAULT PRIVILEGES FOR ROLE \"%s\" IN SCHEMA \"%s\" GRANT SELECT, INSERT, DELETE, UPDATE ON TABLES TO \"%s\";", p.MainUser, s, user.Username)
 			err := p.executeExec(p.Database, grantUsage, admin)
 			if err != nil {
 				logrus.Errorf("failed updating postgres user %s - %s", grantTables, err)
@@ -479,9 +474,9 @@ func (p Postgres) setUserPermission(admin AdminCredentials, user *DatabaseUser) 
 				logrus.Errorf("failed updating postgres user %s - %s", grantTables, err)
 				return err
 			}
-			err = p.executeExec(p.Database, alter, admin)
+			err = p.executeExec(p.Database, defaultPrivileges, admin)
 			if err != nil {
-				logrus.Errorf("failed updating postgres user %s - %s", alter, err)
+				logrus.Errorf("failed updating postgres user %s - %s", defaultPrivileges, err)
 				return err
 			}
 		}
@@ -489,7 +484,7 @@ func (p Postgres) setUserPermission(admin AdminCredentials, user *DatabaseUser) 
 		for _, s := range schemas {
 			grantUsage := fmt.Sprintf("GRANT USAGE ON SCHEMA \"%s\" TO \"%s\"", s, user.Username)
 			grantTables := fmt.Sprintf("GRANT SELECT ON ALL TABLES IN SCHEMA \"%s\" TO \"%s\"", s, user.Username)
-			alter := fmt.Sprintf("ALTER DEFAULT PRIVILEGES FOR ROLE \"%s\" IN SCHEMA \"%s\" GRANT SELECT ON TABLES TO \"%s\";", p.MainUser, s, user.Username)
+			defaultPrivileges := fmt.Sprintf("ALTER DEFAULT PRIVILEGES FOR ROLE \"%s\" IN SCHEMA \"%s\" GRANT SELECT ON TABLES TO \"%s\";", p.MainUser, s, user.Username)
 			err := p.executeExec(p.Database, grantUsage, admin)
 			if err != nil {
 				logrus.Errorf("failed updating postgres user %s - %s", grantTables, err)
@@ -500,9 +495,9 @@ func (p Postgres) setUserPermission(admin AdminCredentials, user *DatabaseUser) 
 				logrus.Errorf("failed updating postgres user %s - %s", grantTables, err)
 				return err
 			}
-			err = p.executeExec(p.Database, alter, admin)
+			err = p.executeExec(p.Database, defaultPrivileges, admin)
 			if err != nil {
-				logrus.Errorf("failed updating postgres user %s - %s", alter, err)
+				logrus.Errorf("failed updating postgres user %s - %s", defaultPrivileges, err)
 				return err
 			}
 		}
@@ -515,8 +510,6 @@ func (p Postgres) setUserPermission(admin AdminCredentials, user *DatabaseUser) 
 }
 
 func (p Postgres) deleteUser(admin AdminCredentials, user *DatabaseUser) error {
-	delete := fmt.Sprintf("DROP USER \"%s\";", user.Username)
-
 	if user.AccessType != ACCESS_TYPE_MAINUSER && p.isUserExist(admin, user) {
 		schemas := p.Schemas
 		if !p.DropPublicSchema {
@@ -541,6 +534,7 @@ func (p Postgres) deleteUser(admin AdminCredentials, user *DatabaseUser) error {
 
 		}
 	}
+	delete := fmt.Sprintf("DROP USER \"%s\";", user.Username)
 	if p.isUserExist(admin, user) {
 		logrus.Debugf("deleting user %s", user.Username)
 		err := p.executeExec("postgres", delete, admin)

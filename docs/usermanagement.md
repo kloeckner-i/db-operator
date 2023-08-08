@@ -41,4 +41,4 @@ DbInstance creation will trigger a new secret creation as well. You will have a 
     - readWrite (SELECT, INSERT, UPDATE, DELETE)
     - readOnly (SELECT)
 
-Read Write user can'r create and drop tables, because actions like this should be done only by the main user (the one created with the database)
+Read Write user can't create and drop tables, because actions like this should be done only by the main user (the one created with the database)

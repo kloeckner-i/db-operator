@@ -42,19 +42,12 @@ import (
 // DbUserReconciler reconciles a DbUser object
 type DbUserReconciler struct {
 	client.Client
-	Scheme   *runtime.Scheme
-	Interval time.Duration
-	Log      logr.Logger
-	Recorder record.EventRecorder
+	Scheme       *runtime.Scheme
+	Interval     time.Duration
+	Log          logr.Logger
+	Recorder     record.EventRecorder
+	CheckChanges bool
 }
-
-// Phases
-const (
-	DBUCR_PHASE_CREATING = "creating"
-	DBUCR_PHASE_UPDATING = "updating"
-	DBUCR_PHASE_DELETING = "deleting"
-	DBUCR_PHASE_READY    = "ready"
-)
 
 //+kubebuilder:rbac:groups=kinda.rocks,resources=dbusers,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=kinda.rocks,resources=dbusers/status,verbs=get;update;patch
@@ -134,7 +127,8 @@ func (r *DbUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		return r.manageError(ctx, dbucr, err, false)
 	}
 
-	if isDbUserChanged(dbucr, userSecret) {
+	// If we don't check for changes, status should be false on each reconciliation
+	if !r.CheckChanges || isDbUserChanged(dbucr, userSecret) {
 		dbucr.Status.Status = false
 	}
 
@@ -160,7 +154,6 @@ func (r *DbUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	dbuser.Username = fmt.Sprintf("%s-%s", dbucr.GetObjectMeta().GetNamespace(), dbucr.GetObjectMeta().GetName())
 
 	if dbucr.GetDeletionTimestamp() != nil {
-		dbucr.Status.Phase = DBUCR_PHASE_DELETING
 		if containsString(dbucr.ObjectMeta.Finalizers, "dbuser."+dbucr.Name) {
 			if err := database.DeleteUser(db, dbuser, adminCred); err != nil {
 				logrus.Errorf("DBUser: namespace=%s, name=%s failed deleting a user - %s", dbucr.Namespace, dbucr.Name, err)
@@ -189,7 +182,6 @@ func (r *DbUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		//Init the DbUser struct depending on a type
 		if !dbucr.Status.Status {
 			if !dbucr.Status.Created {
-				dbucr.Status.Phase = DBUCR_PHASE_CREATING
 				r.Log.Info(fmt.Sprintf("creating a user: %s", dbucr.GetObjectMeta().GetName()))
 				if err := database.CreateUser(db, dbuser, adminCred); err != nil {
 					return r.manageError(ctx, dbucr, err, false)
@@ -208,14 +200,12 @@ func (r *DbUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 				}
 				dbucr.Status.Created = true
 			} else {
-				dbucr.Status.Phase = DBUCR_PHASE_UPDATING
 				r.Log.Info(fmt.Sprintf("updating a user %s", dbucr.GetObjectMeta().GetName()))
 				if err := database.UpdateUser(db, dbuser, adminCred); err != nil {
 					return r.manageError(ctx, dbucr, err, false)
 				}
 			}
 			dbucr.Status.Status = true
-			dbucr.Status.Phase = DBUCR_PHASE_READY
 			dbucr.Status.DatabaseName = dbucr.Spec.DatabaseRef
 		}
 	}
@@ -254,12 +244,11 @@ func (r *DbUserReconciler) getDbUserSecret(ctx context.Context, dbucr *kindav1be
 
 func (r *DbUserReconciler) manageError(ctx context.Context, dbucr *kindav1beta1.DbUser, issue error, requeue bool) (reconcile.Result, error) {
 	dbucr.Status.Status = false
-	logrus.Errorf("DB: namespace=%s, name=%s failed %s - %s", dbucr.Namespace, dbucr.Name, dbucr.Status.Phase, issue)
-	promDBsPhaseError.WithLabelValues(dbucr.Status.Phase).Inc()
+	logrus.Errorf("DB: namespace=%s, name=%s failed - %s", dbucr.Namespace, dbucr.Name, issue)
 
 	retryInterval := 60 * time.Second
 
-	r.Recorder.Event(dbucr, "Warning", "Failed"+dbucr.Status.Phase, issue.Error())
+	r.Recorder.Event(dbucr, "Warning", "Failed", issue.Error())
 	err := r.Status().Update(ctx, dbucr)
 	if err != nil {
 		logrus.Error(err, "unable to update status")

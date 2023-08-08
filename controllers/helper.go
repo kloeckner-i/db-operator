@@ -92,7 +92,7 @@ func containsString(slice []string, s string) bool {
 	return false
 }
 
-func containsSubString(slice []string, s string) bool {
+func sliceContainsSubString(slice []string, s string) bool {
 	for _, item := range slice {
 		if strings.Contains(item, s) {
 			return true

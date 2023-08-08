@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"strconv"
 	"time"
@@ -34,7 +33,7 @@ import (
 	"github.com/db-operator/db-operator/pkg/utils/database"
 	"github.com/db-operator/db-operator/pkg/utils/kci"
 	"github.com/db-operator/db-operator/pkg/utils/proxy"
-	"github.com/db-operator/db-operator/pkg/utils/sectmpl"
+	"github.com/db-operator/db-operator/pkg/utils/templates"
 	"github.com/go-logr/logr"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -124,8 +123,8 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		// Run finalization logic for database. If the
 		// finalization logic fails, don't remove the finalizer so
 		// that we can retry during the next reconciliation.
-		if containsSubString(dbcr.ObjectMeta.Finalizers, "dbuser.") {
-			err := fmt.Errorf("database can't be removed, while there are DbUser referencing it")
+		if sliceContainsSubString(dbcr.ObjectMeta.Finalizers, "dbuser.") {
+			err := errors.New("database can't be removed, while there are DbUser referencing it")
 			logrus.Error(err)
 			return r.manageError(ctx, dbcr, err, true)
 		}
@@ -609,7 +608,7 @@ func (r *DatabaseReconciler) createTemplatedSecrets(ctx context.Context, dbcr *k
 		return err
 	}
 
-	databaseCred, err := sectmpl.ParseTemplatedSecretsData(dbcr, cred, databaseSecret.Data)
+	databaseCred, err := templates.ParseTemplatedSecretsData(dbcr, cred, databaseSecret.Data)
 	if err != nil {
 		return err
 	}
@@ -620,13 +619,13 @@ func (r *DatabaseReconciler) createTemplatedSecrets(ctx context.Context, dbcr *k
 		return err
 	}
 
-	dbSecrets, err := sectmpl.GenerateTemplatedSecrets(dbcr, databaseCred, db.GetDatabaseAddress())
+	dbSecrets, err := templates.GenerateTemplatedSecrets(dbcr, databaseCred, db.GetDatabaseAddress())
 	if err != nil {
 		return err
 	}
 	// Adding values
-	newSecretData := sectmpl.AppendTemplatedSecretData(dbcr, databaseSecret.Data, dbSecrets, ownership)
-	newSecretData = sectmpl.RemoveObsoleteSecret(dbcr, newSecretData, dbSecrets, ownership)
+	newSecretData := templates.AppendTemplatedSecretData(dbcr, databaseSecret.Data, dbSecrets, ownership)
+	newSecretData = templates.RemoveObsoleteSecret(dbcr, newSecretData, dbSecrets, ownership)
 
 	for key, value := range newSecretData {
 		databaseSecret.Data[key] = value
