@@ -24,8 +24,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func testMysql() *Mysql {
-	return &Mysql{"local", test.GetMysqlHost(), test.GetMysqlPort(), "testdb", "testuser", "testpwd", false, false}
+func testMysql() (*Mysql, *DatabaseUser) {
+	return &Mysql{"local", test.GetMysqlHost(), test.GetMysqlPort(), "testdb", false, false}, &DatabaseUser{Username: "testuser", Password: "testpwd"}
 }
 
 func getMysqlAdmin() AdminCredentials {
@@ -33,29 +33,29 @@ func getMysqlAdmin() AdminCredentials {
 }
 
 func TestMysqlCheckStatus(t *testing.T) {
-	m := testMysql()
+	m, dbu := testMysql()
 	admin := getMysqlAdmin()
-	assert.Error(t, m.CheckStatus())
+	assert.Error(t, m.CheckStatus(dbu))
 
-	m.createUser(admin)
-	assert.Error(t, m.CheckStatus())
+	m.createOrUpdateUser(admin, dbu)
+	assert.Error(t, m.CheckStatus(dbu))
 
 	m.createDatabase(admin)
-	assert.NoError(t, m.CheckStatus())
+	assert.NoError(t, m.CheckStatus(dbu))
 
 	m.deleteDatabase(admin)
-	assert.Error(t, m.CheckStatus())
+	assert.Error(t, m.CheckStatus(dbu))
 
-	m.deleteUser(admin)
-	assert.Error(t, m.CheckStatus())
+	m.deleteUser(admin, dbu)
+	assert.Error(t, m.CheckStatus(dbu))
 
 	m.Backend = "google"
-	assert.Error(t, m.CheckStatus())
+	assert.Error(t, m.CheckStatus(dbu))
 }
 
 func TestMysqlExecuteQuery(t *testing.T) {
 	testquery := "SELECT 1;"
-	m := testMysql()
+	m, _ := testMysql()
 	admin := getMysqlAdmin()
 	assert.NoError(t, m.executeQuery(testquery, admin))
 
@@ -65,7 +65,7 @@ func TestMysqlExecuteQuery(t *testing.T) {
 
 func TestMysqlCreateDatabase(t *testing.T) {
 	admin := getMysqlAdmin()
-	m := testMysql()
+	m, _ := testMysql()
 
 	err := m.createDatabase(admin)
 	assert.NoErrorf(t, err, "Unexpected error %v", err)
@@ -80,22 +80,22 @@ func TestMysqlCreateDatabase(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestMysqlCreateUser(t *testing.T) {
+func TestMysqlCreateOrUpdateUser(t *testing.T) {
 	admin := getMysqlAdmin()
-	m := testMysql()
+	m, dbu := testMysql()
 
-	err := m.createUser(admin)
+	err := m.createOrUpdateUser(admin, dbu)
 	assert.NoError(t, err)
 
-	err = m.createUser(admin)
+	err = m.createOrUpdateUser(admin, dbu)
 	assert.NoError(t, err)
 
-	assert.Equal(t, true, m.isUserExist(admin))
+	assert.Equal(t, true, m.isUserExist(admin, dbu))
 }
 
 func TestMysqlDeleteDatabase(t *testing.T) {
 	admin := getMysqlAdmin()
-	m := testMysql()
+	m, _ := testMysql()
 
 	err := m.deleteDatabase(admin)
 	assert.NoError(t, err)
@@ -112,27 +112,27 @@ func TestMysqlDeleteDatabase(t *testing.T) {
 
 func TestMysqlDeleteUser(t *testing.T) {
 	admin := getMysqlAdmin()
-	m := testMysql()
+	m, dbu := testMysql()
 
-	err := m.deleteUser(admin)
+	err := m.deleteUser(admin, dbu)
 	assert.NoError(t, err)
 
-	err = m.deleteUser(admin)
+	err = m.deleteUser(admin, dbu)
 	assert.NoError(t, err)
-	assert.Equal(t, false, m.isUserExist(admin))
+	assert.Equal(t, false, m.isUserExist(admin, dbu))
 }
 
 func TestMysqlGetCredentials(t *testing.T) {
-	m := testMysql()
+	m, dbu := testMysql()
 
-	cred := m.GetCredentials()
-	assert.Equal(t, cred.Username, m.User)
+	cred := m.GetCredentials(dbu)
+	assert.Equal(t, cred.Username, dbu.Username)
 	assert.Equal(t, cred.Name, m.Database)
-	assert.Equal(t, cred.Password, m.Password)
+	assert.Equal(t, cred.Password, dbu.Password)
 }
 
 func TestMysqlParseAdminCredentials(t *testing.T) {
-	m := testMysql()
+	m, _:= testMysql()
 
 	invalidData := make(map[string][]byte)
 	invalidData["unknownkey"] = []byte("wrong")

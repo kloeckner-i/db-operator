@@ -23,21 +23,23 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func testPostgres() *Postgres {
+func testPostgres() (*Postgres, *DatabaseUser) {
 	return &Postgres{
-		Backend:          "local",
-		Host:             test.GetPostgresHost(),
-		Port:             test.GetPostgresPort(),
-		Database:         "testdb",
-		User:             "testuser",
-		Password:         "testpassword",
-		Monitoring:       false,
-		Extensions:       []string{},
-		SSLEnabled:       false,
-		SkipCAVerify:     false,
-		DropPublicSchema: false,
-		Schemas:          []string{},
-	}
+			Backend:          "local",
+			Host:             test.GetPostgresHost(),
+			Port:             test.GetPostgresPort(),
+			Database:         "testdb",
+			Monitoring:       false,
+			Extensions:       []string{},
+			SSLEnabled:       false,
+			SkipCAVerify:     false,
+			DropPublicSchema: false,
+			Schemas:          []string{},
+		},
+		&DatabaseUser{
+			Username: "testuser",
+			Password: "testpassword",
+		}
 }
 
 func getPostgresAdmin() AdminCredentials {
@@ -46,7 +48,7 @@ func getPostgresAdmin() AdminCredentials {
 
 func TestPostgresExecuteQuery(t *testing.T) {
 	testquery := "SELECT 1;"
-	p := testPostgres()
+	p, _ := testPostgres()
 	admin := getPostgresAdmin()
 
 	assert.NoError(t, p.executeExec("postgres", testquery, admin))
@@ -54,7 +56,7 @@ func TestPostgresExecuteQuery(t *testing.T) {
 
 func TestPostgresCreateDatabase(t *testing.T) {
 	admin := getPostgresAdmin()
-	p := testPostgres()
+	p, _ := testPostgres()
 
 	err := p.createDatabase(admin)
 	assert.NoErrorf(t, err, "Unexpected error %v", err)
@@ -65,7 +67,7 @@ func TestPostgresCreateDatabase(t *testing.T) {
 
 func TestPostgresCreateDatabaseTemplate(t *testing.T) {
 	admin := getPostgresAdmin()
-	p := testPostgres()
+	p, _ := testPostgres()
 
 	err := p.createDatabase(admin)
 	assert.NoErrorf(t, err, "Unexpected error %v", err)
@@ -91,104 +93,104 @@ func TestPostgresCreateDatabaseTemplate(t *testing.T) {
 
 func TestPostgresCreateUser(t *testing.T) {
 	admin := getPostgresAdmin()
-	p := testPostgres()
+	p, dbu := testPostgres()
 
-	err := p.createUser(admin)
+	err := p.createOrUpdateUser(admin, dbu)
 	assert.NoErrorf(t, err, "Unexpected error %v", err)
 
-	err = p.createUser(admin)
+	err = p.createOrUpdateUser(admin, dbu)
 	assert.NoErrorf(t, err, "Unexpected error %v", err)
 
-	p.User = "testuser\""
+	dbu.Username = "testuser\""
 
-	err = p.createUser(admin)
+	err = p.createOrUpdateUser(admin, dbu)
 	assert.Error(t, err, "Should get error")
 }
 
 func TestPublicSchema(t *testing.T) {
-	p := testPostgres()
+	p, dbu := testPostgres()
 	p.DropPublicSchema = false
-	assert.NoError(t, p.checkSchemas())
+	assert.NoError(t, p.checkSchemas(dbu))
 }
 
 func TestDropPublicSchemaFail(t *testing.T) {
-	p := testPostgres()
+	p, dbu := testPostgres()
 	p.DropPublicSchema = true
-	assert.Error(t, p.checkSchemas())
+	assert.Error(t, p.checkSchemas(dbu))
 }
 
 func TestDropPublicSchemaMonitoringTrue(t *testing.T) {
-	p := testPostgres()
+	p, dbu := testPostgres()
 	admin := getPostgresAdmin()
 	p.Monitoring = true
 	p.DropPublicSchema = true
 	p.dropPublicSchema(admin)
-	assert.Error(t, p.checkSchemas())
+	assert.Error(t, p.checkSchemas(dbu))
 }
 
-func TestPostgresDropPublicSchemaMonitoringFalse(t *testing.T) {
-	p := testPostgres()
+func TestDropPublicSchemaMonitoringFalse(t *testing.T) {
+	p, dbu := testPostgres()
 	admin := getPostgresAdmin()
 	p.Monitoring = false
 	p.DropPublicSchema = true
 	p.dropPublicSchema(admin)
-	assert.NoError(t, p.checkSchemas())
+	assert.NoError(t, p.checkSchemas(dbu))
 
 	// Schemas is recreated here not to breaks tests
 	p.Schemas = []string{"public"}
 	assert.NoError(t, p.createSchemas(admin))
 }
 
-func TestPostgresEnableMonitoring(t *testing.T) {
-	p := testPostgres()
+func TestEnableMonitoring(t *testing.T) {
+	p, dbu := testPostgres()
 	admin := getPostgresAdmin()
 	p.Monitoring = true
 	p.enableMonitoring(admin)
 	p.Extensions = []string{"pg_stat_statements"}
-	assert.NoError(t, p.checkExtensions())
+	assert.NoError(t, p.checkExtensions(dbu))
 }
 
 func TestPostgresNoExtensions(t *testing.T) {
 	admin := getPostgresAdmin()
-	p := testPostgres()
+	p, dbu := testPostgres()
 	p.Extensions = []string{}
 
 	assert.NoError(t, p.addExtensions(admin))
-	assert.NoError(t, p.checkExtensions())
+	assert.NoError(t, p.checkExtensions(dbu))
 }
 
 func TestPostgresAddExtensions(t *testing.T) {
 	admin := getPostgresAdmin()
-	p := testPostgres()
+	p, dbu := testPostgres()
 	p.Extensions = []string{"pgcrypto", "uuid-ossp"}
 
-	assert.Error(t, p.checkExtensions())
+	assert.Error(t, p.checkExtensions(dbu))
 	assert.NoError(t, p.addExtensions(admin))
-	assert.NoError(t, p.checkExtensions())
+	assert.NoError(t, p.checkExtensions(dbu))
 }
 
 func TestPostgresNoSchemas(t *testing.T) {
 	admin := getPostgresAdmin()
-	p := testPostgres()
+	p, dbu := testPostgres()
 
-	assert.NoError(t, p.checkSchemas())
+	assert.NoError(t, p.checkSchemas(dbu))
 	assert.NoError(t, p.createSchemas(admin))
-	assert.NoError(t, p.checkSchemas())
+	assert.NoError(t, p.checkSchemas(dbu))
 }
 
 func TestPostgresSchemas(t *testing.T) {
 	admin := getPostgresAdmin()
-	p := testPostgres()
+	p, dbu := testPostgres()
 	p.Schemas = []string{"schema_1", "schema_2"}
 
-	assert.Error(t, p.checkSchemas())
+	assert.Error(t, p.checkSchemas(dbu))
 	assert.NoError(t, p.createSchemas(admin))
-	assert.NoError(t, p.checkSchemas())
+	assert.NoError(t, p.checkSchemas(dbu))
 }
 
 func TestPostgresDeleteDatabase(t *testing.T) {
 	admin := getPostgresAdmin()
-	p := testPostgres()
+	p, _ := testPostgres()
 
 	err := p.deleteDatabase(admin)
 	assert.NoErrorf(t, err, "Unexpected error %v", err)
@@ -199,23 +201,23 @@ func TestPostgresDeleteDatabase(t *testing.T) {
 
 func TestPostgresDeleteUser(t *testing.T) {
 	admin := getPostgresAdmin()
-	p := testPostgres()
+	p, dbu := testPostgres()
 
-	err := p.deleteUser(admin)
+	err := p.deleteUser(admin, dbu)
 	assert.NoErrorf(t, err, "Unexpected error %v", err)
 }
 
 func TestPostgresGetCredentials(t *testing.T) {
-	p := testPostgres()
+	p, dbu := testPostgres()
 
-	cred := p.GetCredentials()
-	assert.Equal(t, cred.Username, p.User)
+	cred := p.GetCredentials(dbu)
+	assert.Equal(t, cred.Username, dbu.Username)
 	assert.Equal(t, cred.Name, p.Database)
-	assert.Equal(t, cred.Password, p.Password)
+	assert.Equal(t, cred.Password, dbu.Password)
 }
 
 func TestPostgresParseAdminCredentials(t *testing.T) {
-	p := testPostgres()
+	p, _ := testPostgres()
 
 	invalidData := make(map[string][]byte)
 	invalidData["unknownkey"] = []byte("wrong")

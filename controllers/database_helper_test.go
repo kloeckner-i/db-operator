@@ -34,7 +34,7 @@ var (
 func TestUnitDeterminPostgresType(t *testing.T) {
 	postgresDbCr := newPostgresTestDbCr(newPostgresTestDbInstanceCr())
 
-	db, _ := determinDatabaseType(postgresDbCr, testDbcred)
+	db, _, _ := determinDatabaseType(postgresDbCr, testDbcred)
 	_, ok := db.(database.Postgres)
 	assert.Equal(t, ok, true, "expected true")
 }
@@ -42,7 +42,7 @@ func TestUnitDeterminPostgresType(t *testing.T) {
 func TestUnitDeterminMysqlType(t *testing.T) {
 	mysqlDbCr := newMysqlTestDbCr()
 
-	db, _ := determinDatabaseType(mysqlDbCr, testDbcred)
+	db, _, _ := determinDatabaseType(mysqlDbCr, testDbcred)
 	_, ok := db.(database.Mysql)
 	assert.Equal(t, ok, true, "expected true")
 }
@@ -93,7 +93,7 @@ func TestUnitMonitoringNotEnabled(t *testing.T) {
 	instance := newPostgresTestDbInstanceCr()
 	instance.Spec.Monitoring.Enabled = false
 	postgresDbCr := newPostgresTestDbCr(instance)
-	db, _ := determinDatabaseType(postgresDbCr, testDbcred)
+	db, _, _ := determinDatabaseType(postgresDbCr, testDbcred)
 	postgresInterface, _ := db.(database.Postgres)
 
 	found := false
@@ -112,7 +112,7 @@ func TestUnitMonitoringEnabled(t *testing.T) {
 	postgresDbCr := newPostgresTestDbCr(instance)
 	postgresDbCr.Status.InstanceRef.Spec.Monitoring.Enabled = true
 
-	db, _ := determinDatabaseType(postgresDbCr, testDbcred)
+	db, _, _ := determinDatabaseType(postgresDbCr, testDbcred)
 	postgresInterface, _ := db.(database.Postgres)
 
 	assert.Equal(t, postgresInterface.Monitoring, true, "expected monitoring is true in postgres interface")

@@ -198,7 +198,6 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			// when database creation failed, don't requeue request. to prevent exceeding api limit (ex: against google api)
 			return r.manageError(ctx, dbcr, err, false)
 		}
-
 		dbcr.Status.Phase = dbPhaseInstanceAccessSecret
 
 		if err = r.createInstanceAccessSecret(ctx, dbcr, ownership); err != nil {
@@ -314,7 +313,7 @@ func (r *DatabaseReconciler) createDatabase(ctx context.Context, dbcr *kindav1be
 		return err
 	}
 
-	db, err := determinDatabaseType(dbcr, databaseCred)
+	db, dbuser, err := determinDatabaseType(dbcr, databaseCred)
 	if err != nil {
 		// failed to determine database type
 		return err
@@ -336,7 +335,12 @@ func (r *DatabaseReconciler) createDatabase(ctx context.Context, dbcr *kindav1be
 		return err
 	}
 
-	err = database.Create(db, adminCred)
+	err = database.CreateDatabase(db, adminCred)
+	if err != nil {
+		return err
+	}
+
+	err = database.CreateOrUpdateUser(db, dbuser, adminCred)
 	if err != nil {
 		return err
 	}
@@ -371,7 +375,7 @@ func (r *DatabaseReconciler) deleteDatabase(ctx context.Context, dbcr *kindav1be
 		Username: dbcr.Status.UserName,
 	}
 
-	db, err := determinDatabaseType(dbcr, databaseCred)
+	db, dbuser, err := determinDatabaseType(dbcr, databaseCred)
 	if err != nil {
 		// failed to determine database type
 		return err
@@ -389,7 +393,12 @@ func (r *DatabaseReconciler) deleteDatabase(ctx context.Context, dbcr *kindav1be
 		return err
 	}
 
-	err = database.Delete(db, adminCred)
+	err = database.DeleteDatabase(db, adminCred)
+	if err != nil {
+		return err
+	}
+
+	err = database.DeleteUser(db, dbuser, adminCred)
 	if err != nil {
 		return err
 	}

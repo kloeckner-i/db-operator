@@ -20,6 +20,7 @@ import (
 	"errors"
 	"strconv"
 
+	"github.com/db-operator/db-operator/pkg/utils/database"
 	kcidb "github.com/db-operator/db-operator/pkg/utils/database"
 	"github.com/sirupsen/logrus"
 )
@@ -42,8 +43,6 @@ func makeInterface(in *Generic) (kcidb.Database, error) {
 		db := kcidb.Postgres{
 			Host:         in.Host,
 			Port:         in.Port,
-			User:         in.User,
-			Password:     in.Password,
 			Database:     "postgres",
 			SSLEnabled:   in.SSLEnabled,
 			SkipCAVerify: in.SkipCAVerify,
@@ -53,8 +52,6 @@ func makeInterface(in *Generic) (kcidb.Database, error) {
 		db := kcidb.Mysql{
 			Host:         in.Host,
 			Port:         in.Port,
-			User:         in.User,
-			Password:     in.Password,
 			Database:     "mysql",
 			SSLEnabled:   in.SSLEnabled,
 			SkipCAVerify: in.SkipCAVerify,
@@ -76,7 +73,12 @@ func (ins *Generic) exist() error {
 		logrus.Errorf("can not check if instance exists because of %s", err)
 		return err
 	}
-	err = db.CheckStatus()
+	dbuser := &database.DatabaseUser{
+		Username: ins.User,
+		Password: ins.Password,
+	}
+
+	err = db.CheckStatus(dbuser)
 	if err != nil {
 		logrus.Error(err)
 		return err

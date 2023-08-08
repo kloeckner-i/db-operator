@@ -333,4 +333,3 @@ func getBackupHost(dbcr *kindav1beta1.Database) (string, error) {
 		return host, errors.New("unknown backend type")
 	}
 }
-

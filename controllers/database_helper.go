@@ -53,36 +53,41 @@ func getBlockedTempatedKeys() []string {
 	return []string{fieldMysqlDB, fieldMysqlPassword, fieldMysqlUser, fieldPostgresDB, fieldPostgresUser, fieldPostgressPassword}
 }
 
-func determinDatabaseType(dbcr *kindav1beta1.Database, dbCred database.Credentials) (database.Database, error) {
+func determinDatabaseType(dbcr *kindav1beta1.Database, dbCred database.Credentials) (database.Database, *database.DatabaseUser, error) {
 	instance, err := dbcr.GetInstanceRef()
 	if err != nil {
 		logrus.Errorf("could not get instance ref %s - %s", dbcr.Name, err)
-		return nil, err
+		return nil, nil, err
 	}
 
 	host := instance.Status.Info["DB_CONN"]
 	port, err := strconv.Atoi(instance.Status.Info["DB_PORT"])
 	if err != nil {
 		logrus.Errorf("can't get port information from the instanceRef %s - %s", dbcr.Name, err)
-		return nil, err
+		return nil, nil, err
 	}
 
 	engine, err := dbcr.GetEngineType()
 	if err != nil {
 		logrus.Errorf("could not get instance engine type %s - %s", dbcr.Name, err)
-		return nil, err
+		return nil, nil, err
 	}
 
 	backend, err := dbcr.GetBackendType()
 	if err != nil {
 		logrus.Errorf("could not get backend type %s - %s", dbcr.Name, err)
-		return nil, err
+		return nil, nil, err
 	}
 
 	monitoringEnabled, err := dbcr.IsMonitoringEnabled()
 	if err != nil {
 		logrus.Errorf("could not check if monitoring is enabled %s - %s", dbcr.Name, err)
-		return nil, err
+		return nil, nil, err
+	}
+
+	dbuser := &database.DatabaseUser{
+		Username: dbCred.Username,
+		Password: dbCred.Password,
 	}
 
 	switch engine {
@@ -93,8 +98,6 @@ func determinDatabaseType(dbcr *kindav1beta1.Database, dbCred database.Credentia
 			Host:             host,
 			Port:             uint16(port),
 			Database:         dbCred.Name,
-			User:             dbCred.Username,
-			Password:         dbCred.Password,
 			Monitoring:       monitoringEnabled,
 			Extensions:       extList,
 			SSLEnabled:       instance.Spec.SSLConnection.Enabled,
@@ -103,8 +106,7 @@ func determinDatabaseType(dbcr *kindav1beta1.Database, dbCred database.Credentia
 			Schemas:          dbcr.Spec.Postgres.Schemas,
 			Template:         dbcr.Spec.Postgres.Template,
 		}
-
-		return db, nil
+		return db, dbuser, nil
 
 	case "mysql":
 		db := database.Mysql{
@@ -112,16 +114,14 @@ func determinDatabaseType(dbcr *kindav1beta1.Database, dbCred database.Credentia
 			Host:         host,
 			Port:         uint16(port),
 			Database:     dbCred.Name,
-			User:         dbCred.Username,
-			Password:     dbCred.Password,
 			SSLEnabled:   instance.Spec.SSLConnection.Enabled,
 			SkipCAVerify: instance.Spec.SSLConnection.SkipVerify,
 		}
 
-		return db, nil
+		return db, dbuser, nil
 	default:
 		err := errors.New("not supported engine type")
-		return nil, err
+		return nil, nil, err
 	}
 }
 
@@ -258,7 +258,7 @@ func generateTemplatedSecrets(dbcr *kindav1beta1.Database, databaseCred database
 
 	// If proxy is not used, set a real database address
 	if !dbcr.Status.ProxyStatus.Status {
-		db, err := determinDatabaseType(dbcr, databaseCred)
+		db, _, err := determinDatabaseType(dbcr, databaseCred)
 		if err != nil {
 			return nil, err
 		}

@@ -39,8 +39,6 @@ type Postgres struct {
 	Host             string
 	Port             uint16
 	Database         string
-	User             string
-	Password         string
 	Monitoring       bool
 	Extensions       []string
 	SSLEnabled       bool
@@ -106,16 +104,16 @@ func (p Postgres) isDbExist(admin AdminCredentials) bool {
 	return p.isRowExist("postgres", check, admin.Username, admin.Password)
 }
 
-func (p Postgres) isUserExist(admin AdminCredentials) bool {
-	check := fmt.Sprintf("SELECT 1 FROM pg_user WHERE usename = '%s';", p.User)
+func (p Postgres) isUserExist(admin AdminCredentials, user *DatabaseUser) bool {
+	check := fmt.Sprintf("SELECT 1 FROM pg_user WHERE usename = '%s';", user.Username)
 
 	return p.isRowExist("postgres", check, admin.Username, admin.Password)
 }
 
 // CheckStatus checks status of postgres database
 // if the connection to database works
-func (p Postgres) CheckStatus() error {
-	db, err := p.getDbConn(p.Database, p.User, p.Password)
+func (p Postgres) CheckStatus(user *DatabaseUser) error {
+	db, err := p.getDbConn(p.Database, user.Username, user.Password)
 	if err != nil {
 		return fmt.Errorf("db conn test failed - couldn't get db conn: %s", err)
 	}
@@ -125,11 +123,11 @@ func (p Postgres) CheckStatus() error {
 		return fmt.Errorf("db conn test failed - failed to execute query: %s", err)
 	}
 
-	if err := p.checkSchemas(); err != nil {
+	if err := p.checkSchemas(user); err != nil {
 		return err
 	}
 
-	if err := p.checkExtensions(); err != nil {
+	if err := p.checkExtensions(user); err != nil {
 		return err
 	}
 
@@ -200,12 +198,12 @@ func (p Postgres) createDatabase(admin AdminCredentials) error {
 	return nil
 }
 
-func (p Postgres) createUser(admin AdminCredentials) error {
-	create := fmt.Sprintf("CREATE USER \"%s\" WITH ENCRYPTED PASSWORD '%s' NOSUPERUSER;", p.User, p.Password)
-	grant := fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE \"%s\" TO \"%s\";", p.Database, p.User)
-	update := fmt.Sprintf("ALTER ROLE \"%s\" WITH ENCRYPTED PASSWORD '%s';", p.User, p.Password)
+func (p Postgres) createOrUpdateUser(admin AdminCredentials, user *DatabaseUser) error {
+	create := fmt.Sprintf("CREATE USER \"%s\" WITH ENCRYPTED PASSWORD '%s' NOSUPERUSER;", user.Username, user.Password)
+	grant := fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE \"%s\" TO \"%s\";", p.Database, user.Username)
+	update := fmt.Sprintf("ALTER ROLE \"%s\" WITH ENCRYPTED PASSWORD '%s';", user.Username, user.Password)
 
-	if !p.isUserExist(admin) {
+	if !p.isUserExist(admin, user) {
 		err := p.executeExec("postgres", create, admin)
 		if err != nil {
 			logrus.Errorf("failed creating postgres user - %s", err)
@@ -226,9 +224,71 @@ func (p Postgres) createUser(admin AdminCredentials) error {
 	}
 
 	for _, s := range p.Schemas {
-		grantUserAccess := fmt.Sprintf("GRANT ALL ON SCHEMA \"%s\" TO \"%s\"", s, p.User)
+		grantUserAccess := fmt.Sprintf("GRANT ALL ON SCHEMA \"%s\" TO \"%s\"", s, user.Username)
 		if err := p.executeExec(p.Database, grantUserAccess, admin); err != nil {
-			logrus.Errorf("failed to grant usage access to %s on schema %s: %s", p.User, s, err)
+			logrus.Errorf("failed to grant usage access to %s on schema %s: %s", user.Username, s, err)
+			return err
+		}
+	}
+	return nil
+}
+
+func (p Postgres) createUser(admin AdminCredentials, user *DatabaseUser) error {
+	create := fmt.Sprintf("CREATE USER \"%s\" WITH ENCRYPTED PASSWORD '%s' NOSUPERUSER;", user.Username, user.Password)
+	grant := fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE \"%s\" TO \"%s\";", p.Database, user.Username)
+
+	if !p.isUserExist(admin, user) {
+		err := p.executeExec("postgres", create, admin)
+		if err != nil {
+			logrus.Errorf("failed creating postgres user - %s", err)
+			return err
+		}
+	} else {
+		err := fmt.Errorf("user already exists: %s", user.Username)
+		return err
+	}
+
+	err := p.executeExec("postgres", grant, admin)
+	if err != nil {
+		logrus.Errorf("failed granting postgres user %s - %s", grant, err)
+		return err
+	}
+
+	for _, s := range p.Schemas {
+		grantUserAccess := fmt.Sprintf("GRANT ALL ON SCHEMA \"%s\" TO \"%s\"", s, user.Username)
+		if err := p.executeExec(p.Database, grantUserAccess, admin); err != nil {
+			logrus.Errorf("failed to grant usage access to %s on schema %s: %s", user.Username, s, err)
+			return err
+		}
+	}
+	return nil
+}
+
+func (p Postgres) updateUser(admin AdminCredentials, user *DatabaseUser) error {
+	update := fmt.Sprintf("ALTER ROLE \"%s\" WITH ENCRYPTED PASSWORD '%s';", user.Username, user.Password)
+	grant := fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE \"%s\" TO \"%s\";", p.Database, user.Username)
+
+	if !p.isUserExist(admin, user) {
+		err := fmt.Errorf("user doesn't exist yet: %s", user.Username)
+		return err
+	} else {
+		err := p.executeExec("postgres", update, admin)
+		if err != nil {
+			logrus.Errorf("failed updating postgres user %s - %s", update, err)
+			return err
+		}
+	}
+
+	err := p.executeExec("postgres", grant, admin)
+	if err != nil {
+		logrus.Errorf("failed granting postgres user %s - %s", grant, err)
+		return err
+	}
+
+	for _, s := range p.Schemas {
+		grantUserAccess := fmt.Sprintf("GRANT ALL ON SCHEMA \"%s\" TO \"%s\"", s, user.Username)
+		if err := p.executeExec(p.Database, grantUserAccess, admin); err != nil {
+			logrus.Errorf("failed to grant usage access to %s on schema %s: %s", user.Username, s, err)
 			return err
 		}
 	}
@@ -260,16 +320,16 @@ func (p Postgres) createSchemas(admin AdminCredentials) error {
 	return nil
 }
 
-func (p Postgres) checkSchemas() error {
+func (p Postgres) checkSchemas(user *DatabaseUser) error {
 	if p.DropPublicSchema {
 		query := "SELECT 1 FROM pg_catalog.pg_namespace WHERE nspname = 'public';"
-		if p.isRowExist(p.Database, query, p.User, p.Password) {
+		if p.isRowExist(p.Database, query, user.Username, user.Password) {
 			return fmt.Errorf("schema public still exists")
 		}
 	}
 	for _, s := range p.Schemas {
 		query := fmt.Sprintf("SELECT 1 FROM pg_catalog.pg_namespace WHERE nspname = '%s';", s)
-		if !p.isRowExist(p.Database, query, p.User, p.Password) {
+		if !p.isRowExist(p.Database, query, user.Username, user.Password) {
 			return fmt.Errorf("couldn't find schema %s in database %s", s, p.Database)
 		}
 	}
@@ -305,11 +365,11 @@ func (p Postgres) deleteDatabase(admin AdminCredentials) error {
 	return nil
 }
 
-func (p Postgres) deleteUser(admin AdminCredentials) error {
-	delete := fmt.Sprintf("DROP USER \"%s\";", p.User)
+func (p Postgres) deleteUser(admin AdminCredentials, user *DatabaseUser) error {
+	delete := fmt.Sprintf("DROP USER \"%s\";", user.Username)
 
-	if p.isUserExist(admin) {
-		logrus.Debugf("deleting user %s", p.User)
+	if p.isUserExist(admin, user) {
+		logrus.Debugf("deleting user %s", user.Username)
 		err := p.executeExec("postgres", delete, admin)
 		if err != nil {
 			pqErr := err.(*pq.Error)
@@ -325,11 +385,11 @@ func (p Postgres) deleteUser(admin AdminCredentials) error {
 }
 
 // GetCredentials returns credentials of the postgres database
-func (p Postgres) GetCredentials() Credentials {
+func (p Postgres) GetCredentials(user *DatabaseUser) Credentials {
 	return Credentials{
 		Name:     p.Database,
-		Username: p.User,
-		Password: p.Password,
+		Username: user.Username,
+		Password: user.Password,
 	}
 }
 
@@ -356,10 +416,10 @@ func (p Postgres) enableMonitoring(admin AdminCredentials) error {
 	return nil
 }
 
-func (p Postgres) checkExtensions() error {
+func (p Postgres) checkExtensions(user *DatabaseUser) error {
 	for _, ext := range p.Extensions {
 		query := fmt.Sprintf("SELECT 1 FROM pg_extension WHERE extname = '%s';", ext)
-		if !p.isRowExist(p.Database, query, p.User, p.Password) {
+		if !p.isRowExist(p.Database, query, user.Username, user.Password) {
 			return fmt.Errorf("couldn't find extension %s in database %s", ext, p.Database)
 		}
 	}

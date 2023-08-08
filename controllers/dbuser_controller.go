@@ -90,7 +90,7 @@ func (r *DbUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	// Get the DB by the reference provided in the manifest
 	dbcr := &kindarocksv1beta1.Database{}
 	if err := r.Get(ctx, types.NamespacedName{Namespace: req.Namespace, Name: dbucr.Spec.DatabaseRef}, dbcr); err != nil {
-		r.manageError(ctx, dbucr, err, false)
+		return r.manageError(ctx, dbucr, err, false)
 	}
 
 	// Check if DbUser is marked to be deleted
@@ -141,7 +141,7 @@ func (r *DbUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		dbucr.Status.Status = false
 	}
 
-	db, err := determinDatabaseType(dbcr, creds)
+	db, dbuser, err := determinDatabaseType(dbcr, creds)
 	if err != nil {
 		// failed to determine database type
 		return r.manageError(ctx, dbucr, err, false)
@@ -162,13 +162,13 @@ func (r *DbUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	if !dbucr.Status.Status {
 		if !dbucr.Status.Created {
 			r.Log.Info(fmt.Sprintf("creating a user: %s", dbucr.Spec.Username))
-			if err := database.CreateUser(db, adminCred); err != nil {
+			if err := database.CreateUser(db, dbuser, adminCred); err != nil {
 				return r.manageError(ctx, dbucr, err, false)
 			}
 			dbucr.Status.Created = true
 		} else {
 			r.Log.Info(fmt.Sprintf("updating a user %s", dbucr.Spec.Username))
-			if err := database.UpdateUser(db, adminCred); err != nil {
+			if err := database.UpdateUser(db, dbuser, adminCred); err != nil {
 				return r.manageError(ctx, dbucr, err, false)
 			}
 		}

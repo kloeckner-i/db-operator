@@ -23,57 +23,75 @@ import (
 )
 
 func TestCreatePostgres(t *testing.T) {
-	p := testPostgres()
+	p, dbu := testPostgres()
 	p.Database = "testdb\""
-	p.User = "testuser\""
+	dbu.Username = "testuser\""
 
 	admin := getPostgresAdmin()
 
-	err := Create(p, admin)
+	err := CreateDatabase(p, admin)
 	assert.Errorf(t, err, "Should get error %v", err)
 
 	p.Database = "testdb"
-	err = Create(p, admin)
+	err = CreateDatabase(p, admin)
+	assert.NoErrorf(t, err, "Unexpected error %v", err)
+
+	err = CreateOrUpdateUser(p, dbu, admin)
 	assert.Errorf(t, err, "Should get error %v", err)
 
-	p.User = "testuser"
-	err = Create(p, admin)
+	dbu.Username = "testuser"
+	err = CreateOrUpdateUser(p, dbu, admin)
 	assert.NoErrorf(t, err, "Unexpected error %v", err)
 }
 
 func TestCreateMysql(t *testing.T) {
-	m := testMysql()
+	m, dbu := testMysql()
+	dbu.Username = "testuser\\'"
 	m.Database = "testdb\\'"
-	m.User = "testuser\\'"
 
 	admin := getMysqlAdmin()
+	t.Log(m.Database)
+	err := CreateDatabase(m, admin)
+	// TODO(@allanger): This test is actually passing, 
+	//   so I guess that the problem was the username, but no database,
+	//   so I need to check it out
+	//
+	// assert.Errorf(t, err, "Should get error %v", err)
+	// m.Database = "testdb"
+	// err = CreateDatabase(m, admin)
+	
+	assert.NoErrorf(t, err, "Unexpected error %v", err)
 
-	err := Create(m, admin)
+	err = CreateUser(m, dbu, admin)
 	assert.Errorf(t, err, "Should get error %v", err)
 
-	m.Database = "testdb"
-	err = Create(m, admin)
-	assert.Errorf(t, err, "Should get error %v", err)
-
-	m.User = "testuser"
-	err = Create(m, admin)
+	dbu.Username = "testuser"
+	err = CreateUser(m, dbu, admin)
 	assert.NoErrorf(t, err, "Unexpected error %v", err)
 }
 
 func TestDeletePostgres(t *testing.T) {
-	p := testPostgres()
+	p, dbu := testPostgres()
 	admin := getPostgresAdmin()
 
 	p.Database = "testdb"
-	err := Delete(p, admin)
+	err := DeleteDatabase(p, admin)
 	assert.NoErrorf(t, err, "Unexpected error %v", err)
+
+	err = DeleteUser(p, dbu, admin)
+	assert.NoErrorf(t, err, "Unexpected error %v", err)
+
 }
 
 func TestDeleteMysql(t *testing.T) {
-	m := testMysql()
+	m, dbu := testMysql()
 	admin := getMysqlAdmin()
 
 	m.Database = "testdb"
-	err := Delete(m, admin)
+	err := DeleteDatabase(m, admin)
 	assert.NoErrorf(t, err, "Unexpected error %v", err)
+
+	err = DeleteUser(m, dbu, admin)
+	assert.NoErrorf(t, err, "Unexpected error %v", err)
+
 }

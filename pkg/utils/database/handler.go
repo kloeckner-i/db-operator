@@ -16,28 +16,53 @@
 
 package database
 
-// Create executes queries to create database and user
-func Create(db Database, admin AdminCredentials) error {
+// CreateDatabase executes queries to create database
+func CreateDatabase(db Database, admin AdminCredentials) error {
 	err := db.createDatabase(admin)
-	if err != nil {
-		return err
-	}
-
-	err = db.createUser(admin)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-// Delete executes queries to delete database and user
-func Delete(db Database, admin AdminCredentials) error {
+// CreateOrUpdateUser executes queries to create or update user
+func CreateOrUpdateUser(db Database, dbuser *DatabaseUser, admin AdminCredentials) error {
+	err := db.createOrUpdateUser(admin, dbuser)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// CreateUser executes queries to a create user
+func CreateUser(db Database, dbuser *DatabaseUser, admin AdminCredentials) error {
+	err := db.createOrUpdateUser(admin, dbuser)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func UpdateUser(db Database, dbuser *DatabaseUser, admin AdminCredentials) error {
+	err := db.createOrUpdateUser(admin, dbuser)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// DeleteDatabase executes queries to delete database and user
+func DeleteDatabase(db Database, admin AdminCredentials) error {
 	err := db.deleteDatabase(admin)
 	if err != nil {
 		return err
 	}
 
-	err = db.deleteUser(admin)
+	return nil
+}
+
+func DeleteUser(db Database, dbuser *DatabaseUser, admin AdminCredentials) error {
+	err := db.deleteUser(admin, dbuser)
 	if err != nil {
 		return err
 	}

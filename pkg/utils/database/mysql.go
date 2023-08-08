@@ -38,8 +38,6 @@ type Mysql struct {
 	Host         string
 	Port         uint16
 	Database     string
-	User         string
-	Password     string
 	SSLEnabled   bool
 	SkipCAVerify bool
 }
@@ -64,8 +62,8 @@ func (m Mysql) sslMode() string {
 
 // CheckStatus checks status of mysql database
 // if the connection to database works
-func (m Mysql) CheckStatus() error {
-	db, err := m.getDbConn(m.User, m.Password)
+func (m Mysql) CheckStatus(user *DatabaseUser) error {
+	db, err := m.getDbConn(user.Username, user.Password)
 	if err != nil {
 		return err
 	}
@@ -154,12 +152,12 @@ func (m Mysql) deleteDatabase(admin AdminCredentials) error {
 	return nil
 }
 
-func (m Mysql) createUser(admin AdminCredentials) error {
-	create := fmt.Sprintf("CREATE USER `%s` IDENTIFIED BY '%s';", m.User, m.Password)
-	grant := fmt.Sprintf("GRANT ALL PRIVILEGES ON `%s`.* TO '%s'@'%%';", m.Database, m.User)
-	update := fmt.Sprintf("ALTER USER `%s` IDENTIFIED BY '%s';", m.User, m.Password)
+func (m Mysql) createOrUpdateUser(admin AdminCredentials, user *DatabaseUser) error {
+	create := fmt.Sprintf("CREATE USER `%s` IDENTIFIED BY '%s';", user.Username, user.Password)
+	grant := fmt.Sprintf("GRANT ALL PRIVILEGES ON `%s`.* TO '%s'@'%%';", m.Database, user.Username)
+	update := fmt.Sprintf("ALTER USER `%s` IDENTIFIED BY '%s';", user.Username, user.Password)
 
-	if !m.isUserExist(admin) {
+	if !m.isUserExist(admin, user) {
 		err := m.executeQuery(create, admin)
 		if err != nil {
 			return err
@@ -179,10 +177,54 @@ func (m Mysql) createUser(admin AdminCredentials) error {
 	return nil
 }
 
-func (m Mysql) deleteUser(admin AdminCredentials) error {
-	delete := fmt.Sprintf("DROP USER `%s`;", m.User)
+func (m Mysql) createUser(admin AdminCredentials, user *DatabaseUser) error {
+	create := fmt.Sprintf("CREATE USER `%s` IDENTIFIED BY '%s';", user.Username, user.Password)
+	grant := fmt.Sprintf("GRANT ALL PRIVILEGES ON `%s`.* TO '%s'@'%%';", m.Database, user.Username)
 
-	if m.isUserExist(admin) {
+	if !m.isUserExist(admin, user) {
+		err := m.executeQuery(create, admin)
+		if err != nil {
+			return err
+		}
+	} else {
+		err := fmt.Errorf("user already exists: %s", user.Username)
+		return err
+	}
+
+	err := m.executeQuery(grant, admin)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m Mysql) updateUser(admin AdminCredentials, user *DatabaseUser) error {
+	update := fmt.Sprintf("ALTER USER `%s` IDENTIFIED BY '%s';", user.Username, user.Password)
+	grant := fmt.Sprintf("GRANT ALL PRIVILEGES ON `%s`.* TO '%s'@'%%';", m.Database, user.Username)
+
+	if !m.isUserExist(admin, user) {
+		err := fmt.Errorf("user doesn't exist yet: %s", user.Username)
+		return err
+	} else {
+		err := m.executeQuery(update, admin)
+		if err != nil {
+			return err
+		}
+	}
+
+	err := m.executeQuery(grant, admin)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m Mysql) deleteUser(admin AdminCredentials, user *DatabaseUser) error {
+	delete := fmt.Sprintf("DROP USER `%s`;", user.Username)
+
+	if m.isUserExist(admin, user) {
 		err := m.executeQuery(delete, admin)
 		if err != nil {
 			return err
@@ -208,8 +250,8 @@ func (m Mysql) isRowExist(query string, admin AdminCredentials) bool {
 	return true
 }
 
-func (m Mysql) isUserExist(admin AdminCredentials) bool {
-	check := fmt.Sprintf("SELECT User FROM mysql.user WHERE user='%s';", m.User)
+func (m Mysql) isUserExist(admin AdminCredentials, user *DatabaseUser) bool {
+	check := fmt.Sprintf("SELECT User FROM mysql.user WHERE user='%s';", user.Username)
 
 	if m.isRowExist(check, admin) {
 		logrus.Debug("user exists")
@@ -221,11 +263,11 @@ func (m Mysql) isUserExist(admin AdminCredentials) bool {
 }
 
 // GetCredentials returns credentials of the mysql database
-func (m Mysql) GetCredentials() Credentials {
+func (m Mysql) GetCredentials(user *DatabaseUser) Credentials {
 	return Credentials{
 		Name:     m.Database,
-		Username: m.User,
-		Password: m.Password,
+		Username: user.Username,
+		Password: user.Password,
 	}
 }
 

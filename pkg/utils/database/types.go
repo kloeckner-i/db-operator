@@ -24,6 +24,16 @@ type Credentials struct {
 	TemplatedSecrets map[string]string
 }
 
+type DatabaseUser struct {
+	Username   string
+	Password   string
+	AccessType string
+}
+
+func (user *DatabaseUser) SetAccessType(accessType string) {
+	user.AccessType = "readOnly"
+}
+
 // DatabaseAddress contains host and port of a database instance
 type DatabaseAddress struct {
 	Host string
@@ -39,11 +49,13 @@ type AdminCredentials struct {
 // Database is interface for CRUD operate of different types of databases
 type Database interface {
 	createDatabase(admin AdminCredentials) error
-	createUser(admin AdminCredentials) error
+	createOrUpdateUser(admin AdminCredentials, user *DatabaseUser) error
+	createUser(admin AdminCredentials, user *DatabaseUser) error
+	updateUser(admin AdminCredentials, user *DatabaseUser) error
 	deleteDatabase(admin AdminCredentials) error
-	deleteUser(admin AdminCredentials) error
-	CheckStatus() error
-	GetCredentials() Credentials
+	deleteUser(admin AdminCredentials, user *DatabaseUser) error
+	CheckStatus(user *DatabaseUser) error
+	GetCredentials(user *DatabaseUser) Credentials
 	ParseAdminCredentials(data map[string][]byte) (AdminCredentials, error)
 	GetDatabaseAddress() DatabaseAddress
 }
