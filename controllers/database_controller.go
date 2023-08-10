@@ -652,6 +652,12 @@ func (r *DatabaseReconciler) createInfoConfigMap(ctx context.Context, dbcr *kind
 		info["DB_HOST"] = proxyStatus.ServiceName
 		info["DB_PORT"] = strconv.FormatInt(int64(proxyStatus.SQLPort), 10)
 	}
+
+	sslMode, err := getSSLMode(dbcr)
+	if err != nil {
+		return err
+	}
+	info["SSL_MODE"] = sslMode
 	databaseConfigResource := kci.ConfigMapBuilder(dbcr.Spec.SecretName, dbcr.Namespace, info, ownership)
 
 	err = r.Create(ctx, databaseConfigResource)

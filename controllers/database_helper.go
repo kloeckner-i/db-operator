@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	kindav1beta1 "github.com/db-operator/db-operator/api/v1beta1"
@@ -188,3 +189,62 @@ func generateDatabaseSecretData(objectMeta metav1.ObjectMeta, engine, dbName str
 		return nil, errors.New("not supported engine type")
 	}
 }
+
+const (
+	SSL_DISABLED  = "disabled"
+	SSL_REQUIRED  = "required"
+	SSL_VERIFY_CA = "verify_ca"
+)
+
+func getSSLMode(dbcr *kindav1beta1.Database) (string, error) {
+	engine, err := dbcr.GetEngineType()
+	if err != nil {
+		return "", err
+	}
+	
+	genericSSL, err := getGenericSSLMode(dbcr)
+	if err != nil {
+		return "", err
+	}
+
+	if engine == "postgres" {
+		switch genericSSL {
+			case SSL_DISABLED:
+				return "disable", nil
+			case SSL_REQUIRED:
+				return "require", nil
+			case SSL_VERIFY_CA:
+				return "verify-ca", nil
+		}
+	} 
+	
+	if engine == "mysql" {
+		switch genericSSL {
+			case SSL_DISABLED:
+				return "disabled", nil
+			case SSL_REQUIRED:
+				return "required", nil
+			case SSL_VERIFY_CA:
+				return "verify_ca", nil
+		}
+	}
+
+	return "", fmt.Errorf("unknown database engine: %s", engine)
+}
+
+func getGenericSSLMode(dbcr *kindav1beta1.Database) (string, error){
+	instance, err := dbcr.GetInstanceRef()
+	if err != nil {
+		return "", err
+	}
+	if !instance.Spec.SSLConnection.Enabled {
+		return SSL_DISABLED, nil
+	} else {
+		if instance.Spec.SSLConnection.SkipVerify {
+			return SSL_REQUIRED, nil
+		} else {
+			return SSL_VERIFY_CA, nil
+		}
+	}
+}
+

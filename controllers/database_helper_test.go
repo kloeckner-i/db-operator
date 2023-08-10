@@ -306,3 +306,154 @@ func TestUnitObsoleteFieldsRemoving(t *testing.T) {
 
 	assert.Equal(t, newSecret, expectedData, "generated connections string is wrong")
 }
+
+func TestUnitGetGenericSSLModePostgres(t *testing.T) {
+	posgresDbCR := newPostgresTestDbCr(newPostgresTestDbInstanceCr())
+	postgresInstance, err := posgresDbCR.GetInstanceRef()
+	if err != nil {
+		t.Error(err)
+	}
+
+	postgresInstance.Spec.SSLConnection.Enabled = false
+	postgresInstance.Spec.SSLConnection.SkipVerify = false
+	mode, err := getGenericSSLMode(posgresDbCR)
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, SSL_DISABLED, mode)
+
+	postgresInstance.Spec.SSLConnection.SkipVerify = true
+	mode, err = getGenericSSLMode(posgresDbCR)
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, SSL_DISABLED, mode)
+
+	postgresInstance.Spec.SSLConnection.Enabled = true
+	postgresInstance.Spec.SSLConnection.SkipVerify = true
+	mode, err = getGenericSSLMode(posgresDbCR)
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, SSL_REQUIRED, mode)
+	
+	postgresInstance.Spec.SSLConnection.SkipVerify = false
+	mode, err = getGenericSSLMode(posgresDbCR)
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, SSL_VERIFY_CA, mode)
+}
+
+func TestUnitGetGenericSSLModeMysql(t *testing.T) {
+	mysqlDbCR := newMysqlTestDbCr()
+	mysqlInstance, err := mysqlDbCR.GetInstanceRef()
+	if err != nil {
+		t.Error(err)
+	}
+
+	mysqlInstance.Spec.SSLConnection.Enabled = false
+	mysqlInstance.Spec.SSLConnection.SkipVerify = false
+	mode, err := getGenericSSLMode(mysqlDbCR)
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, SSL_DISABLED, mode)
+
+	mysqlInstance.Spec.SSLConnection.SkipVerify = true
+	mode, err = getGenericSSLMode(mysqlDbCR)
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, SSL_DISABLED, mode)
+
+	mysqlInstance.Spec.SSLConnection.Enabled = true
+	mysqlInstance.Spec.SSLConnection.SkipVerify = true
+	mode, err = getGenericSSLMode(mysqlDbCR)
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, SSL_REQUIRED, mode)
+	
+	mysqlInstance.Spec.SSLConnection.SkipVerify = false
+	mode, err = getGenericSSLMode(mysqlDbCR)
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, SSL_VERIFY_CA, mode)
+}
+func TestUnitGetSSLModePostgres(t *testing.T) {
+	posgresDbCR := newPostgresTestDbCr(newPostgresTestDbInstanceCr())
+	postgresInstance, err := posgresDbCR.GetInstanceRef()
+	if err != nil {
+		t.Error(err)
+	}
+
+	postgresInstance.Spec.SSLConnection.Enabled = false
+	postgresInstance.Spec.SSLConnection.SkipVerify = false
+	mode, err := getSSLMode(posgresDbCR)
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, "disable", mode)
+
+	postgresInstance.Spec.SSLConnection.SkipVerify = true
+	mode, err = getSSLMode(posgresDbCR)
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, "disable", mode)
+
+	postgresInstance.Spec.SSLConnection.Enabled = true
+	postgresInstance.Spec.SSLConnection.SkipVerify = true
+	mode, err = getSSLMode(posgresDbCR)
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, "require", mode)
+	
+	postgresInstance.Spec.SSLConnection.SkipVerify = false
+	mode, err = getSSLMode(posgresDbCR)
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, "verify-ca", mode)
+}
+
+func TestUnitGetSSLModeMysql(t *testing.T) {
+	mysqlDbCR := newMysqlTestDbCr()
+	mysqlInstance, err := mysqlDbCR.GetInstanceRef()
+	if err != nil {
+		t.Error(err)
+	}
+
+	mysqlInstance.Spec.SSLConnection.Enabled = false
+	mysqlInstance.Spec.SSLConnection.SkipVerify = false
+	mode, err := getSSLMode(mysqlDbCR)
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, "disabled", mode)
+
+	mysqlInstance.Spec.SSLConnection.SkipVerify = true
+	mode, err = getSSLMode(mysqlDbCR)
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, "disabled", mode)
+
+	mysqlInstance.Spec.SSLConnection.Enabled = true
+	mysqlInstance.Spec.SSLConnection.SkipVerify = true
+	mode, err = getSSLMode(mysqlDbCR)
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, "required", mode)
+	
+	mysqlInstance.Spec.SSLConnection.SkipVerify = false
+	mode, err = getSSLMode(mysqlDbCR)
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, "verify_ca", mode)
+}
