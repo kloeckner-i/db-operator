@@ -97,7 +97,6 @@ jobs:
 
   mysql-test:
     runs-on: ubuntu-latest
-    continue-on-error: true  
     needs: lint
     strategy:
       matrix:
@@ -142,7 +141,6 @@ jobs:
 
   mariadb-test:
     runs-on: ubuntu-latest
-    continue-on-error: true
     needs: lint
     strategy:
       matrix:
@@ -188,7 +186,6 @@ jobs:
 
   postgres-test:
     runs-on: ubuntu-latest
-    continue-on-error: true  
     needs: lint
     strategy:
       matrix:
