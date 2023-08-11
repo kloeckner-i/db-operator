@@ -109,6 +109,59 @@ func TestPostgresCreateUser(t *testing.T) {
 	assert.Error(t, err, "Should get error")
 }
 
+func TestPostgresMainUserLifecycle(t *testing.T) {
+	// Test if it's created
+	admin := getPostgresAdmin()
+	p, dbu := testPostgres()
+	p.Database = "maintest"
+	p.Schemas = []string{"permtest"}
+	assert.NoError(t, p.createDatabase(admin))
+	assert.NoError(t, p.createSchemas(admin))
+	assert.NoError(t, p.setUserPermission(admin, dbu))
+
+	createTable := `CREATE TABLE permtest.test_1 (
+		role_id serial PRIMARY KEY,
+		role_name VARCHAR (255) UNIQUE NOT NULL
+	  );`
+	assert.NoError(t, p.executeExecAsUser(p.Database, createTable, dbu))
+
+	createTable = `CREATE TABLE public.test_1 (
+		role_id serial PRIMARY KEY,
+		role_name VARCHAR (255) UNIQUE NOT NULL
+	  );`
+	assert.NoError(t, p.executeExecAsUser(p.Database, createTable, dbu))
+
+	insert := "INSERT INTO permtest.test_1 VALUES (1, 'test-1')"
+	assert.NoError(t, p.executeExecAsUser(p.Database, insert, dbu))
+	insert = "INSERT INTO public.test_1 VALUES (1, 'test-1')"
+	assert.NoError(t, p.executeExecAsUser(p.Database, insert, dbu))
+
+	selectQuery := "SELECT * FROM permtest.test_1"
+	assert.NoError(t, p.executeExecAsUser(p.Database, selectQuery, dbu))
+	selectQuery = "SELECT * FROM public.test_1"
+	assert.NoError(t, p.executeExecAsUser(p.Database, selectQuery, dbu))
+
+	insert = "INSERT INTO permtest.test_1 VALUES (2, 'test-2')"
+	assert.NoError(t, p.executeExecAsUser(p.Database, insert, dbu))
+	insert = "INSERT INTO public.test_1 VALUES (2, 'test-2')"
+	assert.NoError(t, p.executeExecAsUser(p.Database, insert, dbu))
+
+	update := "UPDATE permtest.test_1 SET role_name = 'test-1-new' WHERE role_id = 1"
+	assert.NoError(t, p.executeExecAsUser(p.Database, update, dbu))
+	update = "UPDATE public.test_1 SET role_name = 'test-1-new' WHERE role_id = 1"
+	assert.NoError(t, p.executeExecAsUser(p.Database, update, dbu))
+
+	delete := "DELETE FROM permtest.test_1 WHERE role_id = 1"
+	assert.NoError(t, p.executeExecAsUser(p.Database, delete, dbu))
+	delete = "DELETE FROM public.test_1 WHERE role_id = 1"
+	assert.NoError(t, p.executeExecAsUser(p.Database, delete, dbu))
+
+	drop := "DROP TABLE permtest.test_1"
+	assert.NoError(t, p.executeExecAsUser(p.Database, drop, dbu))
+	drop = "DROP TABLE public.test_1"
+	assert.NoError(t, p.executeExecAsUser(p.Database, drop, dbu))
+}
+
 func TestPostgresReadOnlyUserLifecycle(t *testing.T) {
 	// Test if it's created
 	admin := getPostgresAdmin()

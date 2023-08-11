@@ -92,6 +92,38 @@ func TestMysqlCreateOrUpdateUser(t *testing.T) {
 
 	assert.Equal(t, true, m.isUserExist(admin, dbu))
 }
+func TestMysqlMainUserLifecycle(t *testing.T) {
+	// Test if it's created
+	admin := getMysqlAdmin()
+	m, dbu := testMysql()
+	m.Database = "maintest"
+	assert.NoError(t, m.createDatabase(admin))
+	assert.NoError(t, m.setUserPermission(admin, dbu))
+
+	createTable := `CREATE TABLE maintest.test_1 (
+		role_id serial PRIMARY KEY,
+		role_name VARCHAR (255) UNIQUE NOT NULL
+	  );`
+	assert.NoError(t, m.executeQueryAsUser(createTable, dbu))
+
+	insert := "INSERT INTO maintest.test_1 VALUES (1, 'test-1')"
+	assert.NoError(t, m.executeQueryAsUser(insert, dbu))
+
+	selectQuery := "SELECT * FROM maintest.test_1"
+	assert.NoError(t, m.executeQueryAsUser(selectQuery, dbu))
+
+	insert = "INSERT INTO maintest.test_1 VALUES (2, 'test-2')"
+	assert.NoError(t, m.executeQueryAsUser(insert, dbu))
+
+	update := "UPDATE maintest.test_1 SET role_name = 'test-1-new' WHERE role_id = 1"
+	assert.NoError(t, m.executeQueryAsUser(update, dbu))
+
+	delete := "DELETE FROM maintest.test_1 WHERE role_id = 1"
+	assert.NoError(t, m.executeQueryAsUser(delete, dbu))
+
+	drop := "DROP TABLE maintest.test_1"
+	assert.NoError(t, m.executeQueryAsUser(drop, dbu))
+}
 
 func TestMysqlReadOnlyUserLifecycle(t *testing.T) {
 	// Test if it's created
