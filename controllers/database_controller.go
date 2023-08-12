@@ -391,6 +391,7 @@ func (r *DatabaseReconciler) deleteDatabase(ctx context.Context, dbcr *kindav1be
 		// failed to determine database type
 		return err
 	}
+	dbuser.AccessType = database.ACCESS_TYPE_MAINUSER
 
 	adminSecretResource, err := r.getAdminSecret(ctx, dbcr)
 	if err != nil {
