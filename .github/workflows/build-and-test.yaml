@@ -62,7 +62,7 @@ jobs:
       # https://github.com/actions/virtual-environments/issues/181
       # https://github.com/moby/moby/issues/7512#issuecomment-51845976
       - name: Run the unit tests
-        run: go test -tags tests -run "TestUnit"./... -v -cover
+        run: go test -tags tests -run "TestUnit" ./... -v -cover
 
   gsql-test: 
     runs-on: ubuntu-latest
