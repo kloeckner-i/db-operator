@@ -84,7 +84,7 @@ func TestUnitDetermineProxyTypeForDBGenericBackend(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestDetermineProxyTypeForGoogleInstance(t *testing.T) {
+func TestUnitDetermineProxyTypeForGoogleInstance(t *testing.T) {
 	os.Setenv("CONFIG_PATH", "../../pkg/config/test/config_ok.yaml")
 	config := config.LoadConfig()
 	dbin := makeGsqlInstance()
