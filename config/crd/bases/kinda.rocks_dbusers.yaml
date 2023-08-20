@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.12.1
   name: dbusers.kinda.rocks
 spec:
   group: kinda.rocks
@@ -62,6 +62,23 @@ spec:
               secretName:
                 description: SecretName name that should be used to save user's credentials
                 type: string
+              templates:
+                description: Templates to add custom entries to ConfigMaps and Secrets
+                items:
+                  description: Tempaltes to add custom entries to comfigmaps and secrets
+                  properties:
+                    name:
+                      type: string
+                    secret:
+                      type: boolean
+                    template:
+                      type: string
+                  required:
+                  - name
+                  - secret
+                  - template
+                  type: object
+                type: array
             required:
             - accessType
             - databaseRef

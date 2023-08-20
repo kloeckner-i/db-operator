@@ -1,5 +1,6 @@
 /*
  * Copyright 2021 kloeckner.i GmbH
+ * Copyright 2023 Nikolai Rodionov (allanger)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +23,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // DatabaseSpec defines the desired state of Database
 type DatabaseSpec struct {
 	SecretName        string            `json:"secretName"`
@@ -33,6 +32,8 @@ type DatabaseSpec struct {
 	SecretsTemplates  map[string]string `json:"secretsTemplates,omitempty"`
 	Postgres          Postgres          `json:"postgres,omitempty"`
 	Cleanup           bool              `json:"cleanup,omitempty"`
+	// Templates to add custom entries to ConfigMaps and Secrets
+	Templates         Templates         `json:"templates,omitempty"`
 }
 
 // Postgres struct should be used to provide resource that only applicable to postgres
@@ -45,6 +46,8 @@ type Postgres struct {
 	// Let user create database from template
 	Template string `json:"template,omitempty"`
 }
+
+type Templates []*Template
 
 // DatabaseStatus defines the observed state of Database
 type DatabaseStatus struct {

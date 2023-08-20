@@ -404,6 +404,23 @@ spec:
                 additionalProperties:
                   type: string
                 type: object
+              templates:
+                description: Templates to add custom entries to ConfigMaps and Secrets
+                items:
+                  description: Tempaltes to add custom entries to comfigmaps and secrets
+                  properties:
+                    name:
+                      type: string
+                    secret:
+                      type: boolean
+                    template:
+                      type: string
+                  required:
+                  - name
+                  - secret
+                  - template
+                  type: object
+                type: array
             required:
             - backup
             - deletionProtected

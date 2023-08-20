@@ -1,5 +1,6 @@
 /*
  * Copyright 2021 kloeckner.i GmbH
+ * Copyright 2023 Nikolai Rodionov (allanger)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,4 +36,11 @@ func (nn *NamespacedName) ToKubernetesType() types.NamespacedName {
 		Name:      nn.Name,
 		Namespace: nn.Namespace,
 	}
+}
+
+// Tempaltes to add custom entries to comfigmaps and secrets
+type Template struct {
+	Name     string `json:"name"`
+	Template string `json:"template"`
+	Secret   bool   `json:"secret"`
 }
