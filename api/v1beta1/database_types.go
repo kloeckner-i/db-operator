@@ -125,6 +125,18 @@ func (db *Database) GetEngineType() (string, error) {
 	return instance.Spec.Engine, nil
 }
 
+// GetProtocol returns the protocol that is required for connection (postgresql or mysql)
+func (db *Database) GetProtocol() (string, error) {
+	instance, err := db.GetInstanceRef()
+	if err != nil {
+		return "", err
+	}
+	if instance.Spec.Engine == "postgres" {
+		return "psql", nil
+	}
+	return instance.Spec.Engine, nil
+}
+
 // GetBackendType returns type of instance infrastructure.
 // Infrastructure where database is running ex) google cloud sql, generic instance
 func (db *Database) GetBackendType() (string, error) {
