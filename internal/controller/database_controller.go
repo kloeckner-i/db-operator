@@ -1,5 +1,6 @@
 /*
  * Copyright 2021 kloeckner.i GmbH
+ * Copyright 2023 Nikolai Rodionov (allanger)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +30,7 @@ import (
 
 	kindav1beta1 "github.com/db-operator/db-operator/api/v1beta1"
 	"github.com/db-operator/db-operator/internal/controller/backup"
+	"github.com/db-operator/db-operator/internal/utils/templates"
 	"github.com/db-operator/db-operator/pkg/config"
 	"github.com/db-operator/db-operator/pkg/utils/database"
 	"github.com/db-operator/db-operator/pkg/utils/kci"
@@ -66,6 +68,7 @@ var (
 	dbPhaseProxy                = "ProxyCreating"
 	dbPhaseSecretsTemplating    = "SecretsTemplating"
 	dbPhaseConfigMap            = "InfoConfigMapCreating"
+	dbPhaseTemplating           = "Templating"
 	dbPhaseMonitoring           = "MonitoringCreating"
 	dbPhaseBackupJob            = "BackupJobCreating"
 	dbPhaseFinish               = "Finishing"
@@ -77,15 +80,6 @@ var (
 //+kubebuilder:rbac:groups=kinda.rocks,resources=databases/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=kinda.rocks,resources=databases/finalizers,verbs=update
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the Database object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.2/pkg/reconcile
 func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = r.Log.WithValues("database", req.NamespacedName)
 
@@ -221,6 +215,10 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		dbcr.Status.Phase = dbPhaseConfigMap
 		if err = r.createInfoConfigMap(ctx, dbcr, ownership); err != nil {
 			return r.manageError(ctx, dbcr, err, true)
+		}
+		dbcr.Status.Phase = dbPhaseTemplating
+		if err := r.renderTemplates(ctx, dbcr); err != nil {
+			return r.manageError(ctx, dbcr, err, false)
 		}
 		dbcr.Status.Phase = dbPhaseBackupJob
 		err = r.createBackupJob(ctx, dbcr, ownership)
@@ -597,7 +595,42 @@ func (r *DatabaseReconciler) createProxy(ctx context.Context, dbcr *kindav1beta1
 	return nil
 }
 
+func (r *DatabaseReconciler) renderTemplates(ctx context.Context, dbcr *kindav1beta1.Database) error {
+	databaseSecret, err := r.getDatabaseSecret(ctx, dbcr)
+	if err != nil {
+		return err
+	}
+
+	databaseConfigMap, err := r.getDatabaseConfigMap(ctx, dbcr)
+	if err != nil {
+		return err
+	}
+
+	creds, err := parseDatabaseSecretData(dbcr, databaseSecret.Data)
+	if err != nil {
+		return err
+	}
+
+	// We don't need dbuser here, because if it's not nil, templates will be built for the dbuser, not the database
+	db, _, err := determinDatabaseType(dbcr, creds)
+	if err != nil {
+		return err
+	}
+
+	templateds, err := templates.NewTemplateDataSource(dbcr, nil, databaseSecret, databaseConfigMap, db, nil)
+	if err != nil {
+		return err
+	}
+
+	if err := templateds.BuildVars(dbcr.Spec.Templates); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (r *DatabaseReconciler) createTemplatedSecrets(ctx context.Context, dbcr *kindav1beta1.Database, ownership []metav1.OwnerReference) error {
+
 	// First of all the password should be taken from secret because it's not stored anywhere else
 	databaseSecret, err := r.getDatabaseSecret(ctx, dbcr)
 	if err != nil {
@@ -725,6 +758,20 @@ func (r *DatabaseReconciler) getDatabaseSecret(ctx context.Context, dbcr *kindav
 	}
 
 	return secret, nil
+}
+
+func (r *DatabaseReconciler) getDatabaseConfigMap(ctx context.Context, dbcr *kindav1beta1.Database) (*corev1.ConfigMap, error) {
+	configMap := &corev1.ConfigMap{}
+	key := types.NamespacedName{
+		Namespace: dbcr.Namespace,
+		Name:      dbcr.Spec.SecretName,
+	}
+	err := r.Get(ctx, key, configMap)
+	if err != nil {
+		return nil, err
+	}
+
+	return configMap, nil
 }
 
 func (r *DatabaseReconciler) annotateDatabaseSecret(ctx context.Context, dbcr *kindav1beta1.Database, secret *corev1.Secret) error {

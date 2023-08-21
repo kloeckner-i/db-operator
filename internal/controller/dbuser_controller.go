@@ -33,6 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	kindav1beta1 "github.com/db-operator/db-operator/api/v1beta1"
+	"github.com/db-operator/db-operator/internal/utils/templates"
 	"github.com/db-operator/db-operator/pkg/utils/database"
 	"github.com/db-operator/db-operator/pkg/utils/kci"
 	"github.com/go-logr/logr"
@@ -210,6 +211,11 @@ func (r *DbUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		}
 	}
 
+	// Render secret templates for the user
+	if err := r.renderTemplates(ctx, dbucr, dbcr); err != nil {
+		return r.manageError(ctx, dbucr, err, false)
+	}
+
 	return reconcileResult, nil
 }
 
@@ -330,4 +336,54 @@ func (r *DbUserReconciler) getAdminSecret(ctx context.Context, dbcr *kindav1beta
 	}
 
 	return secret, nil
+}
+
+func (r *DbUserReconciler) renderTemplates(ctx context.Context, dbuser *kindav1beta1.DbUser, dbcr *kindav1beta1.Database) error {
+	dbuserSecret, err := r.getDbUserSecret(ctx, dbuser)
+	if err != nil {
+		return err
+	}
+
+	dbuserConfigMap, err := r.getDbUserCongigMap(ctx, dbuser)
+	if err != nil {
+		return err
+	}
+	engine, err := dbcr.GetEngineType()
+	if err != nil {
+		return err
+	}
+	creds, err := parseDbUserSecretData(engine, dbuserSecret.Data)
+	if err != nil {
+		return err
+	}
+
+	db, _, err := determinDatabaseType(dbcr, creds)
+	if err != nil {
+		return err
+	}
+
+	templateds, err := templates.NewTemplateDataSource(dbcr, dbuser, dbuserSecret, dbuserConfigMap, db, nil)
+	if err != nil {
+		return err
+	}
+
+	if err := templateds.BuildVars(dbcr.Spec.Templates); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *DbUserReconciler) getDbUserCongigMap(ctx context.Context, dbcr *kindav1beta1.DbUser) (*corev1.ConfigMap, error) {
+	configMap := &corev1.ConfigMap{}
+	key := types.NamespacedName{
+		Namespace: dbcr.Namespace,
+		Name:      dbcr.Spec.SecretName,
+	}
+	err := r.Get(ctx, key, configMap)
+	if err != nil {
+		return nil, err
+	}
+
+	return configMap, nil
 }
