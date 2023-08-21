@@ -1,5 +1,6 @@
 /*
  * Copyright 2021 kloeckner.i GmbH
+ * Copyright 2023 Nikolai Rodionov (allanger)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +18,10 @@
 package v1beta1
 
 import (
+	"fmt"
+
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/strings/slices"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -53,16 +57,27 @@ var _ webhook.Validator = &DbInstance{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *DbInstance) ValidateCreate() error {
 	dbinstancelog.Info("validate create", "name", r.Name)
-
-	// TODO(user): fill in your validation logic upon object creation.
+	if err := ValidateEngine(r.Spec.Engine); err != nil {
+		return err
+	}
 	return nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *DbInstance) ValidateUpdate(old runtime.Object) error {
 	dbinstancelog.Info("validate update", "name", r.Name)
+	immutableErr := "cannot change %s, the field is immutable"
+	if r.Spec.Engine != old.(*DbInstance).Spec.Engine {
+		return fmt.Errorf(immutableErr, "engine")
+	}
 
-	// TODO(user): fill in your validation logic upon object update.
+	return nil
+}
+
+func ValidateEngine(engine string) error {
+	if !(slices.Contains([]string{"postgres", "mysql"}, engine)) {
+		return fmt.Errorf("unsupported engine: %s. please use either postgres or mysql", engine)
+	}
 	return nil
 }
 
