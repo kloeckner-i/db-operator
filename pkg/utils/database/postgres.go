@@ -310,7 +310,7 @@ func (p Postgres) QueryAsUser(query string, user *DatabaseUser) (string, error) 
 
 	var result string
 	if err := db.QueryRow(query).Scan(&result); err != nil {
-		logrus.Error("failed executing query %s - %s", query, err)
+		logrus.Errorf("failed executing query %s - %s", query, err)
 		return "", err
 	}
 	return result, nil

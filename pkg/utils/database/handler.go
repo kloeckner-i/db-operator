@@ -77,6 +77,8 @@ func New(engine string) Database {
 		return &Postgres{}
 	case "mysql":
 		return &Mysql{}
+	case "dummy":
+		return &Dummy{}
 	}
 
 	return nil
