@@ -54,6 +54,7 @@ type Database interface {
 	GetCredentials(user *DatabaseUser) Credentials
 	ParseAdminCredentials(data map[string][]byte) (AdminCredentials, error)
 	GetDatabaseAddress() DatabaseAddress
+	QueryAsUser(query string, user *DatabaseUser) (string, error)
 	createDatabase(admin AdminCredentials) error
 	deleteDatabase(admin AdminCredentials) error
 	createOrUpdateUser(admin AdminCredentials, user *DatabaseUser) error
@@ -61,4 +62,5 @@ type Database interface {
 	updateUser(admin AdminCredentials, user *DatabaseUser) error
 	deleteUser(admin AdminCredentials, user *DatabaseUser) error
 	setUserPermission(admin AdminCredentials, user *DatabaseUser) error
+	execAsUser(query string, user *DatabaseUser) error
 }

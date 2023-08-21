@@ -102,8 +102,7 @@ func (m Mysql) executeQuery(query string, admin AdminCredentials) error {
 	return nil
 }
 
-// TODO(@allanger): Create a DatabaseUser interface, so executeQuery and executeQueryAsUser are just one function
-func (m Mysql) executeQueryAsUser(query string, user *DatabaseUser) error {
+func (m Mysql) execAsUser(query string, user *DatabaseUser) error {
 	db, err := m.getDbConn(user.Username, user.Password)
 	if err != nil {
 		logrus.Fatalf("failed to get db connection: %s", err)
@@ -117,6 +116,7 @@ func (m Mysql) executeQueryAsUser(query string, user *DatabaseUser) error {
 	rows.Close()
 
 	return nil
+
 }
 
 func (m Mysql) isRowExist(query string, admin AdminCredentials) bool {
@@ -215,6 +215,21 @@ func (m Mysql) GetDatabaseAddress() DatabaseAddress {
 		Host: m.Host,
 		Port: m.Port,
 	}
+}
+
+func (m Mysql) QueryAsUser(query string, user *DatabaseUser) (string, error) {
+	db, err := m.getDbConn(user.Username, user.Password)
+	if err != nil {
+		logrus.Fatalf("failed to get db connection: %s", err)
+	}
+	defer db.Close()
+
+	var result string
+	if err := db.QueryRow(query).Scan(&result); err != nil {
+		logrus.Error(err)
+		return "", err
+	}
+	return result, nil
 }
 
 func (m Mysql) createDatabase(admin AdminCredentials) error {

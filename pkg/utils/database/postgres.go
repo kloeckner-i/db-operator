@@ -104,9 +104,8 @@ func (p Postgres) executeExec(database, query string, admin AdminCredentials) er
 	return err
 }
 
-// TODO(@allanger): Create a DatabaseUser interface, so executeExec and executeExecAsUser are just one function
-func (p Postgres) executeExecAsUser(database, query string, user *DatabaseUser) error {
-	db, err := p.getDbConn(database, user.Username, user.Password)
+func (p Postgres) execAsUser(query string, user *DatabaseUser) error {
+	db, err := p.getDbConn(p.Database, user.Username, user.Password)
 	if err != nil {
 		logrus.Fatalf("failed to open db connection: %s", err)
 	}
@@ -115,6 +114,7 @@ func (p Postgres) executeExecAsUser(database, query string, user *DatabaseUser) 
 	_, err = db.Exec(query)
 
 	return err
+
 }
 
 func (p Postgres) isDbExist(admin AdminCredentials) bool {
@@ -299,6 +299,21 @@ func (p Postgres) GetDatabaseAddress() DatabaseAddress {
 		Host: p.Host,
 		Port: p.Port,
 	}
+}
+
+func (p Postgres) QueryAsUser(query string, user *DatabaseUser) (string, error) {
+	db, err := p.getDbConn(p.Database, user.Username, user.Password)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+	defer db.Close()
+
+	var result string
+	if err := db.QueryRow(query).Scan(&result); err != nil {
+		logrus.Error("failed executing query %s - %s", query, err)
+		return "", err
+	}
+	return result, nil
 }
 
 func (p Postgres) createDatabase(admin AdminCredentials) error {
