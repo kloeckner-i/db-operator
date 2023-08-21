@@ -336,7 +336,7 @@ func TestUnitGetGenericSSLModePostgres(t *testing.T) {
 		t.Error(err)
 	}
 	assert.Equal(t, SSL_REQUIRED, mode)
-	
+
 	postgresInstance.Spec.SSLConnection.SkipVerify = false
 	mode, err = getGenericSSLMode(posgresDbCR)
 	if err != nil {
@@ -374,7 +374,7 @@ func TestUnitGetGenericSSLModeMysql(t *testing.T) {
 		t.Error(err)
 	}
 	assert.Equal(t, SSL_REQUIRED, mode)
-	
+
 	mysqlInstance.Spec.SSLConnection.SkipVerify = false
 	mode, err = getGenericSSLMode(mysqlDbCR)
 	if err != nil {
@@ -411,7 +411,7 @@ func TestUnitGetSSLModePostgres(t *testing.T) {
 		t.Error(err)
 	}
 	assert.Equal(t, "require", mode)
-	
+
 	postgresInstance.Spec.SSLConnection.SkipVerify = false
 	mode, err = getSSLMode(posgresDbCR)
 	if err != nil {
@@ -449,7 +449,7 @@ func TestUnitGetSSLModeMysql(t *testing.T) {
 		t.Error(err)
 	}
 	assert.Equal(t, "required", mode)
-	
+
 	mysqlInstance.Spec.SSLConnection.SkipVerify = false
 	mode, err = getSSLMode(mysqlDbCR)
 	if err != nil {

@@ -22,6 +22,7 @@ import (
 	"strconv"
 
 	kindav1beta1 "github.com/db-operator/db-operator/api/v1beta1"
+	"github.com/db-operator/db-operator/pkg/consts"
 	"github.com/db-operator/db-operator/pkg/utils/database"
 	"github.com/db-operator/db-operator/pkg/utils/kci"
 	"github.com/sirupsen/logrus"
@@ -110,19 +111,19 @@ func parseDatabaseSecretData(dbcr *kindav1beta1.Database, data map[string][]byte
 
 	switch engine {
 	case "postgres":
-		if name, ok := data["POSTGRES_DB"]; ok {
+		if name, ok := data[consts.POSTGRES_DB]; ok {
 			cred.Name = string(name)
 		} else {
 			return cred, errors.New("POSTGRES_DB key does not exist in secret data")
 		}
 
-		if user, ok := data["POSTGRES_USER"]; ok {
+		if user, ok := data[consts.POSTGRES_USER]; ok {
 			cred.Username = string(user)
 		} else {
 			return cred, errors.New("POSTGRES_USER key does not exist in secret data")
 		}
 
-		if pass, ok := data["POSTGRES_PASSWORD"]; ok {
+		if pass, ok := data[consts.POSTGRES_PASSWORD]; ok {
 			cred.Password = string(pass)
 		} else {
 			return cred, errors.New("POSTGRES_PASSWORD key does not exist in secret data")
@@ -130,19 +131,19 @@ func parseDatabaseSecretData(dbcr *kindav1beta1.Database, data map[string][]byte
 
 		return cred, nil
 	case "mysql":
-		if name, ok := data["DB"]; ok {
+		if name, ok := data[consts.MYSQL_DB]; ok {
 			cred.Name = string(name)
 		} else {
 			return cred, errors.New("DB key does not exist in secret data")
 		}
 
-		if user, ok := data["USER"]; ok {
+		if user, ok := data[consts.MYSQL_USER]; ok {
 			cred.Username = string(user)
 		} else {
 			return cred, errors.New("USER key does not exist in secret data")
 		}
 
-		if pass, ok := data["PASSWORD"]; ok {
+		if pass, ok := data[consts.MYSQL_PASSWORD]; ok {
 			cred.Password = string(pass)
 		} else {
 			return cred, errors.New("PASSWORD key does not exist in secret data")
@@ -173,16 +174,16 @@ func generateDatabaseSecretData(objectMeta metav1.ObjectMeta, engine, dbName str
 	switch engine {
 	case "postgres":
 		data := map[string][]byte{
-			"POSTGRES_DB":       []byte(dbName),
-			"POSTGRES_USER":     []byte(dbUser),
-			"POSTGRES_PASSWORD": []byte(dbPassword),
+			consts.POSTGRES_DB:       []byte(dbName),
+			consts.POSTGRES_USER:     []byte(dbUser),
+			consts.POSTGRES_PASSWORD: []byte(dbPassword),
 		}
 		return data, nil
 	case "mysql":
 		data := map[string][]byte{
-			"DB":       []byte(kci.StringSanitize(dbName, mysqlDBNameLengthLimit)),
-			"USER":     []byte(kci.StringSanitize(dbUser, mysqlUserLengthLimit)),
-			"PASSWORD": []byte(dbPassword),
+			consts.MYSQL_DB:       []byte(kci.StringSanitize(dbName, mysqlDBNameLengthLimit)),
+			consts.MYSQL_USER:     []byte(kci.StringSanitize(dbUser, mysqlUserLengthLimit)),
+			consts.MYSQL_PASSWORD: []byte(dbPassword),
 		}
 		return data, nil
 	default:
@@ -201,7 +202,7 @@ func getSSLMode(dbcr *kindav1beta1.Database) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	genericSSL, err := getGenericSSLMode(dbcr)
 	if err != nil {
 		return "", err
@@ -209,30 +210,30 @@ func getSSLMode(dbcr *kindav1beta1.Database) (string, error) {
 
 	if engine == "postgres" {
 		switch genericSSL {
-			case SSL_DISABLED:
-				return "disable", nil
-			case SSL_REQUIRED:
-				return "require", nil
-			case SSL_VERIFY_CA:
-				return "verify-ca", nil
+		case SSL_DISABLED:
+			return "disable", nil
+		case SSL_REQUIRED:
+			return "require", nil
+		case SSL_VERIFY_CA:
+			return "verify-ca", nil
 		}
-	} 
-	
+	}
+
 	if engine == "mysql" {
 		switch genericSSL {
-			case SSL_DISABLED:
-				return "disabled", nil
-			case SSL_REQUIRED:
-				return "required", nil
-			case SSL_VERIFY_CA:
-				return "verify_ca", nil
+		case SSL_DISABLED:
+			return "disabled", nil
+		case SSL_REQUIRED:
+			return "required", nil
+		case SSL_VERIFY_CA:
+			return "verify_ca", nil
 		}
 	}
 
 	return "", fmt.Errorf("unknown database engine: %s", engine)
 }
 
-func getGenericSSLMode(dbcr *kindav1beta1.Database) (string, error){
+func getGenericSSLMode(dbcr *kindav1beta1.Database) (string, error) {
 	instance, err := dbcr.GetInstanceRef()
 	if err != nil {
 		return "", err
@@ -247,4 +248,3 @@ func getGenericSSLMode(dbcr *kindav1beta1.Database) (string, error){
 		}
 	}
 }
-
