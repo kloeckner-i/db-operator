@@ -20,12 +20,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"html/template"
 	"strings"
-	"text/template"
 
 	"github.com/db-operator/db-operator/api/v1beta1"
 	"github.com/db-operator/db-operator/pkg/consts"
 	"github.com/db-operator/db-operator/pkg/utils/database"
+	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/utils/strings/slices"
 )
@@ -49,7 +50,6 @@ func (tds *TemplateDataSources) BuildVars(templates v1beta1.Templates) error {
 	var currentTemplatesSec []string
 	var currentTemplatesCm []string
 	var result = map[string][]byte{}
-
 	// Get the last applied data
 	var lastAppliedSecret []string
 	val, ok := tds.SecretK8sObj.ObjectMeta.Annotations[TEMPLATE_ANNOTATION_KEY]
@@ -88,6 +88,7 @@ func (tds *TemplateDataSources) BuildVars(templates v1beta1.Templates) error {
 		if err != nil {
 			return err
 		}
+
 		result[tmpl.Name] = tmplRes.Bytes()
 		if tmpl.Secret {
 			if !slices.Contains(blockedSecretData, tmpl.Name) {
@@ -117,7 +118,6 @@ func (tds *TemplateDataSources) BuildVars(templates v1beta1.Templates) error {
 		}
 		tds.SecretK8sObj.ObjectMeta.Annotations[TEMPLATE_ANNOTATION_KEY] = strings.Join(currentTemplatesSec, ",")
 		tds.ConfigMapK8sObj.ObjectMeta.Annotations[TEMPLATE_ANNOTATION_KEY] = strings.Join(currentTemplatesCm, ",")
-
 	}
 	return nil
 }
@@ -166,6 +166,13 @@ func NewTemplateDataSource(databaseK8s *v1beta1.Database,
 		return nil, fmt.Errorf("configmap %s doesn't belong to the database %s", secretK8s.Name, databaseK8s.Name)
 	}
 
+	if configmapK8s.ObjectMeta.Annotations == nil {
+		configmapK8s.ObjectMeta.Annotations = make(map[string]string)
+	}
+	if secretK8s.ObjectMeta.Annotations == nil {
+		secretK8s.ObjectMeta.Annotations = make(map[string]string)
+	}
+
 	return &TemplateDataSources{
 		DatabaseK8sObj:  databaseK8s,
 		DbUserK8sObj:    dbuserK8s,
@@ -200,8 +207,8 @@ func (tds *TemplateDataSources) ConfigMap(entry string) (string, error) {
 }
 
 // Get the data directly from the database
-// TODO: I'm not sure yet how it should work
 func (tds *TemplateDataSources) Query(query string) (string, error) {
+	logrus.Warn("Querying data from database is experimental, use cautiously and feel free to create github issues")
 	result, err := tds.DatabaseObj.QueryAsUser(query, tds.DatabaseUser)
 	if err != nil {
 		return "", err

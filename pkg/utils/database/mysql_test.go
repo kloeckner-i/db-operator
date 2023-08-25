@@ -92,6 +92,30 @@ func TestMysqlCreateOrUpdateUser(t *testing.T) {
 
 	assert.Equal(t, true, m.isUserExist(admin, dbu))
 }
+
+func TestMysqlQueryAsUser(t *testing.T) {
+	m, dbu := testMysql()
+
+	if err := m.execAsUser("CREATE TABLE testdb.test (id int, name varchar(255))", dbu); err != nil {
+		t.Error(err)
+	}
+	if err := m.execAsUser("INSERT INTO testdb.test VALUES (1, 'test')", dbu); err != nil {
+		t.Error(err)
+	}
+	
+	res, err := m.QueryAsUser("SELECT name FROM testdb.test", dbu)
+	assert.NoErrorf(t, err, "Unexpected error %v", err)
+	assert.Equal(t, "test", res)
+
+	_, err = m.QueryAsUser("SELECT * FROM testdb.test", dbu)
+	assert.Error(t, err)
+
+	
+	if err := m.execAsUser("DROP TABLE testdb.test", dbu); err != nil {
+		t.Error(err)
+	}
+}
+
 func TestMysqlMainUserLifecycle(t *testing.T) {
 	// Test if it's created
 	admin := getMysqlAdmin()

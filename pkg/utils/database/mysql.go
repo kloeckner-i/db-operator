@@ -221,6 +221,7 @@ func (m Mysql) QueryAsUser(query string, user *DatabaseUser) (string, error) {
 	db, err := m.getDbConn(user.Username, user.Password)
 	if err != nil {
 		logrus.Fatalf("failed to get db connection: %s", err)
+		return "", err
 	}
 	defer db.Close()
 

@@ -484,6 +484,7 @@ func TestUnitBuildAppendCustomSecret(t *testing.T) {
 		"PASSWORD":       []byte("testpassword"),
 		"REUSE_PREVIOUS": []byte("STRING"),
 		"SEC_PASSWORD":   []byte("testpassword"),
+		"GO_FUNCTION":    []byte("It's true"),
 	}
 	for key, val := range secretPostgres.Data {
 		expectedResult[key] = val
@@ -515,11 +516,16 @@ func TestUnitBuildAppendCustomSecret(t *testing.T) {
 			Template: "{{ .Secret \"POSTGRES_PASSWORD\" }}",
 			Secret:   true,
 		},
+		&v1beta1.Template{
+			Name: "GO_FUNCTION",
+			Template: "{{ if eq 1 1 }}It's true{{ else }}It's false{{ end }}",
+			Secret: true,
+		},
 	}); err != nil {
 		t.Error(err)
 	}
 	assert.Equal(t, expectedResult, templateds.SecretK8sObj.Data)
-	assert.Equal(t, "STRING,PASSWORD,REUSE_PREVIOUS,SEC_PASSWORD",
+	assert.Equal(t, "STRING,PASSWORD,REUSE_PREVIOUS,SEC_PASSWORD,GO_FUNCTION",
 		templateds.SecretK8sObj.ObjectMeta.Annotations[templates.TEMPLATE_ANNOTATION_KEY],
 	)
 }
@@ -682,3 +688,4 @@ func TestUnitBuildCleanupConfigmMap(t *testing.T) {
 		templateds.ConfigMapK8sObj.ObjectMeta.Annotations[templates.TEMPLATE_ANNOTATION_KEY],
 	)
 }
+

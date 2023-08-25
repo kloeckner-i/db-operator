@@ -217,8 +217,12 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			return r.manageError(ctx, dbcr, err, true)
 		}
 		dbcr.Status.Phase = dbPhaseTemplating
-		if err := r.renderTemplates(ctx, dbcr); err != nil {
-			return r.manageError(ctx, dbcr, err, false)
+		// A temporary check that exists to avoid creating templates if secretsTemplates are used.
+		// todo: It should be removed when secretsTemlates are gone
+		if len(dbcr.Spec.SecretsTemplates) == 0 {
+			if err := r.renderTemplates(ctx, dbcr); err != nil {
+				return r.manageError(ctx, dbcr, err, false)
+			}
 		}
 		dbcr.Status.Phase = dbPhaseBackupJob
 		err = r.createBackupJob(ctx, dbcr, ownership)
@@ -612,12 +616,12 @@ func (r *DatabaseReconciler) renderTemplates(ctx context.Context, dbcr *kindav1b
 	}
 
 	// We don't need dbuser here, because if it's not nil, templates will be built for the dbuser, not the database
-	db, _, err := determinDatabaseType(dbcr, creds)
+	db, dbuser, err := determinDatabaseType(dbcr, creds)
 	if err != nil {
 		return err
 	}
 
-	templateds, err := templates.NewTemplateDataSource(dbcr, nil, databaseSecret, databaseConfigMap, db, nil)
+	templateds, err := templates.NewTemplateDataSource(dbcr, nil, databaseSecret, databaseConfigMap, db, dbuser)
 	if err != nil {
 		return err
 	}
@@ -626,46 +630,58 @@ func (r *DatabaseReconciler) renderTemplates(ctx context.Context, dbcr *kindav1b
 		return err
 	}
 
+	if err = r.Update(ctx, templateds.SecretK8sObj, &client.UpdateOptions{}); err != nil {
+		return err
+	}
+
+	if err = r.Update(ctx, templateds.ConfigMapK8sObj, &client.UpdateOptions{}); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (r *DatabaseReconciler) createTemplatedSecrets(ctx context.Context, dbcr *kindav1beta1.Database, ownership []metav1.OwnerReference) error {
+	if len(dbcr.Spec.SecretsTemplates) > 0 {
+		r.Recorder.Event(dbcr, "Warning", "Deprecation",
+			"secretsTemplates are deprecated and will be removed in the next API version. Please consider using templates",
+		)
+		// First of all the password should be taken from secret because it's not stored anywhere else
+		databaseSecret, err := r.getDatabaseSecret(ctx, dbcr)
+		if err != nil {
+			return err
+		}
 
-	// First of all the password should be taken from secret because it's not stored anywhere else
-	databaseSecret, err := r.getDatabaseSecret(ctx, dbcr)
-	if err != nil {
-		return err
-	}
+		cred, err := parseDatabaseSecretData(dbcr, databaseSecret.Data)
+		if err != nil {
+			return err
+		}
 
-	cred, err := parseDatabaseSecretData(dbcr, databaseSecret.Data)
-	if err != nil {
-		return err
-	}
+		databaseCred, err := secTemplates.ParseTemplatedSecretsData(dbcr, cred, databaseSecret.Data)
+		if err != nil {
+			return err
+		}
 
-	databaseCred, err := secTemplates.ParseTemplatedSecretsData(dbcr, cred, databaseSecret.Data)
-	if err != nil {
-		return err
-	}
+		db, _, err := determinDatabaseType(dbcr, databaseCred)
+		if err != nil {
+			// failed to determine database type
+			return err
+		}
+		dbSecrets, err := secTemplates.GenerateTemplatedSecrets(dbcr, databaseCred, db.GetDatabaseAddress())
+		if err != nil {
+			return err
+		}
+		// Adding values
+		newSecretData := secTemplates.AppendTemplatedSecretData(dbcr, databaseSecret.Data, dbSecrets, ownership)
+		newSecretData = secTemplates.RemoveObsoleteSecret(dbcr, newSecretData, dbSecrets, ownership)
 
-	db, _, err := determinDatabaseType(dbcr, databaseCred)
-	if err != nil {
-		// failed to determine database type
-		return err
-	}
-	dbSecrets, err := secTemplates.GenerateTemplatedSecrets(dbcr, databaseCred, db.GetDatabaseAddress())
-	if err != nil {
-		return err
-	}
-	// Adding values
-	newSecretData := secTemplates.AppendTemplatedSecretData(dbcr, databaseSecret.Data, dbSecrets, ownership)
-	newSecretData = secTemplates.RemoveObsoleteSecret(dbcr, newSecretData, dbSecrets, ownership)
+		for key, value := range newSecretData {
+			databaseSecret.Data[key] = value
+		}
 
-	for key, value := range newSecretData {
-		databaseSecret.Data[key] = value
-	}
-
-	if err = r.Update(ctx, databaseSecret, &client.UpdateOptions{}); err != nil {
-		return err
+		if err = r.Update(ctx, databaseSecret, &client.UpdateOptions{}); err != nil {
+			return err
+		}
 	}
 
 	return nil

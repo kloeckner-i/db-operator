@@ -1,5 +1,6 @@
 /*
  * Copyright 2021 kloeckner.i GmbH
+ * Copyright 2023 Nikolai Rodionov (allanger)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +18,7 @@
 package v1beta1
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 
@@ -36,8 +38,6 @@ func (r *Database) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-// TODO(user): EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-
 //+kubebuilder:webhook:path=/mutate-kinda-rocks-v1beta1-database,mutating=true,failurePolicy=fail,sideEffects=None,groups=kinda.rocks,resources=databases,verbs=create;update,versions=v1beta1,name=mdatabase.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Defaulter = &Database{}
@@ -49,7 +49,6 @@ func (r *Database) Default() {
 	// TODO(user): fill in your defaulting logic.
 }
 
-// TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 //+kubebuilder:webhook:path=/validate-kinda-rocks-v1beta1-database,mutating=false,failurePolicy=fail,sideEffects=None,groups=kinda.rocks,resources=databases,verbs=create;update,versions=v1beta1,name=vdatabase.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Validator = &Database{}
@@ -58,9 +57,16 @@ var _ webhook.Validator = &Database{}
 func (r *Database) ValidateCreate() error {
 	databaselog.Info("validate create", "name", r.Name)
 
-	err := ValidateSecretTemplates(r.Spec.SecretsTemplates)
-	if err != nil {
-		return err
+	if r.Spec.SecretsTemplates != nil && r.Spec.Templates != nil {
+		return errors.New("using both: secretsTemplates and templates, is not allowed")
+	}
+
+	if r.Spec.SecretsTemplates != nil {
+		fmt.Printf(`secretsTemplates are deprecated, it will be removed in the next API version. Please, consider switching to templates`)
+		if err := ValidateSecretTemplates(r.Spec.SecretsTemplates); err != nil {
+			return err
+		}
+
 	}
 
 	return nil
@@ -70,9 +76,16 @@ func (r *Database) ValidateCreate() error {
 func (r *Database) ValidateUpdate(old runtime.Object) error {
 	databaselog.Info("validate update", "name", r.Name)
 
-	err := ValidateSecretTemplates(r.Spec.SecretsTemplates)
-	if err != nil {
-		return err
+	if r.Spec.SecretsTemplates != nil && r.Spec.Templates != nil {
+		return errors.New("using both: secretsTemplates and templates, is not allowed")
+	}
+
+	if r.Spec.SecretsTemplates != nil {
+		fmt.Printf(`secretsTemplates are deprecated, it will be removed in the next API version. Please, consider switching to templates`)
+		err := ValidateSecretTemplates(r.Spec.SecretsTemplates)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Ensure fields are immutable
@@ -96,10 +109,40 @@ func ValidateSecretTemplates(templates map[string]string) error {
 		reg := "{{\\s*([\\w\\.]+)\\s*}}"
 		r, _ := regexp.Compile(reg)
 		fields := r.FindAllStringSubmatch(template, -1)
-		fmt.Println(fields)
 		for _, field := range fields {
 			if !slices.Contains(allowedFields, field[1]) {
 				err := fmt.Errorf("%v is a field that is not allowed for templating, please use one of these: %v", field[1], allowedFields)
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func ValidateTemplates(templates Templates) error {
+	for _, template := range templates {
+		fmt.Printf("%s - %s\n", template.Name, template.Template)
+		helpers := []string{"Protocol", "Host", "Port", "Password", "Username", "Password", "Database"}
+		functions := []string{"Secret", "ConfigMap", "Query"}
+		// This regexp is getting fields from mustache templates so then they can be compared to allowed fields
+		reg := "{{\\s*\\.([\\w\\.]+)\\s*(.*?)\\s*}}"
+		fmt.Println(reg)
+		r, _ := regexp.Compile(reg)
+		fields := r.FindAllStringSubmatch(template.Template, -1)
+		for _, field := range fields {
+			fmt.Printf("1-%s\n2-%s\n", field[1], field[2])
+			if slices.Contains(helpers, field[1]){
+				continue
+			} else if slices.Contains(functions, field[1]){
+				functionReg := "\".*\""
+				fr, _ := regexp.Compile(functionReg)
+				if !fr.MatchString(field[2]) {
+					err := fmt.Errorf("%s is invalid: Functions must be wrapped in quotes, example: {{ .Secret \\\"PASSWORD\\\" }}", template.Name)
+					return err
+				}
+		  } else {
+				err := fmt.Errorf("%s is invalid: %v is a field that is not allowed for templating, please use one of these: %v, %v", 
+				template.Name, field[1], helpers, functions)
 				return err
 			}
 		}

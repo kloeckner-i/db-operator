@@ -1,5 +1,6 @@
 /*
  * Copyright 2021 kloeckner.i GmbH
+ * Copyright 2023 Nikolai Rodionov (allanger)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,13 +120,16 @@ func TestUnitMonitoringEnabled(t *testing.T) {
 	assert.Equal(t, postgresInterface.Monitoring, true, "expected monitoring is true in postgres interface")
 }
 
-func TestUnitPsqlDefaultTemplatedSecretGeneratationWithProxy(t *testing.T) {
+func TestUnitPsqlTemplatedSecretGeneratationWithProxy(t *testing.T) {
 	instance := newPostgresTestDbInstanceCr()
 	postgresDbCr := newPostgresTestDbCr(instance)
 	postgresDbCr.Status.ProxyStatus.Status = true
+	postgresDbCr.Spec.SecretsTemplates = map[string]string {
+		"PROXIED_HOST": "{{ .DatabaseHost }}",
+	}
 
 	c := templates.SecretsTemplatesFields{
-		DatabaseHost: "postgres",
+		DatabaseHost: "proxied_host",
 		DatabasePort: 5432,
 		UserName:     testDbcred.Username,
 		Password:     testDbcred.Password,
@@ -135,9 +139,9 @@ func TestUnitPsqlDefaultTemplatedSecretGeneratationWithProxy(t *testing.T) {
 	postgresDbCr.Status.ProxyStatus.SQLPort = c.DatabasePort
 	postgresDbCr.Status.ProxyStatus.ServiceName = c.DatabaseHost
 
-	protocol := "postgresql"
+
 	expectedData := map[string][]byte{
-		"CONNECTION_STRING": []byte(fmt.Sprintf("%s://%s:%s@%s:%d/%s", protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName)),
+		"PROXIED_HOST": []byte(c.DatabaseHost),
 	}
 
 	db, _, _ := determinDatabaseType(postgresDbCr, testDbcred)
@@ -147,55 +151,6 @@ func TestUnitPsqlDefaultTemplatedSecretGeneratationWithProxy(t *testing.T) {
 		t.Fail()
 	}
 	assert.Equal(t, expectedData, connString, "generated connections string is wrong")
-}
-
-func TestUnitPsqlDefaultTemplatedSecretGeneratationWithoutProxy(t *testing.T) {
-	instance := newPostgresTestDbInstanceCr()
-	postgresDbCr := newPostgresTestDbCr(instance)
-
-	c := templates.SecretsTemplatesFields{
-		DatabaseHost: "postgres",
-		DatabasePort: 5432,
-		UserName:     testDbcred.Username,
-		Password:     testDbcred.Password,
-		DatabaseName: testDbcred.Name,
-	}
-
-	protocol := "postgresql"
-	expectedData := map[string][]byte{
-		"CONNECTION_STRING": []byte(fmt.Sprintf("%s://%s:%s@%s:%d/%s", protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName)),
-	}
-
-	db, _, _ := determinDatabaseType(postgresDbCr, testDbcred)
-	connString, err := templates.GenerateTemplatedSecrets(postgresDbCr, testDbcred, db.GetDatabaseAddress())
-	if err != nil {
-		t.Logf("Unexpected error: %s", err)
-		t.Fail()
-	}
-	assert.Equal(t, expectedData, connString, "generated connections string is wrong")
-}
-
-func TestUnitMysqlDefaultTemlatedSecretGeneratationWithoutProxy(t *testing.T) {
-	mysqlDbCr := newMysqlTestDbCr()
-	c := templates.SecretsTemplatesFields{
-		DatabaseHost: "mysql",
-		DatabasePort: 3306,
-		UserName:     testDbcred.Username,
-		Password:     testDbcred.Password,
-		DatabaseName: testDbcred.Name,
-	}
-	protocol := "mysql"
-	expectedData := map[string][]byte{
-		"CONNECTION_STRING": []byte(fmt.Sprintf("%s://%s:%s@%s:%d/%s", protocol, c.UserName, c.Password, c.DatabaseHost, c.DatabasePort, c.DatabaseName)),
-	}
-
-	db, _, _ := determinDatabaseType(mysqlDbCr, testDbcred)
-	connString, err := templates.GenerateTemplatedSecrets(mysqlDbCr, testDbcred, db.GetDatabaseAddress())
-	if err != nil {
-		t.Logf("Unexpected error: %s", err)
-		t.Fail()
-	}
-	assert.Equal(t, connString, expectedData, "generated connections string is wrong")
 }
 
 func TestUnitPsqlCustomSecretGeneratation(t *testing.T) {

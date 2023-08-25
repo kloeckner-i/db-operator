@@ -37,11 +37,6 @@ const (
 	FieldMysqlPassword     = "PASSWORD"
 )
 
-const (
-	defaultTemplate = "{{ .Protocol }}://{{ .UserName }}:{{ .Password }}@{{ .DatabaseHost }}:{{ .DatabasePort }}/{{ .DatabaseName }}"
-	defaultKey      = "CONNECTION_STRING"
-)
-
 // SecretsTemplatesFields defines default fields that can be used to generate secrets with db creds
 type SecretsTemplatesFields struct {
 	Protocol     string
@@ -80,12 +75,7 @@ func ParseTemplatedSecretsData(dbcr *kindav1beta1.Database, cred database.Creden
 
 func GenerateTemplatedSecrets(dbcr *kindav1beta1.Database, databaseCred database.Credentials, dbAddress database.DatabaseAddress) (secrets map[string][]byte, err error) {
 	secrets = map[string][]byte{}
-	templates := map[string]string{}
-	if len(dbcr.Spec.SecretsTemplates) > 0 {
-		templates = dbcr.Spec.SecretsTemplates
-	} else {
-		templates[defaultKey] = defaultTemplate
-	}
+	templates := dbcr.Spec.SecretsTemplates
 	// The string that's going to be generated if the default template is used:
 	// "postgresql://user:password@host:port/database"
 	dbData := SecretsTemplatesFields{
