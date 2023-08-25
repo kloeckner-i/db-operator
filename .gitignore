@@ -3,6 +3,7 @@
 build/_output
 build/_test
 db-operator
+main
 
 # Secret file for local testing
 secrets-local.yaml
