@@ -61,6 +61,7 @@ func main() {
 	var probeAddr string
 	var enableLeaderElection bool
 	var checkForChanges bool
+	var webhook bool
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":60000", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&checkForChanges, "check-for-changes", false,
@@ -68,6 +69,7 @@ func main() {
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+	flag.BoolVar(&webhook, "webhook", false, "Starts the webhook server when set.")
 	opts := zap.Options{
 		Development: true,
 	}
@@ -89,64 +91,72 @@ func main() {
 		os.Exit(1)
 	}
 
-	conf := config.LoadConfig()
+	if webhook {
+		setupLog.Info("Starting webhook server")
 
-	interval := os.Getenv("RECONCILE_INTERVAL")
-	i, err := strconv.ParseInt(interval, 10, 64)
-	if err != nil {
-		i = 60
-		logrus.Infof("Set default reconcile period to %d s for database-controller", i)
+		if err = (&kindarocksv1beta1.Database{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "Database")
+			os.Exit(1)
+		}
+		if err = (&kindarocksv1beta1.DbInstance{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "DbInstance")
+			os.Exit(1)
+		}
+		if err = (&kindarocksv1beta1.DbUser{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "DbUser")
+			os.Exit(1)
+		}
+	} else {
+		setupLog.Info("Starting controller")
+		conf := config.LoadConfig()
+
+		interval := os.Getenv("RECONCILE_INTERVAL")
+		i, err := strconv.ParseInt(interval, 10, 64)
+		if err != nil {
+			i = 60
+			logrus.Infof("Set default reconcile period to %d s for database-controller", i)
+		}
+
+		if err = (&controllers.DbInstanceReconciler{
+			Client:   mgr.GetClient(),
+			Log:      ctrl.Log.WithName("controllers").WithName("DbInstance"),
+			Scheme:   mgr.GetScheme(),
+			Interval: time.Duration(i),
+			Conf:     &conf,
+		}).SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "DbInstance")
+			os.Exit(1)
+		}
+
+		watchNamespaces := os.Getenv("WATCH_NAMESPACE")
+		namespaces := strings.Split(watchNamespaces, ",")
+		setupLog.Info("Database resources will be served in the next namespaces", "namespaces", namespaces)
+
+		if err = (&controllers.DatabaseReconciler{
+			Client:          mgr.GetClient(),
+			Log:             ctrl.Log.WithName("controllers").WithName("Database"),
+			Scheme:          mgr.GetScheme(),
+			Recorder:        mgr.GetEventRecorderFor("database-controller"),
+			Interval:        time.Duration(i),
+			Conf:            &conf,
+			WatchNamespaces: namespaces,
+		}).SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "Database")
+			os.Exit(1)
+		}
+
+		if err = (&controllers.DbUserReconciler{
+			Client:   mgr.GetClient(),
+			Scheme:   mgr.GetScheme(),
+			Log:      ctrl.Log.WithName("controllers").WithName("DbUser"),
+			Recorder: mgr.GetEventRecorderFor("database-controller"),
+			Interval: time.Duration(i),
+		}).SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", "DbUser")
+			os.Exit(1)
+		}
 	}
 
-	if err = (&controllers.DbInstanceReconciler{
-		Client:   mgr.GetClient(),
-		Log:      ctrl.Log.WithName("controllers").WithName("DbInstance"),
-		Scheme:   mgr.GetScheme(),
-		Interval: time.Duration(i),
-		Conf:     &conf,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "DbInstance")
-		os.Exit(1)
-	}
-
-	watchNamespaces := os.Getenv("WATCH_NAMESPACE")
-	namespaces := strings.Split(watchNamespaces, ",")
-	setupLog.Info("Database resources will be served in the next namespaces", "namespaces", namespaces)
-
-	if err = (&controllers.DatabaseReconciler{
-		Client:          mgr.GetClient(),
-		Log:             ctrl.Log.WithName("controllers").WithName("Database"),
-		Scheme:          mgr.GetScheme(),
-		Recorder:        mgr.GetEventRecorderFor("database-controller"),
-		Interval:        time.Duration(i),
-		Conf:            &conf,
-		WatchNamespaces: namespaces,
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Database")
-		os.Exit(1)
-	}
-	if err = (&kindarocksv1beta1.Database{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "Database")
-		os.Exit(1)
-	}
-	if err = (&kindarocksv1beta1.DbInstance{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "DbInstance")
-		os.Exit(1)
-	}
-	if err = (&controllers.DbUserReconciler{
-		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		Log:      ctrl.Log.WithName("controllers").WithName("DbUser"),
-		Recorder: mgr.GetEventRecorderFor("database-controller"),
-		Interval: time.Duration(i),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "DbUser")
-		os.Exit(1)
-	}
-	if err = (&kindarocksv1beta1.DbUser{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "DbUser")
-		os.Exit(1)
-	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
