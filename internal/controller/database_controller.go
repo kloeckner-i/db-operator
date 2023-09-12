@@ -621,7 +621,7 @@ func (r *DatabaseReconciler) renderTemplates(ctx context.Context, dbcr *kindav1b
 		return err
 	}
 
-	templateds, err := templates.NewTemplateDataSource(dbcr, nil, databaseSecret, databaseConfigMap, db, dbuser)
+	templateds, err := templates.NewTemplateDataSource(dbcr, databaseSecret, databaseConfigMap, db, dbuser)
 	if err != nil {
 		return err
 	}

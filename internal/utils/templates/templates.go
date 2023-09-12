@@ -125,7 +125,6 @@ func (tds *TemplateDataSources) BuildVars(templates v1beta1.Templates) error {
 // TemplateDataSource  should be only the database resource
 type TemplateDataSources struct {
 	DatabaseK8sObj  *v1beta1.Database
-	DbUserK8sObj    *v1beta1.DbUser
 	SecretK8sObj    *corev1.Secret
 	ConfigMapK8sObj *corev1.ConfigMap
 	DatabaseObj     database.Database
@@ -135,8 +134,8 @@ type TemplateDataSources struct {
 // NewTemplateDataSource is used to init the struct that should handle the templating of secrets and other key-values
 // that can be later used by applications.
 // If DbUser (second argument) is provided, the templater will be working with a secret that belongs to a dbuser
-func NewTemplateDataSource(databaseK8s *v1beta1.Database,
-	dbuserK8s *v1beta1.DbUser,
+func NewTemplateDataSource(
+	databaseK8s *v1beta1.Database,
 	secretK8s *corev1.Secret,
 	configmapK8s *corev1.ConfigMap,
 	db database.Database,
@@ -151,12 +150,7 @@ func NewTemplateDataSource(databaseK8s *v1beta1.Database,
 	if configmapK8s == nil {
 		return nil, errors.New("configmap must be passed")
 	}
-	var secretName string
-	if dbuserK8s != nil {
-		secretName = dbuserK8s.Spec.SecretName
-	} else {
-		secretName = databaseK8s.Spec.SecretName
-	}
+	secretName := databaseK8s.Spec.SecretName
 
 	if secretK8s.Name != secretName {
 		return nil, fmt.Errorf("secret %s doesn't belong to the database %s", secretK8s.Name, databaseK8s.Name)
@@ -175,7 +169,6 @@ func NewTemplateDataSource(databaseK8s *v1beta1.Database,
 
 	return &TemplateDataSources{
 		DatabaseK8sObj:  databaseK8s,
-		DbUserK8sObj:    dbuserK8s,
 		SecretK8sObj:    secretK8s,
 		ConfigMapK8sObj: configmapK8s,
 		DatabaseObj:     db,
