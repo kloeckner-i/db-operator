@@ -86,7 +86,7 @@ func (m Mysql) getDbConn(user, password string) (*sql.DB, error) {
 	return db, nil
 }
 
-func (m Mysql) executeQuery(query string, admin AdminCredentials) error {
+func (m Mysql) executeQuery(query string, admin *DatabaseUser) error {
 	db, err := m.getDbConn(admin.Username, admin.Password)
 	if err != nil {
 		logrus.Fatalf("failed to get db connection: %s", err)
@@ -119,7 +119,7 @@ func (m Mysql) executeQueryAsUser(query string, user *DatabaseUser) error {
 	return nil
 }
 
-func (m Mysql) isRowExist(query string, admin AdminCredentials) bool {
+func (m Mysql) isRowExist(query string, admin *DatabaseUser) bool {
 	db, err := m.getDbConn(admin.Username, admin.Password)
 	if err != nil {
 		logrus.Fatalf("failed to get db connection: %s", err)
@@ -135,7 +135,7 @@ func (m Mysql) isRowExist(query string, admin AdminCredentials) bool {
 	return true
 }
 
-func (m Mysql) isUserExist(admin AdminCredentials, user *DatabaseUser) bool {
+func (m Mysql) isUserExist(admin *DatabaseUser, user *DatabaseUser) bool {
 	check := fmt.Sprintf("SELECT User FROM mysql.user WHERE user='%s';", user.Username)
 
 	if m.isRowExist(check, admin) {
@@ -181,33 +181,33 @@ func (m Mysql) GetCredentials(user *DatabaseUser) Credentials {
 
 // ParseAdminCredentials parse admin username and password of mysql database from secret data
 // If "user" key is not defined, take "root" as admin user by default
-func (m Mysql) ParseAdminCredentials(data map[string][]byte) (AdminCredentials, error) {
-	cred := AdminCredentials{}
+func (m Mysql) ParseAdminCredentials(data map[string][]byte) (*DatabaseUser, error) {
+	admin := &DatabaseUser{}
 
 	_, ok := data["user"]
 	if ok {
-		cred.Username = string(data["user"])
+		admin.Username = string(data["user"])
 	} else {
 		// default admin username is "root"
-		cred.Username = "root"
+		admin.Username = "root"
 	}
 
 	// if "password" key is defined in data, take value as password
 	_, ok = data["password"]
 	if ok {
-		cred.Password = string(data["password"])
-		return cred, nil
+		admin.Password = string(data["password"])
+		return admin, nil
 	}
 
 	// take value of "mysql-root-password" key as password if "password" key is not defined in data
 	// it's compatible with secret created by stable mysql chart
 	_, ok = data["mysql-root-password"]
 	if ok {
-		cred.Password = string(data["mysql-root-password"])
-		return cred, nil
+		admin.Password = string(data["mysql-root-password"])
+		return admin, nil
 	}
 
-	return cred, errors.New("can not find mysql admin credentials")
+	return admin, errors.New("can not find mysql admin credentials")
 }
 
 func (m Mysql) GetDatabaseAddress() DatabaseAddress {
@@ -217,7 +217,7 @@ func (m Mysql) GetDatabaseAddress() DatabaseAddress {
 	}
 }
 
-func (m Mysql) createDatabase(admin AdminCredentials) error {
+func (m Mysql) createDatabase(admin *DatabaseUser) error {
 	create := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS `%s`;", m.Database)
 
 	err := m.executeQuery(create, admin)
@@ -228,7 +228,7 @@ func (m Mysql) createDatabase(admin AdminCredentials) error {
 	return nil
 }
 
-func (m Mysql) deleteDatabase(admin AdminCredentials) error {
+func (m Mysql) deleteDatabase(admin *DatabaseUser) error {
 	create := fmt.Sprintf("DROP DATABASE IF EXISTS `%s`;", m.Database)
 
 	err := kci.Retry(3, 5*time.Second, func() error {
@@ -248,7 +248,7 @@ func (m Mysql) deleteDatabase(admin AdminCredentials) error {
 	return nil
 }
 
-func (m Mysql) createOrUpdateUser(admin AdminCredentials, user *DatabaseUser) error {
+func (m Mysql) createOrUpdateUser(admin *DatabaseUser, user *DatabaseUser) error {
 	if !m.isUserExist(admin, user) {
 		if err := m.createUser(admin, user); err != nil {
 			return err
@@ -266,7 +266,7 @@ func (m Mysql) createOrUpdateUser(admin AdminCredentials, user *DatabaseUser) er
 	return nil
 }
 
-func (m Mysql) createUser(admin AdminCredentials, user *DatabaseUser) error {
+func (m Mysql) createUser(admin *DatabaseUser, user *DatabaseUser) error {
 	create := fmt.Sprintf("CREATE USER `%s` IDENTIFIED BY '%s';", user.Username, user.Password)
 
 	if !m.isUserExist(admin, user) {
@@ -286,7 +286,7 @@ func (m Mysql) createUser(admin AdminCredentials, user *DatabaseUser) error {
 	return nil
 }
 
-func (m Mysql) updateUser(admin AdminCredentials, user *DatabaseUser) error {
+func (m Mysql) updateUser(admin *DatabaseUser, user *DatabaseUser) error {
 	update := fmt.Sprintf("ALTER USER `%s` IDENTIFIED BY '%s';", user.Username, user.Password)
 
 	if !m.isUserExist(admin, user) {
@@ -306,7 +306,7 @@ func (m Mysql) updateUser(admin AdminCredentials, user *DatabaseUser) error {
 	return nil
 }
 
-func (m Mysql) setUserPermission(admin AdminCredentials, user *DatabaseUser) error {
+func (m Mysql) setUserPermission(admin *DatabaseUser, user *DatabaseUser) error {
 	switch user.AccessType {
 	case ACCESS_TYPE_MAINUSER:
 		grant := fmt.Sprintf("GRANT ALL PRIVILEGES ON `%s`.* TO '%s'@'%%';", m.Database, user.Username)
@@ -333,7 +333,7 @@ func (m Mysql) setUserPermission(admin AdminCredentials, user *DatabaseUser) err
 	return nil
 }
 
-func (m Mysql) deleteUser(admin AdminCredentials, user *DatabaseUser) error {
+func (m Mysql) deleteUser(admin *DatabaseUser, user *DatabaseUser) error {
 	delete := fmt.Sprintf("DROP USER `%s`;", user.Username)
 
 	if m.isUserExist(admin, user) {

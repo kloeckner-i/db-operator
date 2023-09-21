@@ -28,8 +28,11 @@ func testMysql() (*Mysql, *DatabaseUser) {
 	return &Mysql{"local", test.GetMysqlHost(), test.GetMysqlPort(), "testdb", false, false}, &DatabaseUser{Username: "testuser", Password: "testpwd", AccessType: ACCESS_TYPE_MAINUSER}
 }
 
-func getMysqlAdmin() AdminCredentials {
-	return AdminCredentials{"root", test.GetMysqlAdminPassword()}
+func getMysqlAdmin() *DatabaseUser {
+	return &DatabaseUser{
+		Username: "root",
+		Password: test.GetMysqlAdminPassword(),
+	}
 }
 
 func TestMysqlCheckStatus(t *testing.T) {

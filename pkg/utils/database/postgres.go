@@ -92,7 +92,7 @@ func (p Postgres) getDbConn(dbname, user, password string) (*sql.DB, error) {
 	return db, err
 }
 
-func (p Postgres) executeExec(database, query string, admin AdminCredentials) error {
+func (p Postgres) executeExec(database, query string, admin *DatabaseUser) error {
 	db, err := p.getDbConn(database, admin.Username, admin.Password)
 	if err != nil {
 		logrus.Fatalf("failed to open db connection: %s", err)
@@ -117,13 +117,13 @@ func (p Postgres) executeExecAsUser(database, query string, user *DatabaseUser) 
 	return err
 }
 
-func (p Postgres) isDbExist(admin AdminCredentials) bool {
+func (p Postgres) isDbExist(admin *DatabaseUser) bool {
 	check := fmt.Sprintf("SELECT 1 FROM pg_database WHERE datname = '%s';", p.Database)
 
 	return p.isRowExist("postgres", check, admin.Username, admin.Password)
 }
 
-func (p Postgres) isUserExist(admin AdminCredentials, user *DatabaseUser) bool {
+func (p Postgres) isUserExist(admin *DatabaseUser, user *DatabaseUser) bool {
 	check := fmt.Sprintf("SELECT 1 FROM pg_user WHERE usename = '%s';", user.Username)
 
 	return p.isRowExist("postgres", check, admin.Username, admin.Password)
@@ -145,7 +145,7 @@ func (p Postgres) isRowExist(database, query, user, password string) bool {
 	return true
 }
 
-func (p Postgres) dropPublicSchema(admin AdminCredentials) error {
+func (p Postgres) dropPublicSchema(admin *DatabaseUser) error {
 	if p.Monitoring {
 		return fmt.Errorf("can not drop public schema when monitoring is enabled on instance level")
 	}
@@ -158,10 +158,10 @@ func (p Postgres) dropPublicSchema(admin AdminCredentials) error {
 	return nil
 }
 
-func (p Postgres) createSchemas(admin AdminCredentials) error {
+func (p Postgres) createSchemas(ac4tor *DatabaseUser) error {
 	for _, s := range p.Schemas {
 		createSchema := fmt.Sprintf("CREATE SCHEMA IF NOT EXISTS %s", s)
-		if err := p.executeExec(p.Database, createSchema, admin); err != nil {
+		if err := p.executeExec(p.Database, createSchema, ac4tor); err != nil {
 			logrus.Errorf("failed to create schema %s, %s", s, err)
 			return err
 		}
@@ -186,7 +186,7 @@ func (p Postgres) checkSchemas(user *DatabaseUser) error {
 	return nil
 }
 
-func (p Postgres) addExtensions(admin AdminCredentials) error {
+func (p Postgres) addExtensions(admin *DatabaseUser) error {
 	for _, ext := range p.Extensions {
 		query := fmt.Sprintf("CREATE EXTENSION IF NOT EXISTS \"%s\";", ext)
 		err := p.executeExec(p.Database, query, admin)
@@ -197,7 +197,7 @@ func (p Postgres) addExtensions(admin AdminCredentials) error {
 	return nil
 }
 
-func (p Postgres) enableMonitoring(admin AdminCredentials) error {
+func (p Postgres) enableMonitoring(admin *DatabaseUser) error {
 	monitoringExtension := "pg_stat_statements"
 
 	query := fmt.Sprintf("CREATE EXTENSION IF NOT EXISTS \"%s\";", monitoringExtension)
@@ -257,41 +257,41 @@ func (p Postgres) GetCredentials(user *DatabaseUser) Credentials {
 
 // ParseAdminCredentials parse admin username and password of postgres database from secret data
 // If "user" key is not defined, take "postgres" as admin user by default
-func (p Postgres) ParseAdminCredentials(data map[string][]byte) (AdminCredentials, error) {
-	cred := AdminCredentials{}
+func (p Postgres) ParseAdminCredentials(data map[string][]byte) (*DatabaseUser, error) {
+	admin := &DatabaseUser{}
 
 	_, ok := data["user"]
 	if ok {
-		cred.Username = string(data["user"])
+		admin.Username = string(data["user"])
 	} else {
 		// default admin username is "postgres"
-		cred.Username = "postgres"
+		admin.Username = "postgres"
 	}
 
 	// if "password" key is defined in data, take value as password
 	_, ok = data["password"]
 	if ok {
-		cred.Password = string(data["password"])
-		return cred, nil
+		admin.Password = string(data["password"])
+		return admin, nil
 	}
 
 	// take value of "postgresql-password" key as password if "password" key is not defined in data
 	// it's compatible with secret created by stable postgres chart
 	_, ok = data["postgresql-password"]
 	if ok {
-		cred.Password = string(data["postgresql-password"])
-		return cred, nil
+		admin.Password = string(data["postgresql-password"])
+		return admin, nil
 	}
 
 	// take value of "postgresql-password" key as password if "postgresql-password" and "password" key is not defined in data
 	// it's compatible with secret created by stable postgres chart
 	_, ok = data["postgresql-postgres-password"]
 	if ok {
-		cred.Password = string(data["postgresql-postgres-password"])
-		return cred, nil
+		admin.Password = string(data["postgresql-postgres-password"])
+		return admin, nil
 	}
 
-	return cred, errors.New("can not find postgres admin credentials")
+	return admin, errors.New("can not find postgres admin credentials")
 }
 
 func (p Postgres) GetDatabaseAddress() DatabaseAddress {
@@ -301,7 +301,7 @@ func (p Postgres) GetDatabaseAddress() DatabaseAddress {
 	}
 }
 
-func (p Postgres) createDatabase(admin AdminCredentials) error {
+func (p Postgres) createDatabase(admin *DatabaseUser) error {
 	var create string
 	if len(p.Template) > 0 {
 		logrus.Infof("Creating database %s from template %s", p.Database, p.Template)
@@ -349,7 +349,7 @@ func (p Postgres) createDatabase(admin AdminCredentials) error {
 	return nil
 }
 
-func (p Postgres) deleteDatabase(admin AdminCredentials) error {
+func (p Postgres) deleteDatabase(admin *DatabaseUser) error {
 	revoke := fmt.Sprintf("REVOKE CONNECT ON DATABASE \"%s\" FROM PUBLIC, \"%s\";", p.Database, admin.Username)
 	delete := fmt.Sprintf("DROP DATABASE \"%s\";", p.Database)
 
@@ -378,7 +378,7 @@ func (p Postgres) deleteDatabase(admin AdminCredentials) error {
 	return nil
 }
 
-func (p Postgres) createOrUpdateUser(admin AdminCredentials, user *DatabaseUser) error {
+func (p Postgres) createOrUpdateUser(admin *DatabaseUser, user *DatabaseUser) error {
 	if !p.isUserExist(admin, user) {
 		if err := p.createUser(admin, user); err != nil {
 			logrus.Errorf("failed creating postgres user - %s", err)
@@ -397,7 +397,7 @@ func (p Postgres) createOrUpdateUser(admin AdminCredentials, user *DatabaseUser)
 	return nil
 }
 
-func (p Postgres) createUser(admin AdminCredentials, user *DatabaseUser) error {
+func (p Postgres) createUser(admin *DatabaseUser, user *DatabaseUser) error {
 	create := fmt.Sprintf("CREATE USER \"%s\" WITH ENCRYPTED PASSWORD '%s' NOSUPERUSER;", user.Username, user.Password)
 
 	if !p.isUserExist(admin, user) {
@@ -418,7 +418,7 @@ func (p Postgres) createUser(admin AdminCredentials, user *DatabaseUser) error {
 	return nil
 }
 
-func (p Postgres) updateUser(admin AdminCredentials, user *DatabaseUser) error {
+func (p Postgres) updateUser(admin *DatabaseUser, user *DatabaseUser) error {
 	update := fmt.Sprintf("ALTER ROLE \"%s\" WITH ENCRYPTED PASSWORD '%s';", user.Username, user.Password)
 
 	if !p.isUserExist(admin, user) {
@@ -438,7 +438,7 @@ func (p Postgres) updateUser(admin AdminCredentials, user *DatabaseUser) error {
 	return nil
 }
 
-func (p Postgres) setUserPermission(admin AdminCredentials, user *DatabaseUser) error {
+func (p Postgres) setUserPermission(admin *DatabaseUser, user *DatabaseUser) error {
 	schemas := p.Schemas
 	if !p.DropPublicSchema {
 		schemas = append(schemas, "public")
@@ -509,7 +509,7 @@ func (p Postgres) setUserPermission(admin AdminCredentials, user *DatabaseUser) 
 	return nil
 }
 
-func (p Postgres) deleteUser(admin AdminCredentials, user *DatabaseUser) error {
+func (p Postgres) deleteUser(admin *DatabaseUser, user *DatabaseUser) error {
 	if user.AccessType != ACCESS_TYPE_MAINUSER && p.isUserExist(admin, user) {
 		schemas := p.Schemas
 		if !p.DropPublicSchema {

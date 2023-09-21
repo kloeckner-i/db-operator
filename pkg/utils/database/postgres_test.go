@@ -44,8 +44,11 @@ func testPostgres() (*Postgres, *DatabaseUser) {
 		}
 }
 
-func getPostgresAdmin() AdminCredentials {
-	return AdminCredentials{"postgres", test.GetPostgresAdminPassword()}
+func getPostgresAdmin() *DatabaseUser {
+	return &DatabaseUser{
+		Username: "postgres",
+		Password: test.GetPostgresAdminPassword(),
+	}
 }
 
 func TestPostgresExecuteQuery(t *testing.T) {

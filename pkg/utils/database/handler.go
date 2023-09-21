@@ -17,7 +17,7 @@
 package database
 
 // CreateDatabase executes queries to create database
-func CreateDatabase(db Database, admin AdminCredentials) error {
+func CreateDatabase(db Database, admin *DatabaseUser) error {
 	err := db.createDatabase(admin)
 	if err != nil {
 		return err
@@ -26,7 +26,7 @@ func CreateDatabase(db Database, admin AdminCredentials) error {
 }
 
 // DeleteDatabase executes queries to delete database and user
-func DeleteDatabase(db Database, admin AdminCredentials) error {
+func DeleteDatabase(db Database, admin *DatabaseUser) error {
 	err := db.deleteDatabase(admin)
 	if err != nil {
 		return err
@@ -36,7 +36,7 @@ func DeleteDatabase(db Database, admin AdminCredentials) error {
 }
 
 // CreateOrUpdateUser executes queries to create or update user
-func CreateOrUpdateUser(db Database, dbuser *DatabaseUser, admin AdminCredentials) error {
+func CreateOrUpdateUser(db Database, dbuser *DatabaseUser, admin *DatabaseUser) error {
 	err := db.createOrUpdateUser(admin, dbuser)
 	if err != nil {
 		return err
@@ -45,7 +45,7 @@ func CreateOrUpdateUser(db Database, dbuser *DatabaseUser, admin AdminCredential
 }
 
 // CreateUser executes queries to a create user
-func CreateUser(db Database, dbuser *DatabaseUser, admin AdminCredentials) error {
+func CreateUser(db Database, dbuser *DatabaseUser, admin *DatabaseUser) error {
 	err := db.createUser(admin, dbuser)
 	if err != nil {
 		return err
@@ -53,7 +53,7 @@ func CreateUser(db Database, dbuser *DatabaseUser, admin AdminCredentials) error
 	return nil
 }
 
-func UpdateUser(db Database, dbuser *DatabaseUser, admin AdminCredentials) error {
+func UpdateUser(db Database, dbuser *DatabaseUser, admin *DatabaseUser) error {
 	err := db.createOrUpdateUser(admin, dbuser)
 	if err != nil {
 		return err
@@ -61,7 +61,7 @@ func UpdateUser(db Database, dbuser *DatabaseUser, admin AdminCredentials) error
 	return nil
 }
 
-func DeleteUser(db Database, dbuser *DatabaseUser, admin AdminCredentials) error {
+func DeleteUser(db Database, dbuser *DatabaseUser, admin *DatabaseUser) error {
 	err := db.deleteUser(admin, dbuser)
 	if err != nil {
 		return err
