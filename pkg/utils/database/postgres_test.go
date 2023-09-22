@@ -24,6 +24,12 @@ import (
 )
 
 func testPostgres() (*Postgres, *DatabaseUser) {
+	dbuser := &DatabaseUser{
+		Username:   "testuser",
+		Password:   "testpassword",
+		AccessType: ACCESS_TYPE_MAINUSER,
+	}
+
 	return &Postgres{
 			Backend:          "local",
 			Host:             test.GetPostgresHost(),
@@ -35,13 +41,9 @@ func testPostgres() (*Postgres, *DatabaseUser) {
 			SkipCAVerify:     false,
 			DropPublicSchema: false,
 			Schemas:          []string{},
-			MainUser:         "testuser",
+			MainUser:         dbuser,
 		},
-		&DatabaseUser{
-			Username:   "testuser",
-			Password:   "testpassword",
-			AccessType: ACCESS_TYPE_MAINUSER,
-		}
+		dbuser
 }
 
 func getPostgresAdmin() *DatabaseUser {

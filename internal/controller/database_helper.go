@@ -80,7 +80,7 @@ func determinDatabaseType(dbcr *kindav1beta1.Database, dbCred database.Credentia
 			DropPublicSchema: dbcr.Spec.Postgres.DropPublicSchema,
 			Schemas:          dbcr.Spec.Postgres.Schemas,
 			Template:         dbcr.Spec.Postgres.Template,
-			MainUser:         dbcr.Status.UserName,
+			MainUser:         dbuser,
 		}
 		return db, dbuser, nil
 
@@ -201,7 +201,7 @@ func getSSLMode(dbcr *kindav1beta1.Database) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	genericSSL, err := getGenericSSLMode(dbcr)
 	if err != nil {
 		return "", err
@@ -209,30 +209,30 @@ func getSSLMode(dbcr *kindav1beta1.Database) (string, error) {
 
 	if engine == "postgres" {
 		switch genericSSL {
-			case SSL_DISABLED:
-				return "disable", nil
-			case SSL_REQUIRED:
-				return "require", nil
-			case SSL_VERIFY_CA:
-				return "verify-ca", nil
+		case SSL_DISABLED:
+			return "disable", nil
+		case SSL_REQUIRED:
+			return "require", nil
+		case SSL_VERIFY_CA:
+			return "verify-ca", nil
 		}
-	} 
-	
+	}
+
 	if engine == "mysql" {
 		switch genericSSL {
-			case SSL_DISABLED:
-				return "disabled", nil
-			case SSL_REQUIRED:
-				return "required", nil
-			case SSL_VERIFY_CA:
-				return "verify_ca", nil
+		case SSL_DISABLED:
+			return "disabled", nil
+		case SSL_REQUIRED:
+			return "required", nil
+		case SSL_VERIFY_CA:
+			return "verify_ca", nil
 		}
 	}
 
 	return "", fmt.Errorf("unknown database engine: %s", engine)
 }
 
-func getGenericSSLMode(dbcr *kindav1beta1.Database) (string, error){
+func getGenericSSLMode(dbcr *kindav1beta1.Database) (string, error) {
 	instance, err := dbcr.GetInstanceRef()
 	if err != nil {
 		return "", err
@@ -247,4 +247,3 @@ func getGenericSSLMode(dbcr *kindav1beta1.Database) (string, error){
 		}
 	}
 }
-

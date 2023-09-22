@@ -1,5 +1,6 @@
 /*
  * Copyright 2021 kloeckner.i GmbH
+ * Copyright 2023 Nikolai Rodionov (allanger)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,8 +49,8 @@ type Postgres struct {
 	Template         string
 	// A user that is created with the Database
 	//  it's required to set default priveleges
-	//  for read only users
-	MainUser string
+	//  for additional users
+	MainUser *DatabaseUser
 }
 
 const postgresDefaultSSLMode = "disable"
@@ -463,7 +464,11 @@ func (p Postgres) setUserPermission(admin *DatabaseUser, user *DatabaseUser) err
 		for _, s := range schemas {
 			grantUsage := fmt.Sprintf("GRANT USAGE ON SCHEMA \"%s\" TO \"%s\"", s, user.Username)
 			grantTables := fmt.Sprintf("GRANT SELECT, INSERT, DELETE, UPDATE ON ALL TABLES IN SCHEMA \"%s\" TO \"%s\"", s, user.Username)
-			defaultPrivileges := fmt.Sprintf("ALTER DEFAULT PRIVILEGES FOR ROLE \"%s\" IN SCHEMA \"%s\" GRANT SELECT, INSERT, DELETE, UPDATE ON TABLES TO \"%s\";", p.MainUser, s, user.Username)
+			defaultPrivileges := fmt.Sprintf("ALTER DEFAULT PRIVILEGES FOR ROLE \"%s\" IN SCHEMA \"%s\" GRANT SELECT, INSERT, DELETE, UPDATE ON TABLES TO \"%s\";",
+				p.MainUser.Username,
+				s,
+				user.Username,
+			)
 			err := p.executeExec(p.Database, grantUsage, admin)
 			if err != nil {
 				logrus.Errorf("failed updating postgres user %s - %s", grantTables, err)
@@ -484,7 +489,11 @@ func (p Postgres) setUserPermission(admin *DatabaseUser, user *DatabaseUser) err
 		for _, s := range schemas {
 			grantUsage := fmt.Sprintf("GRANT USAGE ON SCHEMA \"%s\" TO \"%s\"", s, user.Username)
 			grantTables := fmt.Sprintf("GRANT SELECT ON ALL TABLES IN SCHEMA \"%s\" TO \"%s\"", s, user.Username)
-			defaultPrivileges := fmt.Sprintf("ALTER DEFAULT PRIVILEGES FOR ROLE \"%s\" IN SCHEMA \"%s\" GRANT SELECT ON TABLES TO \"%s\";", p.MainUser, s, user.Username)
+			defaultPrivileges := fmt.Sprintf("ALTER DEFAULT PRIVILEGES FOR ROLE \"%s\" IN SCHEMA \"%s\" GRANT SELECT ON TABLES TO \"%s\";",
+				p.MainUser.Username,
+				s,
+				user.Username,
+			)
 			err := p.executeExec(p.Database, grantUsage, admin)
 			if err != nil {
 				logrus.Errorf("failed updating postgres user %s - %s", grantTables, err)
@@ -516,7 +525,11 @@ func (p Postgres) deleteUser(admin *DatabaseUser, user *DatabaseUser) error {
 			schemas = append(schemas, "public")
 		}
 		for _, schema := range schemas {
-			revokeDefaults := fmt.Sprintf("ALTER DEFAULT PRIVILEGES FOR ROLE \"%s\" IN SCHEMA \"%s\" REVOKE ALL ON TABLES FROM \"%s\";", p.MainUser, schema, user.Username)
+			revokeDefaults := fmt.Sprintf("ALTER DEFAULT PRIVILEGES FOR ROLE \"%s\" IN SCHEMA \"%s\" REVOKE ALL ON TABLES FROM \"%s\";",
+				p.MainUser.Username,
+				schema,
+				user.Username,
+			)
 			if err := p.executeExec(p.Database, revokeDefaults, admin); err != nil {
 				logrus.Errorf("failed removing default proveleges from \"%s\" on schema %s: %s", user.Username, schema, err)
 				return err
