@@ -479,7 +479,7 @@ func (p Postgres) setUserPermission(admin *DatabaseUser, user *DatabaseUser) err
 				logrus.Errorf("failed updating postgres user %s - %s", grantTables, err)
 				return err
 			}
-			err = p.executeExec(p.Database, defaultPrivileges, admin)
+			err = p.executeExec(p.Database, defaultPrivileges, p.MainUser)
 			if err != nil {
 				logrus.Errorf("failed updating postgres user %s - %s", defaultPrivileges, err)
 				return err
@@ -504,7 +504,7 @@ func (p Postgres) setUserPermission(admin *DatabaseUser, user *DatabaseUser) err
 				logrus.Errorf("failed updating postgres user %s - %s", grantTables, err)
 				return err
 			}
-			err = p.executeExec(p.Database, defaultPrivileges, admin)
+			err = p.executeExec(p.Database, defaultPrivileges, p.MainUser)
 			if err != nil {
 				logrus.Errorf("failed updating postgres user %s - %s", defaultPrivileges, err)
 				return err
@@ -530,7 +530,7 @@ func (p Postgres) deleteUser(admin *DatabaseUser, user *DatabaseUser) error {
 				schema,
 				user.Username,
 			)
-			if err := p.executeExec(p.Database, revokeDefaults, admin); err != nil {
+			if err := p.executeExec(p.Database, revokeDefaults, p.MainUser); err != nil {
 				logrus.Errorf("failed removing default proveleges from \"%s\" on schema %s: %s", user.Username, schema, err)
 				return err
 			}
