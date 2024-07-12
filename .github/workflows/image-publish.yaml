@@ -13,7 +13,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       packages: write
     strategy:
@@ -27,75 +27,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Setup go
-        uses: actions/setup-go@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set the image metadata
+        run: ./build/set_image_metadata
+
+      - name: Build an image
+        id: build-image
+        uses: redhat-actions/buildah-build@v2
         with:
-          go-version: ${{ env.go_version }}
+          image: db-operator-devel
+          tags: ${{ env.TAGS }}
+          platforms: linux/amd64, linux/arm64/v8
+          containerfiles: |
+            ./Containerfile
+          labels: ${{ env.ANNOTATIONS }}
 
-      - name: Compile Binary
-        env:
-          GOOS: ${{ env.go_os }}
-          GOARCH: ${{ matrix.go_arch }}
-          CGO_ENABLED: "0"
-        run: |
-          go build -tags build -o ${{ env.product_name }} \
-            -ldflags="-X \"github.com/db-operator/db-operator/internal/helpers/common.OperatorVersion=${{ github.event.release.tag_name }}\"" \
-            ${{ env.main_go_path }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+      - name: Push the image to GHCR
+        id: push-to-ghcr
+        uses: redhat-actions/push-to-registry@v2
         with:
-          registry: ghcr.io
+          image: ${{ steps.build-image.outputs.image }}
+          tags: ${{ steps.build-image.outputs.tags }}
+          registry: ghcr.io/${{ github.repository_owner }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set action link variable
-        run: echo "LINK=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >> $GITHUB_ENV
-
-      - name: Build and export
-        uses: docker/build-push-action@v3
-        with:
-          push: true
-          context: .
-          file: Dockerfile-ci
-          platforms: ${{ env.go_os }}/${{ matrix.docker_arch }}
-          build-args: |
-            OPERATOR_VERSION=${{ github.ref_name }}
-          tags: |
-            ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:latest-${{ matrix.go_arch }}
-            ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:${{ github.event.release.tag_name }}-${{ matrix.go_arch }}
-          labels: |
-            action_link=${{ env.LINK }}
-            actor=${{ github.actor }}
-            sha=${{ github.sha }}
-            ref=${{ github.ref }}
-
-  push_to_ghcr:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create a docker manifest for a versioned container
-        run: |
-          docker buildx imagetools create -t ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:${{ github.event.release.tag_name }} \
-            ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:${{ github.event.release.tag_name }}-amd64 \
-            ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:${{ github.event.release.tag_name }}-arm64
-
-      - name: Create a manifest for the latest container
-        run: |
-          docker buildx imagetools create -t ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:latest \
-            ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:latest-amd64 \
-            ghcr.io/${{ env.manufacturer }}/${{ env.product_name }}:latest-arm64
-
+          password: ${{ github.token }}

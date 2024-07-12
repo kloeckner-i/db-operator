@@ -1,33 +1,30 @@
-FROM registry.hub.docker.com/library/golang:1.22.2-alpine3.18 as builder
+FROM --platform=$BUILDPLATFORM registry.hub.docker.com/library/golang:1.22.2-alpine3.18 as builder
 
-ARG OPERATOR_VERSION
 
 RUN apk update && apk upgrade && \
+RUN apk update && apk upgrade && \
     apk add --no-cache bash build-base
-
-WORKDIR /opt/db-operator
-
-# to reduce docker build time download dependency first before building
-COPY go.mod .
-COPY go.sum .
-RUN go mod download
-
+    apk add --no-cache bash build-base
+@@ -13,10 +13,13 @@ RUN go mod download
+# build
 # build
 COPY . .
+COPY . .
+
 
 ARG GOARCH
-RUN GOOS=linux GOARCH=$GOARCH CGO_ENABLED=0 go build -tags build -o /usr/local/bin/db-operator -ldflags="-X 'github.com/db-operator/db-operator/internal/helpers/common.OperatorVersion=${OPERATOR_VERSION}'" cmd/main.go
+RUN uname -a
+RUN GOOS=linux GOARCH=$GOARCH CGO_ENABLED=0 go build -tags build -o /usr/local/bin/db-operator cmd/main.go
+
+ARG TARGETARCH
+RUN GOOS=linux GOARCH=$TARGETARCH CGO_ENABLED=0 go build -tags build -o /usr/local/bin/db-operator cmt/main.go
+
 
 FROM registry.hub.docker.com/library/alpine:3.18
+RUN uname -a
+LABEL org.opencontainers.image.authors="Nikolai Rodionov<allanger@zohomail.com>"
 LABEL org.opencontainers.image.authors="Nikolai Rodionov<allanger@zohomail.com>"
 
+
 ENV USER_UID=1001
-ENV USER_NAME=db-operator
-
-# # install operator binary
-COPY --from=builder /usr/local/bin/db-operator /usr/local/bin/db-operator
-COPY ./build/bin /usr/local/bin
-RUN /usr/local/bin/user_setup
-
-ENTRYPOINT ["/usr/local/bin/entrypoint"]
-USER $USER_UID
+ENV USER_UID=1001
