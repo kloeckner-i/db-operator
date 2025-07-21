@@ -1,3 +1,9 @@
+‼️‼️ This repo is archived ‼️‼️
+
+Development has moved to this repo: https://github.com/db-operator/db-operator
+
+If you use this project, please consider migrating.
+
 # DB Operator
 
 The DB Operator eases the pain of managing PostgreSQL and MySQL instances for applications running in Kubernetes. The Operator creates databases and make them available in the cluster via Custom Resource. It is designed to support the on demand creation of test environments in CI/CD pipelines.
