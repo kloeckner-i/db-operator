@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: "3"
+
+tasks:
+  localbin:
+    desc: Create local bin directory
+    silent: true
+    cmds:
+      - mkdir -p "{{.LOCALBIN}}"
+
+  go-install-tool:
+    silent: true
+    cmd: |-
+      set -e
+      TARGET="{{.TARGET}}"
+      PACKAGE="{{.PACKAGE}}@{{.VERSION}}"
+      VERSIONED="${TARGET}-{{.VERSION}}"
+
+      if [ -f "$VERSIONED" ] && [ "$(readlink -- "$TARGET" 2>/dev/null)" = "$VERSIONED" ]; then
+        echo "$PACKAGE already installed"
+        exit 0
+      fi
+
+      echo "Downloading $PACKAGE"
+      rm -f "$TARGET"
+
+      GOBIN="{{.LOCALBIN}}" go install "$PACKAGE"
+
+      mv "{{.LOCALBIN}}/$(basename "$TARGET")" "$VERSIONED"
+      ln -sf "$(realpath "$VERSIONED")" "$TARGET"

@@ -16,9 +16,11 @@
 
 package dbinstance
 
+import "context"
+
 // DbInstance interface to operate database server
 type DbInstance interface {
-	exist() error
+	exist(context.Context) error
 	create() error
 	update() error
 	state() (string, error)

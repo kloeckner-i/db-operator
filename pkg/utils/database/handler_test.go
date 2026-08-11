@@ -17,63 +17,72 @@
 package database
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCreatePostgres(t *testing.T) {
-	p := testPostgres()
+	p, dbu := testPostgres()
 	p.Database = "testdb\""
-	p.User = "testuser\""
+	dbu.Username = "testuser\""
 
 	admin := getPostgresAdmin()
 
-	err := Create(p, admin)
+	err := CreateDatabase(context.TODO(), p, admin)
 	assert.Errorf(t, err, "Should get error %v", err)
 
 	p.Database = "testdb"
-	err = Create(p, admin)
+	err = CreateDatabase(context.TODO(), p, admin)
+	assert.NoErrorf(t, err, "Unexpected error %v", err)
+
+	err = CreateOrUpdateUser(context.TODO(), p, dbu, admin)
 	assert.Errorf(t, err, "Should get error %v", err)
 
-	p.User = "testuser"
-	err = Create(p, admin)
+	dbu.Username = "testuser"
+	err = CreateOrUpdateUser(context.TODO(), p, dbu, admin)
 	assert.NoErrorf(t, err, "Unexpected error %v", err)
 }
 
 func TestCreateMysql(t *testing.T) {
-	m := testMysql()
+	m, dbu := testMysql()
+	dbu.Username = "testuser\\'"
 	m.Database = "testdb\\'"
-	m.User = "testuser\\'"
 
 	admin := getMysqlAdmin()
+	t.Log(m.Database)
+	err := CreateDatabase(context.TODO(), m, admin)
+	assert.NoErrorf(t, err, "Unexpected error %v", err)
 
-	err := Create(m, admin)
+	err = CreateUser(context.TODO(), m, dbu, admin)
 	assert.Errorf(t, err, "Should get error %v", err)
 
-	m.Database = "testdb"
-	err = Create(m, admin)
-	assert.Errorf(t, err, "Should get error %v", err)
-
-	m.User = "testuser"
-	err = Create(m, admin)
+	dbu.Username = "testuser"
+	err = CreateUser(context.TODO(), m, dbu, admin)
 	assert.NoErrorf(t, err, "Unexpected error %v", err)
 }
 
 func TestDeletePostgres(t *testing.T) {
-	p := testPostgres()
+	p, dbu := testPostgres()
 	admin := getPostgresAdmin()
 
 	p.Database = "testdb"
-	err := Delete(p, admin)
+	err := DeleteDatabase(context.TODO(), p, admin)
+	assert.NoErrorf(t, err, "Unexpected error %v", err)
+
+	err = DeleteUser(context.TODO(), p, dbu, admin)
 	assert.NoErrorf(t, err, "Unexpected error %v", err)
 }
 
 func TestDeleteMysql(t *testing.T) {
-	m := testMysql()
+	m, dbu := testMysql()
 	admin := getMysqlAdmin()
 
 	m.Database = "testdb"
-	err := Delete(m, admin)
+	err := DeleteDatabase(context.TODO(), m, admin)
+	assert.NoErrorf(t, err, "Unexpected error %v", err)
+
+	err = DeleteUser(context.TODO(), m, dbu, admin)
 	assert.NoErrorf(t, err, "Unexpected error %v", err)
 }

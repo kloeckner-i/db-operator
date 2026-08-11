@@ -16,28 +16,77 @@
 
 package database
 
-// Create executes queries to create database and user
-func Create(db Database, admin AdminCredentials) error {
-	err := db.createDatabase(admin)
-	if err != nil {
-		return err
-	}
+import "context"
 
-	err = db.createUser(admin)
+// CreateDatabase executes queries to create database
+func CreateDatabase(ctx context.Context, db Database, admin *DatabaseUser) error {
+	err := db.createDatabase(ctx, admin)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-// Delete executes queries to delete database and user
-func Delete(db Database, admin AdminCredentials) error {
-	err := db.deleteDatabase(admin)
+// DeleteDatabase executes queries to delete database and user
+func DeleteDatabase(ctx context.Context, db Database, admin *DatabaseUser) error {
+	err := db.deleteDatabase(ctx, admin)
 	if err != nil {
 		return err
 	}
 
-	err = db.deleteUser(admin)
+	return nil
+}
+
+// CreateOrUpdateUser executes queries to create or update user
+func CreateOrUpdateUser(ctx context.Context, db Database, dbuser *DatabaseUser, admin *DatabaseUser) error {
+	err := db.createOrUpdateUser(ctx, admin, dbuser)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// CreateUser executes queries to a create user
+func CreateUser(ctx context.Context, db Database, dbuser *DatabaseUser, admin *DatabaseUser) error {
+	err := db.createUser(ctx, admin, dbuser)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func UpdateUser(ctx context.Context, db Database, dbuser *DatabaseUser, admin *DatabaseUser) error {
+	err := db.createOrUpdateUser(ctx, admin, dbuser)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func RevokePermissions(ctx context.Context, db Database, dbuser *DatabaseUser, admin *DatabaseUser) error {
+	err := db.revokePermissions(ctx, admin, dbuser)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func SetPermissions(ctx context.Context, db Database, dbuser *DatabaseUser, admin *DatabaseUser) error {
+	err := db.setUserPermission(ctx, admin, dbuser)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func DeleteUser(ctx context.Context, db Database, dbuser *DatabaseUser, admin *DatabaseUser) error {
+	err := db.revokePermissions(ctx, admin, dbuser)
+	if err != nil {
+		return err
+	}
+	err = db.deleteUser(ctx, admin, dbuser)
 	if err != nil {
 		return err
 	}
@@ -52,6 +101,8 @@ func New(engine string) Database {
 		return &Postgres{}
 	case "mysql":
 		return &Mysql{}
+	case "dummy":
+		return &Dummy{}
 	}
 
 	return nil

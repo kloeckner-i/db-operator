@@ -1,0 +1,87 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: "3"
+
+vars:
+  CONTROLLER_GEN: "{{.LOCALBIN}}/controller-gen"
+  GOFUMPT: "{{.LOCALBIN}}/gofumpt"
+  GOLANGCI_LINT: "{{.LOCALBIN}}/golangci-lint"
+  KUSTOMIZE: "{{.LOCALBIN}}/kustomize"
+  # Tool versions
+  GOLANGCI_LINT_VERSION: v2.12.2
+
+includes:
+  shared:
+    taskfile: ./shared.yaml
+    internal: true
+    flatten: true
+
+tasks:
+  desired-version:
+    desc: Print the go version from the Containerfile
+    cmds:
+      - grep -o -P '(?<=golang:).*(?=-alpine)' Containerfile
+
+  build:
+    desc: Build manager binary
+    cmd: go build -o bin/manager cmd/main.go
+
+  fmt:
+    desc: Run gofumt fmt against code.
+    deps:
+      - gofumt
+    cmd: '"{{.GOFUMPT}}" -l -w .'
+
+  vet:
+    desc: Run go vet against code.
+    cmd: go vet ./...
+
+  lint:
+    desc: Run golangci-lint linter
+    deps:
+      - golangci-lint
+    cmd: '"{{.GOLANGCI_LINT}}" run'
+
+  lint-fix:
+    desc: Run golangci-lint linter and perform fixes
+    deps:
+      - golangci-lint
+    cmd: '"{{.GOLANGCI_LINT}}" run --fix'
+
+  lint-config:
+    desc: Verify golangci-lint linter configuration
+    deps:
+      - golangci-lint
+    cmd: '"{{.GOLANGCI_LINT}}" config verify'
+
+  gofumt:
+    desc: Download latest gofumt
+    silent: true
+    internal: true
+    deps:
+      - localbin
+    cmds:
+      - task: go-install-tool
+        vars:
+          TARGET: "{{.GOFUMPT}}"
+          PACKAGE: mvdan.cc/gofumpt
+          VERSION: "latest"
+
+  golangci-lint:
+    desc: Install golangci-lint (with optional custom build)
+    silent: true
+    internal: true
+    deps:
+      - localbin
+    cmds:
+      - task: go-install-tool
+        vars:
+          TARGET: "{{.GOLANGCI_LINT}}"
+          PACKAGE: github.com/golangci/golangci-lint/v2/cmd/golangci-lint
+          VERSION: "{{.GOLANGCI_LINT_VERSION}}"
+      - |
+        if [ -f .custom-gcl.yml ]; then
+          echo "Building custom golangci-lint with plugins..."
+          "{{.GOLANGCI_LINT}}" custom --destination "{{.LOCALBIN}}" --name golangci-lint-custom
+          mv -f "{{.LOCALBIN}}/golangci-lint-custom" "{{.GOLANGCI_LINT}}"
+        fi

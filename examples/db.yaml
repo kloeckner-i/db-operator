@@ -1,11 +1,16 @@
 ---
-apiVersion: "kci.rocks/v1beta1"
+apiVersion: "kinda.rocks/v1beta1"
 kind: "Database"
 metadata:
   name: "example-db"
   labels:
     env: test
 spec:
+  credentials:
+    secretName:
+    templates:
+      -
+
   secretName: example-db-credentials # where to save db name user, password for application
   instance: example-generic
   deletionProtected: false

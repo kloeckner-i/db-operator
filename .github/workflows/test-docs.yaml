@@ -1,0 +1,15 @@
+name: Documentation test
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+      - uses: abatilo/actions-poetry@v4
+      - uses: go-task/setup-task@v2
+      - run: task docs:build

@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: "3"
+
+vars:
+  LOCALBIN:
+    sh: echo "$(pwd)/bin"
+
+includes:
+  golang: ./taskfiles/golang.yaml
+  container: ./taskfiles/container.yaml
+  kubebuilder: ./taskfiles/kubebuilder.yaml
+  test: ./taskfiles/test.yaml
+  kind: ./taskfiles/kind.yaml
+  helmfile: ./taskfiles/helmfile.yaml
+  docs:
+    taskfile: ./taskfiles/docs.yaml
+    dir: ./documentation/

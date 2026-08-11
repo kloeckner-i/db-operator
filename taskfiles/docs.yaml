@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: "3"
+
+vars:
+  CONTAINER_TOOL: '{{.CONTAINER_TOOL | default "podman"}}'
+  IMG: '{{.IMG | default "localhost/controller:latest"}}'
+
+tasks:
+  deps:
+    desc: Install python deps
+    silent: true
+    cmd: poetry install --no-root
+  build:
+    desc: Build docs
+    silent: true
+    cmd: poetry run zensical build --clean
+    deps:
+      - deps
+  serve:
+    desc: Run the server with docs
+    silent: true
+    cmd: poetry run zensical serve
+    deps:
+      - deps

@@ -1,0 +1,8 @@
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: {{ include "self-signed-cluster-issuer.name" . }}
+spec:
+  ca:
+    secretName: {{ include "self-signed-cluster-issuer.name" . }}

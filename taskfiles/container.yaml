@@ -1,0 +1,56 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: "3"
+
+vars:
+  CONTAINER_TOOL: '{{.CONTAINER_TOOL | default "podman"}}'
+  IMG: '{{.IMG | default "localhost/controller:latest"}}'
+
+tasks:
+  build:
+    desc: Build a container with the manager.
+    cmd: '"{{.CONTAINER_TOOL}}" build -t "{{.IMG}}" .'
+
+  save:
+    desc: Save a container image as an archive
+    generates:
+      - my-image.tar
+    deps:
+      - build
+    cmds:
+      - rm -f my-image.tar
+      - '"{{.CONTAINER_TOOL}}" save "{{.IMG}}" -o my-image.tar'
+
+  set-image-metadata:
+    desc: Prepare the metadata for the github ci image build
+    silent: true
+    cmds:
+      - |
+        if [ -z "${GITHUB_ENV:-}" ]; then
+          echo "Error: GITHUB_ENV is not set"
+          exit 1
+        fi
+      - |-
+        EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+        echo "ANNOTATIONS<<$EOF" >> "$GITHUB_ENV"
+
+        ANNOTATIONS=$(cat << EOF
+        org.opencontainers.image.created=$(date +"%Y-%m-%d %T")
+        org.opencontainers.image.authors=$GITHUB_ACTOR
+        org.opencontainers.image.url=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+        org.opencontainers.image.documentation=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/main/README.md
+        org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY
+        org.opencontainers.image.version=$GITHUB_SHA
+        org.opencontainers.image.revision=$GITHUB_SHA
+        org.opencontainers.image.vendor=$GITHUB_REPOSITORY_OWNER
+        org.opencontainers.image.license=Apache License v2
+        org.opencontainers.image.title=$GITHUB_REPOSITORY
+        org.opencontainers.image.description=The DB Operator creates databases and make them available in the cluster via Custom Resource.
+        EOF
+        )
+        echo "${ANNOTATIONS}" >> "${GITHUB_ENV}"
+        echo "$EOF" >> "$GITHUB_ENV"
+        # --------------------------------------------
+        # -- Set the image tag by commit sha
+        # --------------------------------------------
+        echo "TAGS=${GITHUB_SHA}" >> "${GITHUB_ENV}"

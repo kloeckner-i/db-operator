@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: "3"
+
+tasks:
+  postgres:
+    env:
+      POSTGRES_INSTALL: "true"
+    cmd: helmfile sync
+
+  mariadb:
+    env:
+      MARIADB_INSTALL: "true"
+    cmd: helmfile sync
+
+  dbs:
+    desc: "Install all databases"
+    env:
+      MARIADB_INSTALL: "true"
+      POSTGRES_INSTALL: "true"
+    cmd: helmfile sync
+
+  remove:
+    desc: "Remove all databases"
+    cmd: helmfile sync

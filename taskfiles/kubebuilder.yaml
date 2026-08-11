@@ -1,0 +1,102 @@
+
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: "3"
+
+vars:
+  # Tools
+  CONTROLLER_GEN: "{{.LOCALBIN}}/controller-gen"
+  KUSTOMIZE: "{{.LOCALBIN}}/kustomize"
+  # Tool versions
+  CONTROLLER_TOOLS_VERSION: v0.20.1
+  KUSTOMIZE_VERSION: v5.8.1
+
+includes:
+  shared:
+    taskfile: ./shared.yaml
+    internal: true
+    flatten: true
+
+tasks:
+  install:
+    desc: Install CRDs into the K8s cluster
+    silent: true
+    deps:
+      - manifests
+      - kustomize
+    cmd: |-
+      out="$({{.KUSTOMIZE}} build config/crd 2>/dev/null || true)"
+      if [ -n "$out" ]; then
+        echo "$out" | kubectl apply -f -
+      else
+        echo "No CRDs to install; skipping."
+      fi
+
+  uninstall:
+    desc: Uninstall CRDs from the K8s cluster
+    silent: true
+    deps:
+      - manifests
+      - kustomize
+    cmd: |-
+      out="$({{.KUSTOMIZE}} build config/crd 2>/dev/null || true)"
+      if [ -n "$out" ]; then
+        echo "$out" | kubectl delete -f -
+      else
+        echo "No CRDs to delete; skipping."
+      fi
+
+  deploy:
+    desc: Deploy controller to the K8s cluster
+    deps:
+      - install
+    cmds:
+      - |
+        cd config/manager
+        {{.KUSTOMIZE}} edit set image controller={{.IMG}}
+      - "{{.KUSTOMIZE}} build config/default | kubectl apply -f -"
+
+  undeploy:
+    desc: Undeploy controller from the K8s cluster
+    deps:
+      - kustomize
+    cmds:
+      - "{{.KUSTOMIZE}} build config/default | kubectl delete -f -"
+
+  manifests:
+    desc: Generate WebhookConfiguration, ClusterRole and CRDs
+    deps:
+      - controller-gen
+    cmd: '"{{.CONTROLLER_GEN}}" rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases'
+
+  generate:
+    desc: Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+    deps:
+      - controller-gen
+    cmd: '"{{.CONTROLLER_GEN}}" object:headerFile="hack/boilerplate.go.txt" paths="./..."'
+
+  controller-gen:
+    desc: Download controller-gen if necessary
+    internal: true
+    silent: true
+    deps:
+      - localbin
+    cmds:
+      - task: go-install-tool
+        vars:
+          TARGET: "{{.CONTROLLER_GEN}}"
+          PACKAGE: sigs.k8s.io/controller-tools/cmd/controller-gen
+          VERSION: "{{.CONTROLLER_TOOLS_VERSION}}"
+
+  kustomize:
+    desc: Download kuztomize if necessary
+    silent: true
+    internal: true
+    deps:
+      - localbin
+    cmds:
+      - task: go-install-tool
+        vars:
+          TARGET: "{{.KUSTOMIZE}}"
+          PACKAGE: sigs.k8s.io/kustomize/kustomize/v5
+          VERSION: "{{.KUSTOMIZE_VERSION}}"

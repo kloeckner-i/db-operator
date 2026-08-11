@@ -1,0 +1,17 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "self-signed-cluster-issuer.name" . }}-ca
+  namespace: {{ .Release.Namespace }}
+spec:
+  isCA: true
+  commonName: my-selfsigned-ca
+  secretName: {{ include "self-signed-cluster-issuer.name" . }}
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: {{ include "self-signed-cluster-issuer.name" . }}-ca
+    kind: ClusterIssuer
+    group: cert-manager.io

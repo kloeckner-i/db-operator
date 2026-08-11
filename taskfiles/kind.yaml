@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: "3"
+
+tasks:
+  create:
+    desc: Create a kind cluster
+    silent: true
+    cmd: kind create cluster --config ./kind-config.yaml
+
+  delete:
+    desc: Delete a kind cluster
+    silent: true
+    cmd: kind delete cluster
+
+  load-image:
+    desc: Load the local db-operator image to kind
+    silent: true
+    cmd: kind load image-archive my-image.tar

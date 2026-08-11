@@ -1,0 +1,52 @@
+[project]
+site_name = "Documentation"
+site_description = "A new project generated from the default template project."
+site_author = "<your name here>"
+copyright = """
+Copyright &copy; 2026 The authors
+"""
+repo_url = "https://github.com/db-operator/db-operator"
+repo_name = "db-operator/db-operator"
+[project.theme]
+favicon = "assets/logo.png"
+
+language = "en"
+features = [
+    "announce.dismiss",
+    "content.code.annotate",
+    "content.code.copy",
+    "content.code.select",
+    "content.footnote.tooltips",
+    "content.tabs.link",
+    "content.tooltips",
+    "navigation.footer",
+    "navigation.indexes",
+    "navigation.instant",
+    "navigation.instant.prefetch",
+    "navigation.path",
+    "navigation.sections",
+    "navigation.top",
+    "navigation.tracking",
+    "search.highlight",
+    "toc.follow",
+]
+[[project.theme.palette]]
+scheme = "default"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+scheme = "slate"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to light mode"
+
+#[project.theme.font]
+#text = "Inter"
+#code = "Jetbrains Mono"
+[project.theme.icon]
+#logo = "assets/logo.png"
+#repo = "lucide/smile"
+
+#[[project.extra.social]]
+#icon = "fontawesome/brands/github"
+#link = "https://github.com/user/repo"

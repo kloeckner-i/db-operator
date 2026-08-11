@@ -1,0 +1,64 @@
+name: Publish a dev container image
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-qemu-action@v4
+      - uses: go-task/setup-task@v2
+      - run: task container:set-image-metadata
+      - name: Set the operator version from the tag
+        run: |-
+          echo OPERATOR_VERSION=${{ github.sha }} >> "$GITHUB_ENV"
+      - name: Build an image
+        id: build-image
+        uses: redhat-actions/buildah-build@v3
+        with:
+          image: db-operator-dev
+          tags: ${{ env.TAGS }}
+          platforms: linux/amd64, linux/arm64/v8
+          build-args: |
+            OPERATOR_VERSION=${{ env.OPERATOR_VERSION }}
+          containerfiles: |
+            ./Containerfile
+          labels: ${{ env.ANNOTATIONS }}
+      - name: Push the image to GHCR
+        id: push-to-ghcr
+        uses: redhat-actions/push-to-registry@v3
+        with:
+          image: ${{ steps.build-image.outputs.image }}
+          tags: ${{ steps.build-image.outputs.tags }}
+          registry: ghcr.io/${{ github.repository_owner }}
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - uses: sigstore/cosign-installer@v4.1.2
+      - uses: docker/login-action@v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: "${{ steps.push-to-ghcr.outputs.registry-path }}"
+          scan-type: image
+          format: "cosign-vuln"
+          exit-code: "0"
+          ignore-unfixed: false
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"
+          output: ./dev-report.json
+      - name: Sign the dev image with GitHub OIDC Token
+        env:
+          DIGEST: ${{ steps.push-to-ghcr.outputs.digest }}
+          IMAGE: ${{ steps.push-to-ghcr.outputs.registry-path }}
+        run: |
+          cosign sign --yes ${IMAGE}@${DIGEST}
+          cosign attest --type vuln --predicate dev-report.json ${IMAGE}@${DIGEST}

@@ -16,7 +16,7 @@
 
 package dbinstance
 
-import "github.com/kloeckner-i/db-operator/pkg/test"
+import "github.com/db-operator/db-operator/v2/pkg/test"
 
 func testGenericMysqlInstance() *Generic {
 	return &Generic{
@@ -33,7 +33,7 @@ func testGenericPostgresInstance() *Generic {
 		Host:     test.GetPostgresHost(),
 		Port:     test.GetPostgresPort(),
 		Engine:   "postgres",
-		User:     "postgres",
+		User:     test.GetPostgresAdminUsername(),
 		Password: test.GetPostgresAdminPassword(),
 	}
 }

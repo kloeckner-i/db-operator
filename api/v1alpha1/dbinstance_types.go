@@ -19,7 +19,7 @@ package v1alpha1
 import (
 	"errors"
 
-	"github.com/kloeckner-i/db-operator/api/v1beta1"
+	"github.com/db-operator/db-operator/v2/api/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
@@ -54,7 +54,7 @@ type DbInstanceStatus struct {
 }
 
 // GoogleInstance is used when instance type is Google Cloud SQL
-// and describes necessary informations to use google API to create sql instances
+// and describes necessary information to use google API to create sql instances
 type GoogleInstance struct {
 	InstanceName  string         `json:"instance"`
 	ConfigmapName NamespacedName `json:"configmapRef"`
@@ -71,7 +71,7 @@ type BackendServer struct {
 }
 
 // GenericInstance is used when instance type is generic
-// and describes necessary informations to use instance
+// and describes necessary information to use instance
 // generic instance can be any backend, it must be reachable by described address and port
 type GenericInstance struct {
 	Host     string `json:"host"`
@@ -187,10 +187,7 @@ func (dbin *DbInstance) GetBackendType() (string, error) {
 
 // IsMonitoringEnabled returns boolean value if monitoring is enabled for the instance
 func (dbin *DbInstance) IsMonitoringEnabled() bool {
-	if dbin.Spec.Monitoring.Enabled == false {
-		return false
-	}
-	return true
+	return dbin.Spec.Monitoring.Enabled
 }
 
 // ConvertTo converts this v1alpha1 to v1beta1. (upgrade)
@@ -200,13 +197,19 @@ func (dbin *DbInstance) ConvertTo(dstRaw conversion.Hub) error {
 	dst.Spec.AdminUserSecret = v1beta1.NamespacedName(dbin.Spec.AdminUserSecret)
 	dst.Spec.Backup = v1beta1.DbInstanceBackup(dbin.Spec.Backup)
 	if dbin.Spec.DbInstanceSource.Generic != nil {
-		dst.Spec.DbInstanceSource.Generic = (*v1beta1.GenericInstance)(dbin.Spec.DbInstanceSource.Generic)
+		dst.Spec.DbInstanceSource.Generic = &v1beta1.GenericInstance{
+			Host:       dbin.Spec.Generic.Host,
+			Port:       dbin.Spec.Generic.Port,
+			PublicIP:   dbin.Spec.Generic.Host,
+			BackupHost: dbin.Spec.Generic.BackupHost,
+		}
 	} else if dbin.Spec.DbInstanceSource.Google != nil {
-
-		dst.Spec.DbInstanceSource.Google.APIEndpoint = dbin.Spec.DbInstanceSource.Google.APIEndpoint
-		dst.Spec.DbInstanceSource.Google.InstanceName = dbin.Spec.DbInstanceSource.Google.InstanceName
-		dst.Spec.DbInstanceSource.Google.ClientSecret = v1beta1.NamespacedName(dbin.Spec.DbInstanceSource.Google.ClientSecret)
-		dst.Spec.DbInstanceSource.Google.ConfigmapName = v1beta1.NamespacedName(dbin.Spec.Google.ConfigmapName)
+		dst.Spec.DbInstanceSource.Google = &v1beta1.GoogleInstance{
+			APIEndpoint:   dbin.Spec.DbInstanceSource.Google.APIEndpoint,
+			InstanceName:  dbin.Spec.DbInstanceSource.Google.InstanceName,
+			ConfigmapName: v1beta1.NamespacedName(dbin.Spec.Google.ConfigmapName),
+			ClientSecret:  v1beta1.NamespacedName(dbin.Spec.DbInstanceSource.Google.ClientSecret),
+		}
 	}
 	dst.Spec.Engine = dbin.Spec.Engine
 	dst.Spec.Monitoring = v1beta1.DbInstanceMonitoring(dbin.Spec.Monitoring)
@@ -221,13 +224,19 @@ func (dst *DbInstance) ConvertFrom(srcRaw conversion.Hub) error {
 	dst.Spec.AdminUserSecret = NamespacedName(dbin.Spec.AdminUserSecret)
 	dst.Spec.Backup = DbInstanceBackup(dbin.Spec.Backup)
 	if dbin.Spec.DbInstanceSource.Generic != nil {
-		dst.Spec.DbInstanceSource.Generic = (*GenericInstance)(dbin.Spec.DbInstanceSource.Generic)
+		dst.Spec.DbInstanceSource.Generic = &GenericInstance{
+			Host:       dbin.Spec.Generic.Host,
+			Port:       dbin.Spec.Generic.Port,
+			PublicIP:   dbin.Spec.Generic.Host,
+			BackupHost: dbin.Spec.Generic.BackupHost,
+		}
 	} else if dbin.Spec.DbInstanceSource.Google != nil {
-
-		dst.Spec.DbInstanceSource.Google.APIEndpoint = dbin.Spec.DbInstanceSource.Google.APIEndpoint
-		dst.Spec.DbInstanceSource.Google.InstanceName = dbin.Spec.DbInstanceSource.Google.InstanceName
-		dst.Spec.DbInstanceSource.Google.ClientSecret = NamespacedName(dbin.Spec.DbInstanceSource.Google.ClientSecret)
-		dst.Spec.DbInstanceSource.Google.ConfigmapName = NamespacedName(dbin.Spec.Google.ConfigmapName)
+		dst.Spec.DbInstanceSource.Google = &GoogleInstance{
+			APIEndpoint:   dbin.Spec.DbInstanceSource.Google.APIEndpoint,
+			InstanceName:  dbin.Spec.DbInstanceSource.Google.InstanceName,
+			ConfigmapName: NamespacedName(dbin.Spec.Google.ConfigmapName),
+			ClientSecret:  NamespacedName(dbin.Spec.DbInstanceSource.Google.ClientSecret),
+		}
 	}
 	dst.Spec.Engine = dbin.Spec.Engine
 	dst.Spec.Monitoring = DbInstanceMonitoring(dbin.Spec.Monitoring)

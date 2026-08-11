@@ -17,26 +17,28 @@
 package gcloud
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 
-	"github.com/sirupsen/logrus"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // GetServiceAccount reads file which contains google service account credentials and parse it
-func GetServiceAccount() ServiceAccount {
+func GetServiceAccount(ctx context.Context) ServiceAccount {
 	var serviceaccount ServiceAccount
 
+	log := log.FromContext(ctx)
 	credentialPath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
 	credentialValues, err := os.ReadFile(credentialPath)
 	if err != nil {
-		logrus.Fatalf("failed to open service account file - %s", err)
+		log.Error(err, "failed to open service account file")
 	}
 
 	// parse credentials.json file
 	err = json.Unmarshal([]byte(credentialValues), &serviceaccount)
 	if err != nil {
-		logrus.Fatalf("failed to parse service account file - %s", err)
+		log.Error(err, "failed to parse service account file")
 	}
 
 	return serviceaccount

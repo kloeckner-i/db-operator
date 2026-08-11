@@ -20,13 +20,14 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/kloeckner-i/can-haz-password/password"
+	"github.com/db-operator/can-haz-password/password"
 	"github.com/stretchr/testify/assert"
 )
 
 // Verify we generate a valid password based on the default rule.
-func TestGeneratePass(t *testing.T) {
-	generatedPassword := GeneratePass()
+func TestUnitGeneratePass(t *testing.T) {
+	generatedPassword, err := GeneratePass()
+	assert.NoError(t, err)
 
 	if assert.NotEmpty(t, generatedPassword) {
 		assert.True(t, len(generatedPassword) >= 20)

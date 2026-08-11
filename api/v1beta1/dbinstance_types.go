@@ -20,6 +20,7 @@ import (
 	"errors"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8stypes "k8s.io/apimachinery/pkg/types"
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -27,15 +28,24 @@ import (
 // DbInstanceSpec defines the desired state of DbInstance
 type DbInstanceSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
-	Engine           string                  `json:"engine"`
-	AdminUserSecret  NamespacedName          `json:"adminSecretRef"`
-	Backup           DbInstanceBackup        `json:"backup,omitempty"`
-	Monitoring       DbInstanceMonitoring    `json:"monitoring,omitempty"`
-	SSLConnection    DbInstanceSSLConnection `json:"sslConnection,omitempty"`
+	Engine          string                  `json:"engine"`
+	AdminUserSecret NamespacedName          `json:"adminSecretRef"`
+	Backup          DbInstanceBackup        `json:"backup,omitempty"`
+	Monitoring      DbInstanceMonitoring    `json:"monitoring,omitempty"`
+	SSLConnection   DbInstanceSSLConnection `json:"sslConnection,omitempty"`
+	// A list of privileges that are allowed to be set as Dbuser's extra privileges
+	AllowedPrivileges []string `json:"allowedPrivileges,omitempty"`
+	// If set to true, extra grants are enabled on the databases
+	// making it possible to provide access to any user on the database instance
+	AllowExtraGrants bool `json:"allowExtraGrants,omitempty"`
+	// InstanceVars can be used by any database/dbuser that are deployed
+	// to this instance to build templated credentials with some generic values.
+	// Can be used for example to provide a read only postgres replica url
+	InstanceVars     map[string]string `json:"instanceVars,omitempty"`
 	DbInstanceSource `json:",inline"`
 }
 
-// DbInstanceSource represents the source of a instance.
+// DbInstanceSource represents the source of an instance.
 // Only one of its members may be specified.
 type DbInstanceSource struct {
 	Google  *GoogleInstance  `json:"google,omitempty" protobuf:"bytes,1,opt,name=google"`
@@ -52,7 +62,7 @@ type DbInstanceStatus struct {
 }
 
 // GoogleInstance is used when instance type is Google Cloud SQL
-// and describes necessary informations to use google API to create sql instances
+// and describes necessary information to use google API to create sql instances
 type GoogleInstance struct {
 	InstanceName  string         `json:"instance"`
 	ConfigmapName NamespacedName `json:"configmapRef"`
@@ -69,16 +79,37 @@ type BackendServer struct {
 }
 
 // GenericInstance is used when instance type is generic
-// and describes necessary informations to use instance
+// and describes necessary information to use instance
 // generic instance can be any backend, it must be reachable by described address and port
 type GenericInstance struct {
-	Host     string `json:"host"`
-	Port     uint16 `json:"port"`
-	PublicIP string `json:"publicIp,omitempty"`
+	Host         string   `json:"host,omitempty"`
+	HostFrom     *FromRef `json:"hostFrom,omitempty"`
+	Port         uint16   `json:"port,omitempty"`
+	PortFrom     *FromRef `json:"portFrom,omitempty"`
+	PublicIP     string   `json:"publicIp,omitempty"`
+	PublicIPFrom *FromRef `json:"publicIpFrom,omitempty"`
 	// BackupHost address will be used for dumping database for backup
 	// Usually secondary address for primary-secondary setup or cluster lb address
 	// If it's not defined, above Host will be used as backup host address.
 	BackupHost string `json:"backupHost,omitempty"`
+}
+
+type FromRef struct {
+	Kind      string `json:"kind"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+	Key       string `json:"key"`
+}
+
+func (fr *FromRef) ToKubernetesType() k8stypes.NamespacedName {
+	if fr == nil {
+		return k8stypes.NamespacedName{}
+	}
+
+	return k8stypes.NamespacedName{
+		Name:      fr.Name,
+		Namespace: fr.Namespace,
+	}
 }
 
 // DbInstanceBackup defines name of google bucket to use for storing database dumps for backup when backup is enabled
@@ -91,10 +122,10 @@ type DbInstanceMonitoring struct {
 	Enabled bool `json:"enabled"`
 }
 
-// DbInstanceSSLConnection defines weather connection from db-operator to instance has to be ssl or not
+// DbInstanceSSLConnection defines whether connection from db-operator to instance has to be ssl or not
 type DbInstanceSSLConnection struct {
 	Enabled bool `json:"enabled"`
-	// SkipVerity use SSL connection, but don't check against a CA
+	// SkipVerify use SSL connection, but don't check against a CA
 	SkipVerify bool `json:"skip-verify"`
 }
 
@@ -189,4 +220,20 @@ func (dbin *DbInstance) IsMonitoringEnabled() bool {
 	return dbin.Spec.Monitoring.Enabled
 }
 
-func (db *DbInstance) Hub() {}
+// DbInstances don't have the cleanup feature
+func (dbin *DbInstance) IsCleanup() bool {
+	return false
+}
+
+func (dbin *DbInstance) IsDeleted() bool {
+	return dbin.GetDeletionTimestamp() != nil
+}
+
+// This method isn't supported by dbin
+func (dbin *DbInstance) GetSecretName() string {
+	return ""
+}
+
+func (db *DbInstance) Hub() {
+	// Function to mark the DbInstance as a hub
+}

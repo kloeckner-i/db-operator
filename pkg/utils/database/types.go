@@ -16,12 +16,34 @@
 
 package database
 
+import "context"
+
+const (
+	ACCESS_TYPE_READONLY  = "readOnly"
+	ACCESS_TYPE_READWRITE = "readWrite"
+	ACCESS_TYPE_MAINUSER  = "main"
+)
+
 // Credentials contains credentials to connect database
 type Credentials struct {
 	Name             string
 	Username         string
 	Password         string
 	TemplatedSecrets map[string]string
+}
+
+type DatabaseUser struct {
+	Username        string `yaml:"user"`
+	Password        string `yaml:"password"`
+	AccessType      string
+	ExtraPrivileges []string
+	GrantToAdmin    bool
+	// A workaround mostly for AWS RDS. Since we can't
+	// grant a user that is a member of rds_iam role to
+	// the admin, we need to make the grant after a
+	// user is revoked from rds_iam, hence it should
+	// happen while it's being deleted
+	GrantToAdminOnDelete bool
 }
 
 // DatabaseAddress contains host and port of a database instance
@@ -38,12 +60,18 @@ type AdminCredentials struct {
 
 // Database is interface for CRUD operate of different types of databases
 type Database interface {
-	createDatabase(admin AdminCredentials) error
-	createUser(admin AdminCredentials) error
-	deleteDatabase(admin AdminCredentials) error
-	deleteUser(admin AdminCredentials) error
-	CheckStatus() error
-	GetCredentials() Credentials
-	ParseAdminCredentials(data map[string][]byte) (AdminCredentials, error)
-	GetDatabaseAddress() DatabaseAddress
+	CheckStatus(ctx context.Context, user *DatabaseUser) error
+	GetCredentials(ctx context.Context, user *DatabaseUser) Credentials
+	ParseAdminCredentials(ctx context.Context, data map[string][]byte) (*DatabaseUser, error)
+	GetDatabaseAddress(ctx context.Context) DatabaseAddress
+	QueryAsUser(ctx context.Context, query string, user *DatabaseUser) (string, error)
+	createDatabase(ctx context.Context, admin *DatabaseUser) error
+	deleteDatabase(ctx context.Context, admin *DatabaseUser) error
+	createOrUpdateUser(ctx context.Context, admin *DatabaseUser, user *DatabaseUser) error
+	createUser(ctx context.Context, admin *DatabaseUser, user *DatabaseUser) error
+	updateUser(ctx context.Context, admin *DatabaseUser, user *DatabaseUser) error
+	deleteUser(ctx context.Context, admin *DatabaseUser, user *DatabaseUser) error
+	setUserPermission(ctx context.Context, admin *DatabaseUser, user *DatabaseUser) error
+	revokePermissions(ctx context.Context, admin *DatabaseUser, user *DatabaseUser) error
+	execAsUser(ctx context.Context, query string, user *DatabaseUser) error
 }

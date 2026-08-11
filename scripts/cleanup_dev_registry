@@ -1,0 +1,20 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+my $images_list_req_tpl = "gh api '/orgs/db-operator/packages/container/db-operator-dev/versions?page=%d&per_page=20' | jq '.[].id'";
+my $page_number  = 3;
+
+while (1) {
+  my $images_list_req = sprintf($images_list_req_tpl, $page_number);
+  my @images_list_res = `$images_list_req`;
+  chomp @images_list_res;
+  last if (!@images_list_res);
+  for my $image_id (@images_list_res) {
+    print "Deleting $image_id\n";
+    my $delete_req = sprintf("gh api '/orgs/db-operator/packages/container/db-operator-dev/versions/%d' -X DELETE", $image_id);
+    my @delete_out = `$delete_req`;
+  }
+  $page_number++;
+}

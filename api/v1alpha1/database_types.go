@@ -19,7 +19,7 @@ package v1alpha1
 import (
 	"errors"
 
-	"github.com/kloeckner-i/db-operator/api/v1beta1"
+	"github.com/db-operator/db-operator/v2/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -156,11 +156,13 @@ func (db *Database) InstanceAccessSecretName() string {
 
 // ConvertTo converts this v1alpha1 to v1beta1. (upgrade)
 func (db *Database) ConvertTo(dstRaw conversion.Hub) error {
-
 	dst := dstRaw.(*v1beta1.Database)
 	dst.ObjectMeta = db.ObjectMeta
 
-	dst.Spec.Backup = v1beta1.DatabaseBackup(db.Spec.Backup)
+	dst.Spec.Backup = v1beta1.DatabaseBackup{
+		Enable: db.Spec.Backup.Enable,
+		Cron:   db.Spec.Backup.Cron,
+	}
 	dst.Spec.Cleanup = db.Spec.Cleanup
 	dst.Spec.DeletionProtected = db.Spec.DeletionProtected
 	dst.Spec.Instance = db.Spec.Instance
@@ -178,7 +180,10 @@ func (dst *Database) ConvertFrom(srcRaw conversion.Hub) error {
 	db := srcRaw.(*v1beta1.Database)
 	dst.ObjectMeta = db.ObjectMeta
 
-	dst.Spec.Backup = DatabaseBackup(db.Spec.Backup)
+	dst.Spec.Backup = DatabaseBackup{
+		Enable: db.Spec.Backup.Enable,
+		Cron:   db.Spec.Backup.Cron,
+	}
 	dst.Spec.Cleanup = db.Spec.Cleanup
 	dst.Spec.DeletionProtected = db.Spec.DeletionProtected
 	dst.Spec.Instance = db.Spec.Instance

@@ -19,13 +19,13 @@ package kci
 import (
 	"context"
 
-	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // GetConfigResource get configmap resource by kubernetes incluster rest api
@@ -51,6 +51,7 @@ func GetConfigResource(ctx context.Context, key types.NamespacedName) (*corev1.C
 // GetSecretResource get secret resource by kubernetes incluster rest api
 // TODO: will be deprecated
 func GetSecretResource(ctx context.Context, key types.NamespacedName) (*corev1.Secret, error) {
+	log := log.FromContext(ctx)
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		panic(err.Error())
@@ -62,10 +63,10 @@ func GetSecretResource(ctx context.Context, key types.NamespacedName) (*corev1.S
 
 	secret, err := clientset.CoreV1().Secrets(key.Namespace).Get(ctx, key.Name, metav1.GetOptions{})
 	if k8serrors.IsNotFound(err) {
-		logrus.Errorf("secret %s not found", key.Name)
+		log.Error(err, "secret not found", "key", key.Name)
 		return nil, err
 	} else if statusError, isStatus := err.(*k8serrors.StatusError); isStatus {
-		logrus.Errorf("error getting Secret %s %v\n", key.Name, statusError.ErrStatus.Message)
+		log.Error(err, "error getting", "secret", key.Name, "message", statusError.ErrStatus.Message)
 		return nil, err
 	} else if err != nil {
 		return nil, err

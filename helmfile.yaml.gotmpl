@@ -1,0 +1,134 @@
+environments:
+  default:
+    values:
+      - certManager:
+          installed: {{ env "CERT_MANAGER_INSTALL" | default true }}
+      - databases:
+          mariadb:
+            installed: {{ env "MARIADB_INSTALL" | default false }}
+            nodePort: 30306
+            rootPassword: {{ env "MYSQL_PASSWORD" | default "qwertyu9"}}
+            imageTag: {{ env "MARIADB_VERSION" | default 12 }}
+            ssl:
+              enabled: false
+              skipVerify: false
+          postgres:
+            installed: {{ env "POSTGRES_INSTALL" | default false }}
+            username: {{ env "POSTGRES_USER" | default "db-operator" }}
+            password: {{ env "POSTGRES_PASSWORD" | default "qwertyu9" }}
+            nodePort: 30432
+            imageTag: {{ env "POSTGRES_VERSION" | default 18 }}
+            ssl:
+              enabled: false
+              skipVerify: false
+---
+repositories:
+  - name: jetstack
+    url: quay.io/jetstack/charts
+    oci: true
+  - name: cloudpirates
+    url: registry-1.docker.io/cloudpirates
+    oci: true
+
+releases:
+  - name: cert-manager
+    chart: jetstack/cert-manager
+    namespace: cert-manager
+    installed: {{ .Values.certManager.installed }}
+    version: v1.21.1
+    createNamespace: true
+    values:
+      - crds:
+          enabled: true
+
+  - name: cluster-issuer
+    chart: ./test/charts/self-signed-cluster-issuer
+    namespace: cert-manager
+    installed: {{ .Values.certManager.installed }}
+    needs:
+      - cert-manager/cert-manager
+
+  - name: mariadb-instance
+    namespace: databases
+    chart: cloudpirates/mariadb
+    installed: {{ .Values.databases.mariadb.installed }}
+    {{- if .Values.certManager.installed }}
+    needs:
+      - cert-manager/cert-manager
+    {{- end }}
+    version: 0.16.8
+    values:
+      - image:
+          tag: {{ .Values.databases.mariadb.imageTag | quote }}
+      - auth:
+          rootPassword: {{ .Values.databases.mariadb.rootPassword }}
+      - service:
+          type: NodePort
+          nodePort: {{ .Values.databases.mariadb.nodePort | quote }}
+    strategicMergePatches:
+      - apiVersion: apps/v1
+        kind: StatefulSet
+        metadata:
+          name: mariadb-instance
+          namespace: databases
+        spec:
+          persistentVolumeClaimRetentionPolicy:
+            whenDeleted: Delete
+            whenScaled: Retain
+
+  - name: postgres-instance
+    namespace: databases
+    chart: cloudpirates/postgres
+    version: 0.19.13
+    {{- if .Values.certManager.installed }}
+    needs:
+      - cert-manager/cert-manager
+    {{- end }}
+    installed: {{ .Values.databases.postgres.installed }}
+    values:
+      - image:
+          tag: {{ .Values.databases.postgres.imageTag | quote }}
+      - auth:
+          username: {{ .Values.databases.postgres.username }}
+          password: {{ .Values.databases.postgres.password }}
+      - service:
+          type: NodePort
+          nodePort: {{ .Values.databases.postgres.nodePort }}
+      - persistentVolumeClaimRetentionPolicy:
+          enabled: true
+          whenDeleted: Delete
+      {{- if .Values.databases.postgres.ssl.enabled }}
+      - extraObjects:
+        - |-
+            apiVersion: cert-manager.io/v1
+            kind: Certificate
+            metadata:
+              name: postgres-secure
+            spec:
+              issuerRef:
+                group: cert-manager.io
+                kind: ClusterIssuer
+                name: self-signed-cluster-issuer
+              secretName: postgres-cert
+              dnsNames:
+                - localhost
+                - postgres-instance.databases.svc.cluster.local
+                - postgres-instance.databases.svc
+      - extraVolumes:
+        - name: certs
+          secret:
+            secretName: postgres-cert
+            defaultMode: 384
+        extraVolumeMounts:
+          - mountPath: /pg/certs
+            name: certs
+      - args:
+        - postgres
+        - --config_file=/etc/postgresql/postgresql.conf
+        - -c
+        - ssl=on
+        - -c
+        - ssl_cert_file=/pg/certs/tls.crt
+        - -c
+        - ssl_key_file=/pg/certs/tls.key
+      {{- end }}

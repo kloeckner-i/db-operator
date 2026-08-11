@@ -2,6 +2,8 @@
 # Temporary Build Files
 build/_output
 build/_test
+db-operator
+main
 
 # Secret file for local testing
 secrets-local.yaml
@@ -123,3 +125,5 @@ my-image.tar
 /testbin
 
 secrets.yaml
+
+gen-docker-compose*
