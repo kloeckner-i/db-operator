@@ -91,7 +91,7 @@ stringData:
 And now you can create a `DbInstance` resource:
 
 ```yaml
-apiVersion: kinda.rocks/v1beta1
+apiVersion: kci.rocks/v1beta1
 kind: DbInstance
 metadata:
   name: postgres
@@ -122,7 +122,7 @@ postgres     Running   true
 ### Database creation
 
 ```yaml
-apiVersion: kinda.rocks/v1beta1
+apiVersion: kci.rocks/v1beta1
 kind: Database
 metadata:
   name: my-app

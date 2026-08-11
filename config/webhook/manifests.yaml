@@ -10,12 +10,12 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /mutate-kinda-rocks-v1beta1-database
+      path: /mutate-kci-rocks-v1beta1-database
   failurePolicy: Fail
   name: mdatabase-v1beta1.kb.io
   rules:
   - apiGroups:
-    - kinda.rocks
+    - kci.rocks
     apiVersions:
     - v1beta1
     operations:
@@ -30,12 +30,12 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /mutate-kinda-rocks-v1beta1-dbinstance
+      path: /mutate-kci-rocks-v1beta1-dbinstance
   failurePolicy: Fail
   name: mdbinstance-v1beta1.kb.io
   rules:
   - apiGroups:
-    - kinda.rocks
+    - kci.rocks
     apiVersions:
     - v1beta1
     operations:
@@ -56,12 +56,12 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /validate-kinda-rocks-v1beta1-database
+      path: /validate-kci-rocks-v1beta1-database
   failurePolicy: Fail
   name: vdatabase-v1beta1.kb.io
   rules:
   - apiGroups:
-    - kinda.rocks
+    - kci.rocks
     apiVersions:
     - v1beta1
     operations:
@@ -76,12 +76,12 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /validate-kinda-rocks-v1beta1-dbinstance
+      path: /validate-kci-rocks-v1beta1-dbinstance
   failurePolicy: Fail
   name: vdbinstance-v1beta1.kb.io
   rules:
   - apiGroups:
-    - kinda.rocks
+    - kci.rocks
     apiVersions:
     - v1beta1
     operations:
@@ -96,12 +96,12 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /validate-kinda-rocks-v1beta1-dbuser
+      path: /validate-kci-rocks-v1beta1-dbuser
   failurePolicy: Fail
   name: vdbuser-v1beta1.kb.io
   rules:
   - apiGroups:
-    - kinda.rocks
+    - kci.rocks
     apiVersions:
     - v1beta1
     operations:

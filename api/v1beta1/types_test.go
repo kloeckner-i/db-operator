@@ -3,14 +3,14 @@ package v1beta1_test
 import (
 	"testing"
 
-	"github.com/db-operator/db-operator/v2/api/v1beta1"
-	"github.com/db-operator/db-operator/v2/pkg/types"
+	"github.com/kloeckner-i/db-operator/api/v1beta1"
+	"github.com/kloeckner-i/db-operator/pkg/types"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-var dbin types.KindaObject
+var dbin types.KciObject
 
 func TestKindObjectDbToClientObject(t *testing.T) {
 	dbin = &v1beta1.Database{

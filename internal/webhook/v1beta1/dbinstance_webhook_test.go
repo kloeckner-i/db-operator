@@ -18,21 +18,21 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	kindarocksv1beta1 "github.com/db-operator/db-operator/v2/api/v1beta1"
+	kcirocksv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
 	// TODO (user): Add any additional imports if needed
 )
 
 var _ = Describe("DbInstance Webhook", func() {
 	var (
-		obj       *kindarocksv1beta1.DbInstance
-		oldObj    *kindarocksv1beta1.DbInstance
+		obj       *kcirocksv1beta1.DbInstance
+		oldObj    *kcirocksv1beta1.DbInstance
 		validator DbInstanceCustomValidator
 		defaulter DbInstanceCustomDefaulter
 	)
 
 	BeforeEach(func() {
-		obj = &kindarocksv1beta1.DbInstance{}
-		oldObj = &kindarocksv1beta1.DbInstance{}
+		obj = &kcirocksv1beta1.DbInstance{}
+		oldObj = &kcirocksv1beta1.DbInstance{}
 		validator = DbInstanceCustomValidator{}
 		Expect(validator).NotTo(BeNil(), "Expected validator to be initialized")
 		defaulter = DbInstanceCustomDefaulter{}
@@ -86,7 +86,7 @@ var _ = Describe("DbInstance Webhook", func() {
 		// TODO (user): Add logic to convert the object to the desired version and verify the conversion
 		// Example:
 		// It("Should convert the object correctly", func() {
-		//     convertedObj := &kindarocksv1beta1.DbInstance{}
+		//     convertedObj := &kcirocksv1beta1.DbInstance{}
 		//     Expect(obj.ConvertTo(convertedObj)).To(Succeed())
 		//     Expect(convertedObj).ToNot(BeNil())
 		// })

@@ -1,4 +1,4 @@
-module github.com/db-operator/db-operator/v2
+module github.com/kloeckner-i/db-operator
 
 go 1.26.5
 

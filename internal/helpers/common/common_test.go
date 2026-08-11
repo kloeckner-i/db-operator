@@ -20,9 +20,9 @@ import (
 	"context"
 	"testing"
 
-	kindav1beta1 "github.com/db-operator/db-operator/v2/api/v1beta1"
-	"github.com/db-operator/db-operator/v2/internal/helpers/common"
-	"github.com/db-operator/db-operator/v2/internal/utils/testutils"
+	kciv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
+	"github.com/kloeckner-i/db-operator/internal/helpers/common"
+	"github.com/kloeckner-i/db-operator/internal/utils/testutils"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -103,8 +103,8 @@ func TestUnitGenerateDBInstanceChecksums(t *testing.T) {
 	t.Run("Basic Spec and AdminSecret", func(t *testing.T) {
 		// Test case: Basic instance with only AdminSecret referenced.
 		// Verifies that 'spec' and 'adminSecret' keys are populated.
-		dbin := &kindav1beta1.DbInstance{
-			Spec: kindav1beta1.DbInstanceSpec{
+		dbin := &kciv1beta1.DbInstance{
+			Spec: kciv1beta1.DbInstanceSpec{
 				Engine: "postgres",
 			},
 		}
@@ -123,12 +123,12 @@ func TestUnitGenerateDBInstanceChecksums(t *testing.T) {
 	t.Run("Google Backend with ConfigMap and ClientSecret", func(t *testing.T) {
 		// Test case: Google backend with both ConfigMap and ClientSecret.
 		// Verifies that backend-specific keys are correctly included.
-		dbin := &kindav1beta1.DbInstance{
-			Spec: kindav1beta1.DbInstanceSpec{
+		dbin := &kciv1beta1.DbInstance{
+			Spec: kciv1beta1.DbInstanceSpec{
 				Engine: "postgres",
-				DbInstanceSource: kindav1beta1.DbInstanceSource{
-					Google: &kindav1beta1.GoogleInstance{
-						ClientSecret: kindav1beta1.NamespacedName{Name: "client-sec"},
+				DbInstanceSource: kciv1beta1.DbInstanceSource{
+					Google: &kciv1beta1.GoogleInstance{
+						ClientSecret: kciv1beta1.NamespacedName{Name: "client-sec"},
 					},
 				},
 			},
@@ -150,14 +150,14 @@ func TestUnitGenerateDBInstanceChecksums(t *testing.T) {
 	t.Run("Generic Backend with Host, Port and PublicIP FromRef", func(t *testing.T) {
 		// Test case: Generic backend with all fields fetched from external references.
 		// Verifies that generic-specific 'From' keys are included.
-		dbin := &kindav1beta1.DbInstance{
-			Spec: kindav1beta1.DbInstanceSpec{
+		dbin := &kciv1beta1.DbInstance{
+			Spec: kciv1beta1.DbInstanceSpec{
 				Engine: "postgres",
-				DbInstanceSource: kindav1beta1.DbInstanceSource{
-					Generic: &kindav1beta1.GenericInstance{
-						HostFrom:     &kindav1beta1.FromRef{Name: "host-sec"},
-						PortFrom:     &kindav1beta1.FromRef{Name: "port-cm"},
-						PublicIPFrom: &kindav1beta1.FromRef{Name: "ip-sec"},
+				DbInstanceSource: kciv1beta1.DbInstanceSource{
+					Generic: &kciv1beta1.GenericInstance{
+						HostFrom:     &kciv1beta1.FromRef{Name: "host-sec"},
+						PortFrom:     &kciv1beta1.FromRef{Name: "port-cm"},
+						PublicIPFrom: &kciv1beta1.FromRef{Name: "ip-sec"},
 					},
 				},
 			},
@@ -177,10 +177,10 @@ func TestUnitGenerateDBInstanceChecksums(t *testing.T) {
 	t.Run("Missing data doesn't panic and omits keys", func(t *testing.T) {
 		// Test case: Spec expects references, but DbInstanceData is empty.
 		// Verifies the function is robust against missing data (e.g. during partial reconcile).
-		dbin := &kindav1beta1.DbInstance{
-			Spec: kindav1beta1.DbInstanceSpec{
-				DbInstanceSource: kindav1beta1.DbInstanceSource{
-					Google: &kindav1beta1.GoogleInstance{},
+		dbin := &kciv1beta1.DbInstance{
+			Spec: kciv1beta1.DbInstanceSpec{
+				DbInstanceSource: kciv1beta1.DbInstanceSource{
+					Google: &kciv1beta1.GoogleInstance{},
 				},
 			},
 		}
@@ -196,8 +196,8 @@ func TestUnitGenerateDBInstanceChecksums(t *testing.T) {
 	t.Run("IsDBInstanceChanged detects modifications", func(t *testing.T) {
 		// Test case: End-to-end detection of state change.
 		// Verifies that modifying a referenced secret results in a 'changed' detection.
-		dbin := &kindav1beta1.DbInstance{
-			Status: kindav1beta1.DbInstanceStatus{
+		dbin := &kciv1beta1.DbInstance{
+			Status: kciv1beta1.DbInstanceStatus{
 				Checksums: map[string]string{"spec": "initial-spec"},
 			},
 		}

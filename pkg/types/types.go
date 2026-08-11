@@ -5,8 +5,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-// An interface that implements common memthods for all kinda objects
-type KindaObject interface {
+// An interface that implements common memthods for all kci objects
+type KciObject interface {
 	IsCleanup() bool
 	IsDeleted() bool
 	GetSecretName() string

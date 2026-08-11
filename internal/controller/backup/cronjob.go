@@ -21,9 +21,9 @@ import (
 	"errors"
 	"fmt"
 
-	kindav1beta1 "github.com/db-operator/db-operator/v2/api/v1beta1"
-	"github.com/db-operator/db-operator/v2/pkg/config"
-	"github.com/db-operator/db-operator/v2/pkg/utils/kci"
+	kciv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
+	"github.com/kloeckner-i/db-operator/pkg/config"
+	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,7 +32,7 @@ import (
 // BackupCronJobManifest builds kubernetes cronjob object
 // to create database backup regularly with defined schedule from dbcr
 // this job will database dump and upload to google bucket storage for backup
-func BackupCronJobManifest(conf *config.Config, dbcr *kindav1beta1.Database, instance *kindav1beta1.DbInstance) (*batchv1.CronJob, error) {
+func BackupCronJobManifest(conf *config.Config, dbcr *kciv1beta1.Database, instance *kciv1beta1.DbInstance) (*batchv1.CronJob, error) {
 	cronJobSpec, err := buildCronJobSpec(conf, dbcr, instance)
 	if err != nil {
 		return nil, err
@@ -54,7 +54,7 @@ func BackupCronJobManifest(conf *config.Config, dbcr *kindav1beta1.Database, ins
 	return cronJob, nil
 }
 
-func buildCronJobSpec(conf *config.Config, dbcr *kindav1beta1.Database, instance *kindav1beta1.DbInstance) (batchv1.CronJobSpec, error) {
+func buildCronJobSpec(conf *config.Config, dbcr *kciv1beta1.Database, instance *kciv1beta1.DbInstance) (batchv1.CronJobSpec, error) {
 	jobTemplate, err := buildJobTemplate(conf, dbcr, instance)
 	if err != nil {
 		return batchv1.CronJobSpec{}, err
@@ -68,7 +68,7 @@ func buildCronJobSpec(conf *config.Config, dbcr *kindav1beta1.Database, instance
 	return spec, nil
 }
 
-func buildJobTemplate(conf *config.Config, dbcr *kindav1beta1.Database, instance *kindav1beta1.DbInstance) (batchv1.JobTemplateSpec, error) {
+func buildJobTemplate(conf *config.Config, dbcr *kciv1beta1.Database, instance *kciv1beta1.DbInstance) (batchv1.JobTemplateSpec, error) {
 	var activeDeadlineSeconds int64
 	if conf.Backup.ActiveDeadlineSeconds > 0 {
 		activeDeadlineSeconds = int64(conf.Backup.ActiveDeadlineSeconds)
@@ -118,7 +118,7 @@ func buildJobTemplate(conf *config.Config, dbcr *kindav1beta1.Database, instance
 	}, nil
 }
 
-func postgresBackupContainer(conf *config.Config, dbcr *kindav1beta1.Database, instance *kindav1beta1.DbInstance) (v1.Container, error) {
+func postgresBackupContainer(conf *config.Config, dbcr *kciv1beta1.Database, instance *kciv1beta1.DbInstance) (v1.Container, error) {
 	env, err := postgresEnvVars(conf, dbcr, instance)
 	if err != nil {
 		return v1.Container{}, err
@@ -135,7 +135,7 @@ func postgresBackupContainer(conf *config.Config, dbcr *kindav1beta1.Database, i
 	}, nil
 }
 
-func mysqlBackupContainer(conf *config.Config, dbcr *kindav1beta1.Database, instance *kindav1beta1.DbInstance) (v1.Container, error) {
+func mysqlBackupContainer(conf *config.Config, dbcr *kciv1beta1.Database, instance *kciv1beta1.DbInstance) (v1.Container, error) {
 	env, err := mysqlEnvVars(dbcr, instance)
 	if err != nil {
 		return v1.Container{}, err
@@ -169,7 +169,7 @@ func volumeMounts() []v1.VolumeMount {
 	return mounts
 }
 
-func volumes(dbcr *kindav1beta1.Database) []v1.Volume {
+func volumes(dbcr *kciv1beta1.Database) []v1.Volume {
 	volumes := []v1.Volume{}
 	dbCreds := &v1.Volume{
 		Name: "db-cred",
@@ -191,7 +191,7 @@ func volumes(dbcr *kindav1beta1.Database) []v1.Volume {
 	return volumes
 }
 
-func postgresEnvVars(conf *config.Config, dbcr *kindav1beta1.Database, instance *kindav1beta1.DbInstance) ([]v1.EnvVar, error) {
+func postgresEnvVars(conf *config.Config, dbcr *kciv1beta1.Database, instance *kciv1beta1.DbInstance) ([]v1.EnvVar, error) {
 	host, err := getBackupHost(dbcr, instance)
 	if err != nil {
 		return []v1.EnvVar{}, fmt.Errorf("can not build postgres backup job environment variables - %s", err)
@@ -235,7 +235,7 @@ func postgresEnvVars(conf *config.Config, dbcr *kindav1beta1.Database, instance 
 	return envList, nil
 }
 
-func mysqlEnvVars(dbcr *kindav1beta1.Database, instance *kindav1beta1.DbInstance) ([]v1.EnvVar, error) {
+func mysqlEnvVars(dbcr *kciv1beta1.Database, instance *kciv1beta1.DbInstance) ([]v1.EnvVar, error) {
 	host, err := getBackupHost(dbcr, instance)
 	if err != nil {
 		return []v1.EnvVar{}, fmt.Errorf("can not build mysql backup job environment variables - %s", err)
@@ -278,7 +278,7 @@ func mysqlEnvVars(dbcr *kindav1beta1.Database, instance *kindav1beta1.DbInstance
 	return envList, nil
 }
 
-func getBackupHost(dbcr *kindav1beta1.Database, instance *kindav1beta1.DbInstance) (string, error) {
+func getBackupHost(dbcr *kciv1beta1.Database, instance *kciv1beta1.DbInstance) (string, error) {
 	host := ""
 
 	backend, err := instance.GetBackendType()
@@ -304,7 +304,7 @@ func getBackupHost(dbcr *kindav1beta1.Database, instance *kindav1beta1.DbInstanc
 // Currently it's only possible to set a secret as a source.
 // By default it's supposed to be used by rclone to be able to
 // upload backup to the storage
-func envFrom(dbcr *kindav1beta1.Database) []v1.EnvFromSource {
+func envFrom(dbcr *kciv1beta1.Database) []v1.EnvFromSource {
 	envFrom := []v1.EnvFromSource{}
 	optional := false
 	if dbcr.Spec.Backup.EnvFromSecret != "" {

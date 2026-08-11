@@ -21,7 +21,7 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/db-operator/db-operator/v2/pkg/utils/database"
+	"github.com/kloeckner-i/db-operator/pkg/utils/database"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 

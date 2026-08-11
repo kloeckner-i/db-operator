@@ -17,7 +17,7 @@
 package kci
 
 import (
-	"github.com/db-operator/db-operator/v2/pkg/consts"
+	"github.com/kloeckner-i/db-operator/pkg/consts"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

@@ -30,7 +30,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	kindarocksv1beta1 "github.com/db-operator/db-operator/v2/api/v1beta1"
+	kcirocksv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -64,7 +64,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 
-	err = kindarocksv1beta1.AddToScheme(scheme.Scheme)
+	err = kcirocksv1beta1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	//+kubebuilder:scaffold:scheme

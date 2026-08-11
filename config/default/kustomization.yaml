@@ -225,7 +225,7 @@ replacements:
    targets: # Do not remove or uncomment the following scaffold marker; required to generate code for target CRD.
      - select:
          kind: CustomResourceDefinition
-         name: databases.kinda.rocks
+         name: databases.kci.rocks
        fieldPaths:
          - .metadata.annotations.[cert-manager.io/inject-ca-from]
        options:
@@ -234,7 +234,7 @@ replacements:
          create: true
 #     - select:
 #         kind: CustomResourceDefinition
-#         name: dbinstances.kinda.rocks
+#         name: dbinstances.kci.rocks
 #       fieldPaths:
 #         - .metadata.annotations.[cert-manager.io/inject-ca-from]
 #       options:
@@ -251,7 +251,7 @@ replacements:
    targets: # Do not remove or uncomment the following scaffold marker; required to generate code for target CRD.
      - select:
          kind: CustomResourceDefinition
-         name: databases.kinda.rocks
+         name: databases.kci.rocks
        fieldPaths:
          - .metadata.annotations.[cert-manager.io/inject-ca-from]
        options:
@@ -260,7 +260,7 @@ replacements:
          create: true
 #     - select:
 #         kind: CustomResourceDefinition
-#         name: dbinstances.kinda.rocks
+#         name: dbinstances.kci.rocks
 #       fieldPaths:
 #         - .metadata.annotations.[cert-manager.io/inject-ca-from]
 #       options:

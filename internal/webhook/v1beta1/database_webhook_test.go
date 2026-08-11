@@ -18,21 +18,21 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	kindarocksv1beta1 "github.com/db-operator/db-operator/v2/api/v1beta1"
+	kcirocksv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
 	// TODO (user): Add any additional imports if needed
 )
 
 var _ = Describe("Database Webhook", func() {
 	var (
-		obj       *kindarocksv1beta1.Database
-		oldObj    *kindarocksv1beta1.Database
+		obj       *kcirocksv1beta1.Database
+		oldObj    *kcirocksv1beta1.Database
 		validator DatabaseCustomValidator
 		defaulter DatabaseCustomDefaulter
 	)
 
 	BeforeEach(func() {
-		obj = &kindarocksv1beta1.Database{}
-		oldObj = &kindarocksv1beta1.Database{}
+		obj = &kcirocksv1beta1.Database{}
+		oldObj = &kcirocksv1beta1.Database{}
 		validator = DatabaseCustomValidator{}
 		Expect(validator).NotTo(BeNil(), "Expected validator to be initialized")
 		defaulter = DatabaseCustomDefaulter{}
@@ -86,7 +86,7 @@ var _ = Describe("Database Webhook", func() {
 		// TODO (user): Add logic to convert the object to the desired version and verify the conversion
 		// Example:
 		// It("Should convert the object correctly", func() {
-		//     convertedObj := &kindarocksv1beta1.Database{}
+		//     convertedObj := &kcirocksv1beta1.Database{}
 		//     Expect(obj.ConvertTo(convertedObj)).To(Succeed())
 		//     Expect(convertedObj).ToNot(BeNil())
 		// })

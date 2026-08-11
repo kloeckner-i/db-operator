@@ -14,7 +14,7 @@ After you have a working `DbInstance` you can start managing databases.
 Let's start by defining an instance on which the database should be deployed. Let's assume you have an instance called `cloudnative-pg`
 
 ```yaml
-apiVersion: kinda.rocks/v1beta1
+apiVersion: kci.rocks/v1beta1
 kind: Database
 metadata:
   name: my-database
@@ -25,7 +25,7 @@ spec:
 Then we need to define a name that is going to be used by the operator to create a `ConfigMap` and a `Secret`. If a secret with this name already exists, db-operator will try to use it, but let's talk about it [later](#reusing-an-existing-secret).
 
 ```yaml
-apiVersion: kinda.rocks/v1beta1
+apiVersion: kci.rocks/v1beta1
 kind: Database
 metadata:
   name: my-database
@@ -59,8 +59,8 @@ kind: Secret
 metadata:
   labels:
     app.kubernetes.io/managed-by: db-operator
-    kinda.rocks/used-by-kind: Database
-    kinda.rocks/used-by-name: my-database
+    kci.rocks/used-by-kind: Database
+    kci.rocks/used-by-name: my-database
   name: my-database-creds
 type: Opaque
 data:
@@ -77,8 +77,8 @@ kind: Secret
 metadata:
   labels:
     app.kubernetes.io/managed-by: db-operator
-    kinda.rocks/used-by-kind: Database
-    kinda.rocks/used-by-name: my-database
+    kci.rocks/used-by-kind: Database
+    kci.rocks/used-by-name: my-database
   name: my-database-creds
 type: Opaque
 data:
@@ -97,8 +97,8 @@ kind: ConfigMap
 metadata:
   labels:
     app.kubernetes.io/managed-by: db-operator
-    kinda.rocks/used-by-kind: Database
-    kinda.rocks/used-by-name: my-database
+    kci.rocks/used-by-kind: Database
+    kci.rocks/used-by-name: my-database
   name: my-database-creds
 data:
   DB_CONN: <database server address>
@@ -112,7 +112,7 @@ By default, ConfigMap and Secret are created without owner references, so they w
 If you want them to be deleted too, you need to turn on the cleanup feature.
 
 ```YAML
-apiVersion: "kinda.rocks/v1beta1"
+apiVersion: "kci.rocks/v1beta1"
 kind: "Database"
 metadata:
   name: "example-db"
@@ -292,7 +292,7 @@ This annotation should be used, when a DbUser is not allowed to log in with pass
 
 For more info see this issue: https://github.com/db-operator/db-operator/issues/125
 ```yaml
-kinda.rocks/rds-iam-impersonate: "true"
+kci.rocks/rds-iam-impersonate: "true"
 ```
 
 ### Force Database Deletion
@@ -300,7 +300,7 @@ kinda.rocks/rds-iam-impersonate: "true"
 Delete a postgres database with present connections, might be useful when pgbouncer is used
 
 ```yaml
-kinda.rocks/postgres-force-delete-db: "true"
+kci.rocks/postgres-force-delete-db: "true"
 ```
 
 ## Reconciliation logic
@@ -310,7 +310,7 @@ By default db-operator checks if a database needs to be reconcilied.
 First, use can force a full reconciliation by setting a following annotation:
 
 ```yaml
-kinda.rocks/db-force-full-reconcile: "true"
+kci.rocks/db-force-full-reconcile: "true"
 ```
 
 If it's set, operator will remove it and run the full reconciliation.

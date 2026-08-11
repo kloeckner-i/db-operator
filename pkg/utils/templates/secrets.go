@@ -23,8 +23,8 @@ import (
 	"slices"
 	"text/template"
 
-	kindav1beta1 "github.com/db-operator/db-operator/v2/api/v1beta1"
-	"github.com/db-operator/db-operator/v2/pkg/utils/database"
+	kciv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
+	"github.com/kloeckner-i/db-operator/pkg/utils/database"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -54,7 +54,7 @@ func getBlockedTempatedKeys() []string {
 	return []string{FieldMysqlDB, FieldMysqlPassword, FieldMysqlUser, FieldPostgresDB, FieldPostgresUser, FieldPostgressPassword}
 }
 
-func ParseTemplatedSecretsData(ctx context.Context, dbcr *kindav1beta1.Database, cred database.Credentials, data map[string][]byte) (database.Credentials, error) {
+func ParseTemplatedSecretsData(ctx context.Context, dbcr *kciv1beta1.Database, cred database.Credentials, data map[string][]byte) (database.Credentials, error) {
 	log := log.FromContext(ctx)
 	cred.TemplatedSecrets = map[string]string{}
 	for key := range dbcr.Spec.SecretsTemplates {
@@ -74,7 +74,7 @@ func ParseTemplatedSecretsData(ctx context.Context, dbcr *kindav1beta1.Database,
 	return cred, nil
 }
 
-func GenerateTemplatedSecrets(ctx context.Context, dbcr *kindav1beta1.Database, databaseCred database.Credentials, dbAddress database.DatabaseAddress) (secrets map[string][]byte, err error) {
+func GenerateTemplatedSecrets(ctx context.Context, dbcr *kciv1beta1.Database, databaseCred database.Credentials, dbAddress database.DatabaseAddress) (secrets map[string][]byte, err error) {
 	log := log.FromContext(ctx)
 	secrets = map[string][]byte{}
 	templates := dbcr.Spec.SecretsTemplates
@@ -128,7 +128,7 @@ func GenerateTemplatedSecrets(ctx context.Context, dbcr *kindav1beta1.Database, 
 	return secrets, nil
 }
 
-func AppendTemplatedSecretData(ctx context.Context, dbcr *kindav1beta1.Database, secretData map[string][]byte, newSecretFields map[string][]byte) map[string][]byte {
+func AppendTemplatedSecretData(ctx context.Context, dbcr *kciv1beta1.Database, secretData map[string][]byte, newSecretFields map[string][]byte) map[string][]byte {
 	log := log.FromContext(ctx)
 	blockedTempatedKeys := getBlockedTempatedKeys()
 	for key, value := range newSecretFields {
@@ -145,7 +145,7 @@ func AppendTemplatedSecretData(ctx context.Context, dbcr *kindav1beta1.Database,
 	return secretData
 }
 
-func RemoveObsoleteSecret(ctx context.Context, dbcr *kindav1beta1.Database, secretData map[string][]byte, newSecretFields map[string][]byte) map[string][]byte {
+func RemoveObsoleteSecret(ctx context.Context, dbcr *kciv1beta1.Database, secretData map[string][]byte, newSecretFields map[string][]byte) map[string][]byte {
 	log := log.FromContext(ctx)
 	blockedTempatedKeys := getBlockedTempatedKeys()
 

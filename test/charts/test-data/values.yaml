@@ -1,9 +1,0 @@
-engines:
-  - name: postgres
-    sslConfig:
-      enabled: false
-      skipVerify: true
-  - name: mysql
-    sslConfig:
-      enabled: false
-      skipVerify: true

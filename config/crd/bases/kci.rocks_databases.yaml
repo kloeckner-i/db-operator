@@ -4,9 +4,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.20.1
-  name: databases.kinda.rocks
+  name: databases.kci.rocks
 spec:
-  group: kinda.rocks
+  group: kci.rocks
   names:
     kind: Database
     listKind: DatabaseList

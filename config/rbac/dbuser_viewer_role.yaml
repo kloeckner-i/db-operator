@@ -1,7 +1,7 @@
 # This rule is not used by the project db-operator itself.
 # It is provided to allow the cluster admin to help manage permissions for users.
 #
-# Grants read-only access to kinda.rocks resources.
+# Grants read-only access to kci.rocks resources.
 # This role is intended for users who need visibility into these resources
 # without permissions to modify them. It is ideal for monitoring purposes and limited-access viewing.
 
@@ -14,7 +14,7 @@ metadata:
   name: dbuser-viewer-role
 rules:
 - apiGroups:
-  - kinda.rocks
+  - kci.rocks
   resources:
   - dbusers
   verbs:
@@ -22,7 +22,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - kinda.rocks
+  - kci.rocks
   resources:
   - dbusers/status
   verbs:

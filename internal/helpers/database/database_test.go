@@ -22,11 +22,11 @@ import (
 	"fmt"
 	"testing"
 
-	dbhelper "github.com/db-operator/db-operator/v2/internal/helpers/database"
-	"github.com/db-operator/db-operator/v2/internal/utils/testutils"
-	"github.com/db-operator/db-operator/v2/pkg/consts"
-	"github.com/db-operator/db-operator/v2/pkg/utils/database"
-	"github.com/db-operator/db-operator/v2/pkg/utils/templates"
+	dbhelper "github.com/kloeckner-i/db-operator/internal/helpers/database"
+	"github.com/kloeckner-i/db-operator/internal/utils/testutils"
+	"github.com/kloeckner-i/db-operator/pkg/consts"
+	"github.com/kloeckner-i/db-operator/pkg/utils/database"
+	"github.com/kloeckner-i/db-operator/pkg/utils/templates"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 )

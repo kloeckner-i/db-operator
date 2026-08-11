@@ -25,10 +25,10 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/db-operator/db-operator/v2/api/v1beta1"
-	"github.com/db-operator/db-operator/v2/pkg/consts"
-	"github.com/db-operator/db-operator/v2/pkg/types"
-	"github.com/db-operator/db-operator/v2/pkg/utils/database"
+	"github.com/kloeckner-i/db-operator/api/v1beta1"
+	"github.com/kloeckner-i/db-operator/pkg/consts"
+	"github.com/kloeckner-i/db-operator/pkg/types"
+	"github.com/kloeckner-i/db-operator/pkg/utils/database"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -164,7 +164,7 @@ func NewTemplateDataSource(
 	}
 
 	var secretName string
-	var caller types.KindaObject
+	var caller types.KciObject
 	if dbuserk8s != nil {
 		caller = dbuserk8s
 		secretName = caller.GetSecretName()

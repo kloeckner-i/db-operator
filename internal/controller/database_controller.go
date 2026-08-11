@@ -28,19 +28,19 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	kindav1beta1 "github.com/db-operator/db-operator/v2/api/v1beta1"
-	"github.com/db-operator/db-operator/v2/internal/controller/backup"
-	commonhelper "github.com/db-operator/db-operator/v2/internal/helpers/common"
-	dbhelper "github.com/db-operator/db-operator/v2/internal/helpers/database"
-	kubehelper "github.com/db-operator/db-operator/v2/internal/helpers/kube"
-	proxyhelper "github.com/db-operator/db-operator/v2/internal/helpers/proxy"
-	"github.com/db-operator/db-operator/v2/internal/utils/templates"
-	"github.com/db-operator/db-operator/v2/pkg/config"
-	"github.com/db-operator/db-operator/v2/pkg/consts"
-	"github.com/db-operator/db-operator/v2/pkg/utils/database"
-	"github.com/db-operator/db-operator/v2/pkg/utils/kci"
-	"github.com/db-operator/db-operator/v2/pkg/utils/proxy"
-	secTemplates "github.com/db-operator/db-operator/v2/pkg/utils/templates"
+	kciv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
+	"github.com/kloeckner-i/db-operator/internal/controller/backup"
+	commonhelper "github.com/kloeckner-i/db-operator/internal/helpers/common"
+	dbhelper "github.com/kloeckner-i/db-operator/internal/helpers/database"
+	kubehelper "github.com/kloeckner-i/db-operator/internal/helpers/kube"
+	proxyhelper "github.com/kloeckner-i/db-operator/internal/helpers/proxy"
+	"github.com/kloeckner-i/db-operator/internal/utils/templates"
+	"github.com/kloeckner-i/db-operator/pkg/config"
+	"github.com/kloeckner-i/db-operator/pkg/consts"
+	"github.com/kloeckner-i/db-operator/pkg/utils/database"
+	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
+	"github.com/kloeckner-i/db-operator/pkg/utils/proxy"
+	secTemplates "github.com/kloeckner-i/db-operator/pkg/utils/templates"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	crdv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -80,9 +80,9 @@ var (
 	dbPhaseDelete               = "Deleting"
 )
 
-//+kubebuilder:rbac:groups=kinda.rocks,resources=databases,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=kinda.rocks,resources=databases/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=kinda.rocks,resources=databases/finalizers,verbs=update
+//+kubebuilder:rbac:groups=kci.rocks,resources=databases,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=kci.rocks,resources=databases/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=kci.rocks,resources=databases/finalizers,verbs=update
 //+kubebuilder:rbac:groups="",resources=secrets;configmaps,verbs=get;list;watch;create;update
 //+kubebuilder:rbac:groups="events.k8s.io",resources=events,verbs=create
 //+kubebuilder:rbac:groups="batch",resources=cronjob,verbs=create;update;get;watch
@@ -94,7 +94,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	reconcileResult := reconcile.Result{RequeueAfter: reconcilePeriod}
 
 	// Fetch the Database custom resource
-	dbcr := &kindav1beta1.Database{}
+	dbcr := &kciv1beta1.Database{}
 	err := r.Get(ctx, req.NamespacedName, dbcr)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
@@ -151,7 +151,7 @@ func (r *DatabaseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	return r.handleDbCreateOrUpdate(ctx, dbcr, mustReconile)
 }
 
-func (r *DatabaseReconciler) healthCheck(ctx context.Context, dbcr *kindav1beta1.Database) error {
+func (r *DatabaseReconciler) healthCheck(ctx context.Context, dbcr *kciv1beta1.Database) error {
 	log := log.FromContext(ctx)
 	if len(dbcr.Spec.ExistingUser) > 0 {
 		log.Info("An existing user is used, running health check as admin")
@@ -161,7 +161,7 @@ func (r *DatabaseReconciler) healthCheck(ctx context.Context, dbcr *kindav1beta1
 }
 
 // Move it to helpers and start testing it
-func (r *DatabaseReconciler) healthCheckUser(ctx context.Context, dbcr *kindav1beta1.Database) error {
+func (r *DatabaseReconciler) healthCheckUser(ctx context.Context, dbcr *kciv1beta1.Database) error {
 	var dbSecret *corev1.Secret
 	dbSecret, err := r.getDatabaseSecret(ctx, dbcr)
 	if err != nil {
@@ -174,7 +174,7 @@ func (r *DatabaseReconciler) healthCheckUser(ctx context.Context, dbcr *kindav1b
 		return err
 	}
 
-	instance := &kindav1beta1.DbInstance{}
+	instance := &kciv1beta1.DbInstance{}
 	if err := r.Get(ctx, types.NamespacedName{Name: dbcr.Spec.Instance}, instance); err != nil {
 		return err
 	}
@@ -193,7 +193,7 @@ func (r *DatabaseReconciler) healthCheckUser(ctx context.Context, dbcr *kindav1b
 }
 
 // Move it to helpers and start testing it
-func (r *DatabaseReconciler) healthCheckAdmin(ctx context.Context, dbcr *kindav1beta1.Database) error {
+func (r *DatabaseReconciler) healthCheckAdmin(ctx context.Context, dbcr *kciv1beta1.Database) error {
 	var dbSecret *corev1.Secret
 	dbSecret, err := r.getDatabaseSecret(ctx, dbcr)
 	if err != nil {
@@ -206,7 +206,7 @@ func (r *DatabaseReconciler) healthCheckAdmin(ctx context.Context, dbcr *kindav1
 		return err
 	}
 
-	instance := &kindav1beta1.DbInstance{}
+	instance := &kciv1beta1.DbInstance{}
 	if err := r.Get(ctx, types.NamespacedName{Name: dbcr.Spec.Instance}, instance); err != nil {
 		return err
 	}
@@ -250,7 +250,7 @@ func (r *DatabaseReconciler) healthCheckAdmin(ctx context.Context, dbcr *kindav1
  * --  be set to false, and then db-operator will run queries
  * --  against the database.
  * ----------------------------------------------------------------- */
-func (r *DatabaseReconciler) isFullReconcile(ctx context.Context, dbcr *kindav1beta1.Database) (bool, error) {
+func (r *DatabaseReconciler) isFullReconcile(ctx context.Context, dbcr *kciv1beta1.Database) (bool, error) {
 	log := log.FromContext(ctx)
 	// This is the first check, because even if the checkForChanges is false,
 	// the annotation is expected to be removed
@@ -299,7 +299,7 @@ func (r *DatabaseReconciler) isFullReconcile(ctx context.Context, dbcr *kindav1b
  * --  action to run. If mustReconcile is true, all the db queries
  * --  will be executed.
  * ------------------------------------------------------------------ */
-func (r *DatabaseReconciler) handleDbCreateOrUpdate(ctx context.Context, dbcr *kindav1beta1.Database, mustReconcile bool) (reconcile.Result, error) {
+func (r *DatabaseReconciler) handleDbCreateOrUpdate(ctx context.Context, dbcr *kciv1beta1.Database, mustReconcile bool) (reconcile.Result, error) {
 	log := log.FromContext(ctx)
 	var err error
 
@@ -417,7 +417,7 @@ func (r *DatabaseReconciler) handleDbCreateOrUpdate(ctx context.Context, dbcr *k
 	return reconcileResult, nil
 }
 
-func (r *DatabaseReconciler) handleDbDelete(ctx context.Context, dbcr *kindav1beta1.Database) (reconcile.Result, error) {
+func (r *DatabaseReconciler) handleDbDelete(ctx context.Context, dbcr *kciv1beta1.Database) (reconcile.Result, error) {
 	log := log.FromContext(ctx)
 	phase := dbPhaseDelete
 	reconcilePeriod := r.Interval * time.Second
@@ -487,7 +487,7 @@ func (r *DatabaseReconciler) handleDbDelete(ctx context.Context, dbcr *kindav1be
 // SetupWithManager sets up the controller with the Manager.
 func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&kindav1beta1.Database{}).
+		For(&kciv1beta1.Database{}).
 		Watches(
 			&corev1.Secret{},
 			handler.EnqueueRequestsFromMapFunc(r.findDatabaseForSecret),
@@ -517,7 +517,7 @@ func (r *DatabaseReconciler) findDatabaseForSecret(ctx context.Context, secret c
 		return nil
 	}
 	log.Info("Getting databases for the secret")
-	database := &kindav1beta1.Database{}
+	database := &kciv1beta1.Database{}
 
 	if err := r.Get(ctx, client.ObjectKey{
 		Namespace: namespace,
@@ -537,14 +537,14 @@ func (r *DatabaseReconciler) findDatabaseForSecret(ctx context.Context, secret c
 	return []reconcile.Request{request}
 }
 
-func (r *DatabaseReconciler) setEngine(ctx context.Context, dbcr *kindav1beta1.Database) error {
+func (r *DatabaseReconciler) setEngine(ctx context.Context, dbcr *kciv1beta1.Database) error {
 	log := log.FromContext(ctx)
 	if len(dbcr.Spec.Instance) == 0 {
 		return errors.New("instance name not defined")
 	}
 
 	if len(dbcr.Status.Engine) == 0 {
-		instance := &kindav1beta1.DbInstance{}
+		instance := &kciv1beta1.DbInstance{}
 		key := types.NamespacedName{
 			Namespace: "",
 			Name:      dbcr.Spec.Instance,
@@ -570,14 +570,14 @@ func (r *DatabaseReconciler) setEngine(ctx context.Context, dbcr *kindav1beta1.D
 }
 
 // createDatabase secret, actual database using admin secret
-func (r *DatabaseReconciler) createDatabase(ctx context.Context, dbcr *kindav1beta1.Database, dbSecret *corev1.Secret) error {
+func (r *DatabaseReconciler) createDatabase(ctx context.Context, dbcr *kciv1beta1.Database, dbSecret *corev1.Secret) error {
 	log := log.FromContext(ctx)
 	databaseCred, err := dbhelper.ParseDatabaseSecretData(dbcr, dbSecret.Data)
 	if err != nil {
 		// failed to parse database credential from secret
 		return err
 	}
-	instance := &kindav1beta1.DbInstance{}
+	instance := &kciv1beta1.DbInstance{}
 	if err := r.Get(ctx, types.NamespacedName{Name: dbcr.Spec.Instance}, instance); err != nil {
 		return err
 	}
@@ -685,7 +685,7 @@ func (r *DatabaseReconciler) createDatabase(ctx context.Context, dbcr *kindav1be
 	return nil
 }
 
-func (r *DatabaseReconciler) deleteDatabase(ctx context.Context, dbcr *kindav1beta1.Database) error {
+func (r *DatabaseReconciler) deleteDatabase(ctx context.Context, dbcr *kciv1beta1.Database) error {
 	log := log.FromContext(ctx)
 	if dbcr.Spec.DeletionProtected {
 		log.Info("database is deletion protected, it will not be deleted in backends")
@@ -697,7 +697,7 @@ func (r *DatabaseReconciler) deleteDatabase(ctx context.Context, dbcr *kindav1be
 		Username: dbcr.Status.UserName,
 	}
 
-	instance := &kindav1beta1.DbInstance{}
+	instance := &kciv1beta1.DbInstance{}
 	if err := r.Get(ctx, types.NamespacedName{Name: dbcr.Spec.Instance}, instance); err != nil {
 		return err
 	}
@@ -736,10 +736,10 @@ func (r *DatabaseReconciler) deleteDatabase(ctx context.Context, dbcr *kindav1be
 	return nil
 }
 
-func (r *DatabaseReconciler) handleInstanceAccessSecret(ctx context.Context, dbcr *kindav1beta1.Database) error {
+func (r *DatabaseReconciler) handleInstanceAccessSecret(ctx context.Context, dbcr *kciv1beta1.Database) error {
 	log := log.FromContext(ctx)
 	var err error
-	instance := &kindav1beta1.DbInstance{}
+	instance := &kciv1beta1.DbInstance{}
 	if err := r.Get(ctx, types.NamespacedName{Name: dbcr.Spec.Instance}, instance); err != nil {
 		return err
 	}
@@ -780,9 +780,9 @@ func (r *DatabaseReconciler) handleInstanceAccessSecret(ctx context.Context, dbc
 	return nil
 }
 
-func (r *DatabaseReconciler) handleProxy(ctx context.Context, dbcr *kindav1beta1.Database) error {
+func (r *DatabaseReconciler) handleProxy(ctx context.Context, dbcr *kciv1beta1.Database) error {
 	log := log.FromContext(ctx)
-	instance := &kindav1beta1.DbInstance{}
+	instance := &kciv1beta1.DbInstance{}
 	if err := r.Get(ctx, types.NamespacedName{Name: dbcr.Spec.Instance}, instance); err != nil {
 		return err
 	}
@@ -861,7 +861,7 @@ func (r *DatabaseReconciler) handleProxy(ctx context.Context, dbcr *kindav1beta1
 // If database has a deletion timestamp, this function will remove all the templated fields from
 // secrets and configmaps, so it's a generic function that can be used for both:
 // creating and removing
-func (r *DatabaseReconciler) handleTemplatedCredentials(ctx context.Context, dbcr *kindav1beta1.Database) error {
+func (r *DatabaseReconciler) handleTemplatedCredentials(ctx context.Context, dbcr *kciv1beta1.Database) error {
 	databaseSecret, err := r.getDatabaseSecret(ctx, dbcr)
 	if err != nil {
 		return err
@@ -878,7 +878,7 @@ func (r *DatabaseReconciler) handleTemplatedCredentials(ctx context.Context, dbc
 	}
 
 	// We don't need dbuser here, because if it's not nil, templates will be built for the dbuser, not the database
-	instance := &kindav1beta1.DbInstance{}
+	instance := &kciv1beta1.DbInstance{}
 	if err := r.Get(ctx, types.NamespacedName{Name: dbcr.Spec.Instance}, instance); err != nil {
 		return err
 	}
@@ -899,7 +899,7 @@ func (r *DatabaseReconciler) handleTemplatedCredentials(ctx context.Context, dbc
 		}
 	} else {
 		// Render with an empty slice, so templated entries are removed from Data and Annotations
-		if err := templateds.Render(kindav1beta1.Templates{}); err != nil {
+		if err := templateds.Render(kciv1beta1.Templates{}); err != nil {
 			return err
 		}
 	}
@@ -916,7 +916,7 @@ func (r *DatabaseReconciler) handleTemplatedCredentials(ctx context.Context, dbc
 	return nil
 }
 
-func (r *DatabaseReconciler) createTemplatedSecrets(ctx context.Context, dbcr *kindav1beta1.Database) error {
+func (r *DatabaseReconciler) createTemplatedSecrets(ctx context.Context, dbcr *kciv1beta1.Database) error {
 	if len(dbcr.Spec.SecretsTemplates) > 0 {
 		r.Recorder.Eventf(dbcr, nil, corev1.EventTypeWarning, "Deprecation", "Secrets Templates",
 			"secretsTemplates are deprecated and will be removed in the next API version. Please consider using templates",
@@ -936,7 +936,7 @@ func (r *DatabaseReconciler) createTemplatedSecrets(ctx context.Context, dbcr *k
 		if err != nil {
 			return err
 		}
-		instance := &kindav1beta1.DbInstance{}
+		instance := &kciv1beta1.DbInstance{}
 		if err := r.Get(ctx, types.NamespacedName{Name: dbcr.Spec.Instance}, instance); err != nil {
 			return err
 		}
@@ -968,9 +968,9 @@ func (r *DatabaseReconciler) createTemplatedSecrets(ctx context.Context, dbcr *k
 	return nil
 }
 
-func (r *DatabaseReconciler) handleInfoConfigMap(ctx context.Context, dbcr *kindav1beta1.Database) error {
+func (r *DatabaseReconciler) handleInfoConfigMap(ctx context.Context, dbcr *kciv1beta1.Database) error {
 	log := log.FromContext(ctx)
-	instance := &kindav1beta1.DbInstance{}
+	instance := &kciv1beta1.DbInstance{}
 	if err := r.Get(ctx, types.NamespacedName{Name: dbcr.Spec.Instance}, instance); err != nil {
 		return err
 	}
@@ -998,12 +998,12 @@ func (r *DatabaseReconciler) handleInfoConfigMap(ctx context.Context, dbcr *kind
 	return nil
 }
 
-func (r *DatabaseReconciler) handleBackupJob(ctx context.Context, dbcr *kindav1beta1.Database) error {
+func (r *DatabaseReconciler) handleBackupJob(ctx context.Context, dbcr *kciv1beta1.Database) error {
 	if !dbcr.Spec.Backup.Enable {
 		// if not enabled, skip
 		return nil
 	}
-	instance := &kindav1beta1.DbInstance{}
+	instance := &kciv1beta1.DbInstance{}
 	if err := r.Get(ctx, types.NamespacedName{Name: dbcr.Spec.Instance}, instance); err != nil {
 		return err
 	}
@@ -1024,7 +1024,7 @@ func (r *DatabaseReconciler) handleBackupJob(ctx context.Context, dbcr *kindav1b
 	return nil
 }
 
-func (r *DatabaseReconciler) getDatabaseSecret(ctx context.Context, dbcr *kindav1beta1.Database) (*corev1.Secret, error) {
+func (r *DatabaseReconciler) getDatabaseSecret(ctx context.Context, dbcr *kciv1beta1.Database) (*corev1.Secret, error) {
 	secret := &corev1.Secret{}
 	key := types.NamespacedName{
 		Namespace: dbcr.Namespace,
@@ -1038,7 +1038,7 @@ func (r *DatabaseReconciler) getDatabaseSecret(ctx context.Context, dbcr *kindav
 	return secret, nil
 }
 
-func (r *DatabaseReconciler) getDatabaseConfigMap(ctx context.Context, dbcr *kindav1beta1.Database) (*corev1.ConfigMap, error) {
+func (r *DatabaseReconciler) getDatabaseConfigMap(ctx context.Context, dbcr *kciv1beta1.Database) (*corev1.ConfigMap, error) {
 	configMap := &corev1.ConfigMap{}
 	key := types.NamespacedName{
 		Namespace: dbcr.Namespace,
@@ -1052,8 +1052,8 @@ func (r *DatabaseReconciler) getDatabaseConfigMap(ctx context.Context, dbcr *kin
 	return configMap, nil
 }
 
-func (r *DatabaseReconciler) getAdminSecret(ctx context.Context, dbcr *kindav1beta1.Database) (*corev1.Secret, error) {
-	instance := &kindav1beta1.DbInstance{}
+func (r *DatabaseReconciler) getAdminSecret(ctx context.Context, dbcr *kciv1beta1.Database) (*corev1.Secret, error) {
+	instance := &kciv1beta1.DbInstance{}
 	if err := r.Get(ctx, types.NamespacedName{Name: dbcr.Spec.Instance}, instance); err != nil {
 		return nil, err
 	}
@@ -1068,7 +1068,7 @@ func (r *DatabaseReconciler) getAdminSecret(ctx context.Context, dbcr *kindav1be
 	return secret, nil
 }
 
-func (r *DatabaseReconciler) manageError(ctx context.Context, dbcr *kindav1beta1.Database, issue error, requeue bool, phase string) (reconcile.Result, error) {
+func (r *DatabaseReconciler) manageError(ctx context.Context, dbcr *kciv1beta1.Database, issue error, requeue bool, phase string) (reconcile.Result, error) {
 	dbcr.Status.Status = false
 	log := log.FromContext(ctx)
 	log.Error(issue, "an error occurred during the reconciliation")
@@ -1093,7 +1093,7 @@ func (r *DatabaseReconciler) manageError(ctx context.Context, dbcr *kindav1beta1
 	}, nil
 }
 
-func (r *DatabaseReconciler) createSecret(ctx context.Context, dbcr *kindav1beta1.Database) (*corev1.Secret, error) {
+func (r *DatabaseReconciler) createSecret(ctx context.Context, dbcr *kciv1beta1.Database) (*corev1.Secret, error) {
 	log := log.FromContext(ctx)
 	secretData, err := dbhelper.GenerateDatabaseSecretData(dbcr.ObjectMeta, dbcr.Status.Engine, "", dbcr.Spec.ExistingUser)
 	if err != nil {

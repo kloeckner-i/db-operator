@@ -20,7 +20,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/db-operator/db-operator/v2/pkg/consts"
+	"github.com/kloeckner-i/db-operator/pkg/consts"
 	"golang.org/x/exp/maps"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -30,7 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	dbotypes "github.com/db-operator/db-operator/v2/pkg/types"
+	dbotypes "github.com/kloeckner-i/db-operator/pkg/types"
 )
 
 const ERROR_CANT_CAST = "couldn't cast a caller to the client.Object"
@@ -47,11 +47,11 @@ type KubeHelper struct {
 	Cli client.Client
 	Rec events.EventRecorder
 	// Caller is a db-operator object that is requesting modifications
-	Caller dbotypes.KindaObject
+	Caller dbotypes.KciObject
 }
 
 // Init a Kubehelper struct
-func NewKubeHelper(cli client.Client, rec events.EventRecorder, caller dbotypes.KindaObject) *KubeHelper {
+func NewKubeHelper(cli client.Client, rec events.EventRecorder, caller dbotypes.KciObject) *KubeHelper {
 	return &KubeHelper{cli, rec, caller}
 }
 
@@ -66,7 +66,7 @@ func (kh *KubeHelper) ModifyObject(ctx context.Context, obj client.Object) error
 	return kh.HandleCreateOrUpdate(ctx, obj)
 }
 
-// If KindaRocks object is removed, other objects should be cleaned up
+// If KciRocks object is removed, other objects should be cleaned up
 func (kh *KubeHelper) HandleDelete(ctx context.Context, obj client.Object) error {
 	// If object is not used by the caller, we shouldn't edit it when a caller is removed
 	if err := kh.Cli.Get(ctx, types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, obj); err != nil {

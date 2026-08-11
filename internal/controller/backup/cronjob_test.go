@@ -22,18 +22,18 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 
-	kindav1beta1 "github.com/db-operator/db-operator/v2/api/v1beta1"
-	"github.com/db-operator/db-operator/v2/pkg/config"
+	kciv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
+	"github.com/kloeckner-i/db-operator/pkg/config"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestUnitBackupCronGeneric(t *testing.T) {
-	dbcr := &kindav1beta1.Database{}
+	dbcr := &kciv1beta1.Database{}
 	dbcr.Namespace = "TestNS"
 	dbcr.Name = "TestDB"
-	instance := &kindav1beta1.DbInstance{}
+	instance := &kciv1beta1.DbInstance{}
 	instance.Status.Info = map[string]string{"DB_CONN": "TestConnection", "DB_PORT": "1234"}
-	instance.Spec.Generic = &kindav1beta1.GenericInstance{BackupHost: "replica.test"}
+	instance.Spec.Generic = &kciv1beta1.GenericInstance{BackupHost: "replica.test"}
 	instance.Spec.Backup.Bucket = "test-bucket"
 	dbcr.Spec.Instance = "staging"
 	dbcr.Spec.Backup.Cron = "* * * * *"
@@ -63,12 +63,12 @@ func TestUnitBackupCronGeneric(t *testing.T) {
 }
 
 func TestUnitBackupCronGenericEnvFrom(t *testing.T) {
-	dbcr := &kindav1beta1.Database{}
+	dbcr := &kciv1beta1.Database{}
 	dbcr.Namespace = "TestNS"
 	dbcr.Name = "TestDB"
-	instance := &kindav1beta1.DbInstance{}
+	instance := &kciv1beta1.DbInstance{}
 	instance.Status.Info = map[string]string{"DB_CONN": "TestConnection", "DB_PORT": "1234"}
-	instance.Spec.Generic = &kindav1beta1.GenericInstance{BackupHost: "replica.test"}
+	instance.Spec.Generic = &kciv1beta1.GenericInstance{BackupHost: "replica.test"}
 	instance.Spec.Backup.Bucket = "test-bucket"
 	dbcr.Spec.Instance = "staging"
 	dbcr.Spec.Backup.Cron = "* * * * *"
@@ -99,12 +99,12 @@ func TestUnitBackupCronGenericEnvFrom(t *testing.T) {
 }
 
 func TestUnitBackupCronGenericBucket(t *testing.T) {
-	dbcr := &kindav1beta1.Database{}
+	dbcr := &kciv1beta1.Database{}
 	dbcr.Namespace = "TestNS"
 	dbcr.Name = "TestDB"
-	instance := &kindav1beta1.DbInstance{}
+	instance := &kciv1beta1.DbInstance{}
 	instance.Status.Info = map[string]string{"DB_CONN": "TestConnection", "DB_PORT": "1234"}
-	instance.Spec.Generic = &kindav1beta1.GenericInstance{BackupHost: "slave.test"}
+	instance.Spec.Generic = &kciv1beta1.GenericInstance{BackupHost: "slave.test"}
 	instance.Spec.Backup.Bucket = "test-bucket"
 	dbcr.Spec.Instance = "staging"
 	dbcr.Spec.Backup.Cron = "* * * * *"

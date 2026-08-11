@@ -24,14 +24,14 @@ import (
 	"strconv"
 	"time"
 
-	kindav1beta1 "github.com/db-operator/db-operator/v2/api/v1beta1"
-	commonhelper "github.com/db-operator/db-operator/v2/internal/helpers/common"
-	dbhelper "github.com/db-operator/db-operator/v2/internal/helpers/database"
-	kubehelper "github.com/db-operator/db-operator/v2/internal/helpers/kube"
-	"github.com/db-operator/db-operator/v2/internal/utils/templates"
-	"github.com/db-operator/db-operator/v2/pkg/consts"
-	"github.com/db-operator/db-operator/v2/pkg/utils/database"
-	"github.com/db-operator/db-operator/v2/pkg/utils/kci"
+	kciv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
+	commonhelper "github.com/kloeckner-i/db-operator/internal/helpers/common"
+	dbhelper "github.com/kloeckner-i/db-operator/internal/helpers/database"
+	kubehelper "github.com/kloeckner-i/db-operator/internal/helpers/kube"
+	"github.com/kloeckner-i/db-operator/internal/utils/templates"
+	"github.com/kloeckner-i/db-operator/pkg/consts"
+	"github.com/kloeckner-i/db-operator/pkg/utils/database"
+	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -53,9 +53,9 @@ type DbUserReconciler struct {
 	kubeHelper   *kubehelper.KubeHelper
 }
 
-// +kubebuilder:rbac:groups=kinda.rocks,resources=dbusers,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=kinda.rocks,resources=dbusers/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=kinda.rocks,resources=dbusers/finalizers,verbs=update
+// +kubebuilder:rbac:groups=kci.rocks,resources=dbusers,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kci.rocks,resources=dbusers/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=kci.rocks,resources=dbusers/finalizers,verbs=update
 
 // Reconcile a DbUser object
 func (r *DbUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -63,7 +63,7 @@ func (r *DbUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	reconcilePeriod := r.Interval
 	reconcileResult := reconcile.Result{RequeueAfter: reconcilePeriod}
 
-	dbusercr := &kindav1beta1.DbUser{}
+	dbusercr := &kciv1beta1.DbUser{}
 	err := r.Get(ctx, req.NamespacedName, dbusercr)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
@@ -88,7 +88,7 @@ func (r *DbUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	r.kubeHelper = kubehelper.NewKubeHelper(r.Client, r.Recorder, dbusercr)
 
 	// Get the DB by the reference provided in the manifest
-	dbcr := &kindav1beta1.Database{}
+	dbcr := &kciv1beta1.Database{}
 	if err := r.Get(ctx, types.NamespacedName{Namespace: req.Namespace, Name: dbusercr.Spec.DatabaseRef}, dbcr); err != nil {
 		return r.manageError(ctx, dbusercr, err, false)
 	}
@@ -156,7 +156,7 @@ func (r *DbUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 
 	if !dbusercr.Status.Status {
-		instance := &kindav1beta1.DbInstance{}
+		instance := &kciv1beta1.DbInstance{}
 		if err := r.Get(ctx, types.NamespacedName{Name: dbcr.Spec.Instance}, instance); err != nil {
 			return r.manageError(ctx, dbusercr, err, false)
 		}
@@ -317,11 +317,11 @@ func (r *DbUserReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 // SetupWithManager sets up the controller with the Manager.
 func (r *DbUserReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&kindav1beta1.DbUser{}).
+		For(&kciv1beta1.DbUser{}).
 		Complete(r)
 }
 
-func isDbUserChanged(dbucr *kindav1beta1.DbUser, userSecret *corev1.Secret) bool {
+func isDbUserChanged(dbucr *kciv1beta1.DbUser, userSecret *corev1.Secret) bool {
 	annotations := dbucr.GetAnnotations()
 	hash, err := kci.GenerateChecksum(dbucr.Spec)
 	// just in case
@@ -332,7 +332,7 @@ func isDbUserChanged(dbucr *kindav1beta1.DbUser, userSecret *corev1.Secret) bool
 		annotations["checksum/secret"] != commonhelper.GenerateChecksumSecretValue(userSecret)
 }
 
-func (r *DbUserReconciler) getDbUserSecret(ctx context.Context, dbucr *kindav1beta1.DbUser) (*corev1.Secret, error) {
+func (r *DbUserReconciler) getDbUserSecret(ctx context.Context, dbucr *kciv1beta1.DbUser) (*corev1.Secret, error) {
 	secret := &corev1.Secret{}
 	key := types.NamespacedName{
 		Namespace: dbucr.Namespace,
@@ -346,7 +346,7 @@ func (r *DbUserReconciler) getDbUserSecret(ctx context.Context, dbucr *kindav1be
 	return secret, nil
 }
 
-func (r *DbUserReconciler) manageError(ctx context.Context, dbucr *kindav1beta1.DbUser, issue error, requeue bool) (reconcile.Result, error) {
+func (r *DbUserReconciler) manageError(ctx context.Context, dbucr *kciv1beta1.DbUser, issue error, requeue bool) (reconcile.Result, error) {
 	log := log.FromContext(ctx)
 	dbucr.Status.Status = false
 	log.Error(issue, "an error occurred during the reconciliation")
@@ -410,8 +410,8 @@ func parseDbUserSecretData(engine string, data map[string][]byte) (database.Cred
 	}
 }
 
-func (r *DbUserReconciler) getAdminSecret(ctx context.Context, dbcr *kindav1beta1.Database) (*corev1.Secret, error) {
-	instance := kindav1beta1.DbInstance{}
+func (r *DbUserReconciler) getAdminSecret(ctx context.Context, dbcr *kciv1beta1.Database) (*corev1.Secret, error) {
+	instance := kciv1beta1.DbInstance{}
 	if err := r.Get(ctx, types.NamespacedName{Name: dbcr.Spec.Instance}, &instance); err != nil {
 		return nil, err
 	}
@@ -430,7 +430,7 @@ func (r *DbUserReconciler) getAdminSecret(ctx context.Context, dbcr *kindav1beta
 // secrets and configmaps, so it's a generic function that can be used for both:
 // creating and removing
 // It's mostly a copy-paste from the database controller, maybe it might be refactored
-func (r *DbUserReconciler) handleTemplatedCredentials(ctx context.Context, dbcr *kindav1beta1.Database, dbusercr *kindav1beta1.DbUser, dbuser *database.DatabaseUser) error {
+func (r *DbUserReconciler) handleTemplatedCredentials(ctx context.Context, dbcr *kciv1beta1.Database, dbusercr *kciv1beta1.DbUser, dbuser *database.DatabaseUser) error {
 	databaseSecret, err := r.getDbUserSecret(ctx, dbusercr)
 	if err != nil {
 		return err
@@ -447,7 +447,7 @@ func (r *DbUserReconciler) handleTemplatedCredentials(ctx context.Context, dbcr 
 	}
 
 	// We don't need dbuser here, because if it's not nil, templates will be built for the dbuser, not the database
-	instance := &kindav1beta1.DbInstance{}
+	instance := &kciv1beta1.DbInstance{}
 	if err := r.Get(ctx, types.NamespacedName{Name: dbcr.Spec.Instance}, instance); err != nil {
 		return err
 	}
@@ -468,7 +468,7 @@ func (r *DbUserReconciler) handleTemplatedCredentials(ctx context.Context, dbcr 
 		}
 	} else {
 		// Render with an empty slice, so templated entries are removed from Data and Annotations
-		if err := templateds.Render(kindav1beta1.Templates{}); err != nil {
+		if err := templateds.Render(kciv1beta1.Templates{}); err != nil {
 			return err
 		}
 	}
@@ -483,7 +483,7 @@ func (r *DbUserReconciler) handleTemplatedCredentials(ctx context.Context, dbcr 
 	return nil
 }
 
-func (r *DbUserReconciler) getDatabaseConfigMap(ctx context.Context, dbcr *kindav1beta1.Database) (*corev1.ConfigMap, error) {
+func (r *DbUserReconciler) getDatabaseConfigMap(ctx context.Context, dbcr *kciv1beta1.Database) (*corev1.ConfigMap, error) {
 	configMap := &corev1.ConfigMap{}
 	key := types.NamespacedName{
 		Namespace: dbcr.Namespace,
@@ -497,7 +497,7 @@ func (r *DbUserReconciler) getDatabaseConfigMap(ctx context.Context, dbcr *kinda
 	return configMap, nil
 }
 
-func (r *DbUserReconciler) addFinalizers(ctx context.Context, dbusercr *kindav1beta1.DbUser, dbcr *kindav1beta1.Database) (err error) {
+func (r *DbUserReconciler) addFinalizers(ctx context.Context, dbusercr *kciv1beta1.DbUser, dbcr *kciv1beta1.Database) (err error) {
 	log := log.FromContext(ctx)
 	kci.AddFinalizer(&dbusercr.ObjectMeta, "dbuser."+dbusercr.Name)
 	err = r.Update(ctx, dbusercr)

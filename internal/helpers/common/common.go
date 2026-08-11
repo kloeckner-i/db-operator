@@ -24,16 +24,16 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 
-	kindav1beta1 "github.com/db-operator/db-operator/v2/api/v1beta1"
-	"github.com/db-operator/db-operator/v2/pkg/consts"
-	"github.com/db-operator/db-operator/v2/pkg/utils/kci"
+	kciv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
+	"github.com/kloeckner-i/db-operator/pkg/consts"
+	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 	crdv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var OperatorVersion string
 
-func IsDBChanged(dbcr *kindav1beta1.Database, databaseSecret *corev1.Secret) bool {
+func IsDBChanged(dbcr *kciv1beta1.Database, databaseSecret *corev1.Secret) bool {
 	annotations := dbcr.GetAnnotations()
 
 	hash, err := kci.GenerateChecksum(dbcr.Spec)
@@ -45,7 +45,7 @@ func IsDBChanged(dbcr *kindav1beta1.Database, databaseSecret *corev1.Secret) boo
 		annotations["checksum/secret"] != GenerateChecksumSecretValue(databaseSecret)
 }
 
-func AddDBChecksum(dbcr *kindav1beta1.Database, databaseSecret *corev1.Secret) {
+func AddDBChecksum(dbcr *kciv1beta1.Database, databaseSecret *corev1.Secret) {
 	annotations := dbcr.GetAnnotations()
 	if len(annotations) == 0 {
 		annotations = make(map[string]string)
@@ -87,14 +87,14 @@ type DbInstanceData struct {
 	PublicIPFrom client.Object
 }
 
-func IsDBInstanceChanged(ctx context.Context, dbin *kindav1beta1.DbInstance, data DbInstanceData) bool {
+func IsDBInstanceChanged(ctx context.Context, dbin *kciv1beta1.DbInstance, data DbInstanceData) bool {
 	currentChecksums := GenerateDBInstanceChecksums(dbin, data)
 	return !reflect.DeepEqual(currentChecksums, dbin.Status.Checksums)
 }
 
 // GenerateDBInstanceChecksums serves as the single source of truth for calculating the checksums
 // of all objects a DBInstance depends on (spec, secrets, and configmaps).
-func GenerateDBInstanceChecksums(dbin *kindav1beta1.DbInstance, data DbInstanceData) map[string]string {
+func GenerateDBInstanceChecksums(dbin *kciv1beta1.DbInstance, data DbInstanceData) map[string]string {
 	checksums := make(map[string]string)
 
 	hash, err := kci.GenerateChecksum(dbin.Spec)

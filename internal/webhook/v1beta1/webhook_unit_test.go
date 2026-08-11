@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/db-operator/db-operator/v2/api/v1beta1"
-	webhook "github.com/db-operator/db-operator/v2/internal/webhook/v1beta1"
-	"github.com/db-operator/db-operator/v2/pkg/consts"
+	"github.com/kloeckner-i/db-operator/api/v1beta1"
+	webhook "github.com/kloeckner-i/db-operator/internal/webhook/v1beta1"
+	"github.com/kloeckner-i/db-operator/pkg/consts"
 	"github.com/stretchr/testify/assert"
 )
 

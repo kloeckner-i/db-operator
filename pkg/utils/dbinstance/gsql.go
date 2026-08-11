@@ -24,8 +24,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/db-operator/db-operator/v2/pkg/utils/gcloud"
-	"github.com/db-operator/db-operator/v2/pkg/utils/kci"
+	"github.com/kloeckner-i/db-operator/pkg/utils/gcloud"
+	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 	"golang.org/x/oauth2"
 	"google.golang.org/api/option"
 	sqladmin "google.golang.org/api/sqladmin/v1beta4"

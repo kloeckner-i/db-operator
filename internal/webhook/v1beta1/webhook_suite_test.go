@@ -37,7 +37,7 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	kindarocksv1beta1 "github.com/db-operator/db-operator/v2/api/v1beta1"
+	kcirocksv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -64,7 +64,7 @@ var _ = BeforeSuite(func() {
 	ctx, cancel = context.WithCancel(context.TODO())
 
 	var err error
-	err = kindarocksv1beta1.AddToScheme(scheme.Scheme)
+	err = kcirocksv1beta1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	// +kubebuilder:scaffold:scheme

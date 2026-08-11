@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/db-operator/db-operator/v2/pkg/test"
+	"github.com/kloeckner-i/db-operator/pkg/test"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -23,7 +23,7 @@ import (
 	"regexp"
 	"slices"
 
-	kindarocksv1beta1 "github.com/db-operator/db-operator/v2/api/v1beta1"
+	kcirocksv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
 )
 
 var (
@@ -36,7 +36,7 @@ var (
 //
 // the second argument: cmAllowed. It should be set to false when
 // validation is called by dbuser_webhook.
-func ValidateTemplates(templates kindarocksv1beta1.Templates, cmAllowed bool) error {
+func ValidateTemplates(templates kcirocksv1beta1.Templates, cmAllowed bool) error {
 	for _, template := range templates {
 		if !cmAllowed {
 			if !template.Secret {

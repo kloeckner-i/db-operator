@@ -1,9 +1,0 @@
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: test-data
-  namespace: default
-data:
-  test_data.yaml: |-
-    {{ .Values | toYaml | nindent 4 }}

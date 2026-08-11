@@ -25,9 +25,9 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	kindarocksv1beta1 "github.com/db-operator/db-operator/v2/api/v1beta1"
-	"github.com/db-operator/db-operator/v2/internal/helpers/kube"
-	"github.com/db-operator/db-operator/v2/pkg/consts"
+	kcirocksv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
+	"github.com/kloeckner-i/db-operator/internal/helpers/kube"
+	"github.com/kloeckner-i/db-operator/pkg/consts"
 )
 
 // nolint:unused
@@ -36,13 +36,13 @@ var dbinstancelog = logf.Log.WithName("dbinstance-resource")
 
 // SetupDbInstanceWebhookWithManager registers the webhook for DbInstance in the manager.
 func SetupDbInstanceWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr, &kindarocksv1beta1.DbInstance{}).
+	return ctrl.NewWebhookManagedBy(mgr, &kcirocksv1beta1.DbInstance{}).
 		WithValidator(&DbInstanceCustomValidator{}).
 		WithDefaulter(&DbInstanceCustomDefaulter{}).
 		Complete()
 }
 
-// +kubebuilder:webhook:path=/mutate-kinda-rocks-v1beta1-dbinstance,mutating=true,failurePolicy=fail,sideEffects=None,groups=kinda.rocks,resources=dbinstances,verbs=create;update,versions=v1beta1,name=mdbinstance-v1beta1.kb.io,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/mutate-kci-rocks-v1beta1-dbinstance,mutating=true,failurePolicy=fail,sideEffects=None,groups=kci.rocks,resources=dbinstances,verbs=create;update,versions=v1beta1,name=mdbinstance-v1beta1.kb.io,admissionReviewVersions=v1
 
 // DbInstanceCustomDefaulter struct is responsible for setting default values on the custom resource of the
 // Kind DbInstance when those are created or updated.
@@ -54,7 +54,7 @@ type DbInstanceCustomDefaulter struct {
 }
 
 // Default implements webhook.CustomDefaulter so a webhook will be registered for the Kind DbInstance.
-func (d *DbInstanceCustomDefaulter) Default(_ context.Context, obj *kindarocksv1beta1.DbInstance) error {
+func (d *DbInstanceCustomDefaulter) Default(_ context.Context, obj *kcirocksv1beta1.DbInstance) error {
 	dbinstancelog.Info("Defaulting for DbInstance", "name", obj.GetName())
 	return nil
 }
@@ -62,7 +62,7 @@ func (d *DbInstanceCustomDefaulter) Default(_ context.Context, obj *kindarocksv1
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 // NOTE: The 'path' attribute must follow a specific pattern and should not be modified directly here.
 // Modifying the path for an invalid path can cause API server errors; failing to locate the webhook.
-// +kubebuilder:webhook:path=/validate-kinda-rocks-v1beta1-dbinstance,mutating=false,failurePolicy=fail,sideEffects=None,groups=kinda.rocks,resources=dbinstances,verbs=create;update,versions=v1beta1,name=vdbinstance-v1beta1.kb.io,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/validate-kci-rocks-v1beta1-dbinstance,mutating=false,failurePolicy=fail,sideEffects=None,groups=kci.rocks,resources=dbinstances,verbs=create;update,versions=v1beta1,name=vdbinstance-v1beta1.kb.io,admissionReviewVersions=v1
 
 // DbInstanceCustomValidator struct is responsible for validating the DbInstance resource
 // when it is created, updated, or deleted.
@@ -83,7 +83,7 @@ func TestAllowedPrivileges(privileges []string) error {
 }
 
 // ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type DbInstance.
-func (v *DbInstanceCustomValidator) ValidateCreate(_ context.Context, obj *kindarocksv1beta1.DbInstance) (admission.Warnings, error) {
+func (v *DbInstanceCustomValidator) ValidateCreate(_ context.Context, obj *kcirocksv1beta1.DbInstance) (admission.Warnings, error) {
 	dbinstancelog.Info("Validation for DbInstance upon creation", "name", obj.GetName())
 
 	if err := TestAllowedPrivileges(obj.Spec.AllowedPrivileges); err != nil {
@@ -105,7 +105,7 @@ func (v *DbInstanceCustomValidator) ValidateCreate(_ context.Context, obj *kinda
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type DbInstance.
-func (v *DbInstanceCustomValidator) ValidateUpdate(_ context.Context, oldObj, newObj *kindarocksv1beta1.DbInstance) (admission.Warnings, error) {
+func (v *DbInstanceCustomValidator) ValidateUpdate(_ context.Context, oldObj, newObj *kcirocksv1beta1.DbInstance) (admission.Warnings, error) {
 	dbinstancelog.Info("Validation for DbInstance upon update", "name", newObj.GetName())
 
 	if err := TestAllowedPrivileges(newObj.Spec.AllowedPrivileges); err != nil {
@@ -128,13 +128,13 @@ func (v *DbInstanceCustomValidator) ValidateUpdate(_ context.Context, oldObj, ne
 }
 
 // ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type DbInstance.
-func (v *DbInstanceCustomValidator) ValidateDelete(ctx context.Context, obj *kindarocksv1beta1.DbInstance) (admission.Warnings, error) {
+func (v *DbInstanceCustomValidator) ValidateDelete(ctx context.Context, obj *kcirocksv1beta1.DbInstance) (admission.Warnings, error) {
 	dbinstancelog.Info("Validation for DbInstance upon deletion", "name", obj.GetName())
 
 	return nil, nil
 }
 
-func ValidateConfigVsConfigFrom(r *kindarocksv1beta1.GenericInstance) error {
+func ValidateConfigVsConfigFrom(r *kcirocksv1beta1.GenericInstance) error {
 	if r != nil {
 		if len(r.Host) > 0 && r.HostFrom != nil {
 			return errors.New("it's not allowed to use both host and hostFrom, please choose one")
@@ -149,7 +149,7 @@ func ValidateConfigVsConfigFrom(r *kindarocksv1beta1.GenericInstance) error {
 	return nil
 }
 
-func ValidateConfigFrom(dbin *kindarocksv1beta1.GenericInstance) error {
+func ValidateConfigFrom(dbin *kcirocksv1beta1.GenericInstance) error {
 	check := dbin.HostFrom
 	if check != nil && check.Kind != kube.CONFIGMAP && check.Kind != kube.SECRET {
 		return fmt.Errorf("unsupported kind in hostFrom: %s, please use %s or %s", check.Kind, kube.CONFIGMAP, kube.SECRET)

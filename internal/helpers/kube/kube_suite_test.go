@@ -24,9 +24,9 @@ import (
 	"testing"
 	"time"
 
-	kindav1beta1 "github.com/db-operator/db-operator/v2/api/v1beta1"
-	"github.com/db-operator/db-operator/v2/internal/helpers/kube"
-	"github.com/db-operator/db-operator/v2/pkg/consts"
+	kciv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
+	"github.com/kloeckner-i/db-operator/internal/helpers/kube"
+	"github.com/kloeckner-i/db-operator/pkg/consts"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"golang.org/x/exp/maps"
@@ -83,7 +83,7 @@ var _ = BeforeSuite(func() {
 		Expect(err).ToNot(HaveOccurred(), "failed to run manager")
 	}()
 
-	err = kindav1beta1.AddToScheme(scheme.Scheme)
+	err = kciv1beta1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})

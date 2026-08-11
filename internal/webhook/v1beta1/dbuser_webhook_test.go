@@ -18,20 +18,20 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	kindarocksv1beta1 "github.com/db-operator/db-operator/v2/api/v1beta1"
+	kcirocksv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
 	// TODO (user): Add any additional imports if needed
 )
 
 var _ = Describe("DbUser Webhook", func() {
 	var (
-		obj       *kindarocksv1beta1.DbUser
-		oldObj    *kindarocksv1beta1.DbUser
+		obj       *kcirocksv1beta1.DbUser
+		oldObj    *kcirocksv1beta1.DbUser
 		validator DbUserCustomValidator
 	)
 
 	BeforeEach(func() {
-		obj = &kindarocksv1beta1.DbUser{}
-		oldObj = &kindarocksv1beta1.DbUser{}
+		obj = &kcirocksv1beta1.DbUser{}
+		oldObj = &kcirocksv1beta1.DbUser{}
 		validator = DbUserCustomValidator{}
 		Expect(validator).NotTo(BeNil(), "Expected validator to be initialized")
 		Expect(oldObj).NotTo(BeNil(), "Expected oldObj to be initialized")

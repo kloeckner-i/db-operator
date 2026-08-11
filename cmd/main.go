@@ -22,19 +22,19 @@ import (
 	"time"
 
 	"github.com/alecthomas/kong"
-	"github.com/db-operator/db-operator/v2/pkg/config"
-	"github.com/db-operator/db-operator/v2/pkg/utils/thirdpartyapi"
+	"github.com/kloeckner-i/db-operator/pkg/config"
+	"github.com/kloeckner-i/db-operator/pkg/utils/thirdpartyapi"
 	"go.uber.org/zap/zapcore"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
-	kindarocksv1alpha1 "github.com/db-operator/db-operator/v2/api/v1alpha1"
-	kindarocksv1beta1 "github.com/db-operator/db-operator/v2/api/v1beta1"
-	webhookv1beta1 "github.com/db-operator/db-operator/v2/internal/webhook/v1beta1"
+	kcirocksv1alpha1 "github.com/kloeckner-i/db-operator/api/v1alpha1"
+	kcirocksv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
+	webhookv1beta1 "github.com/kloeckner-i/db-operator/internal/webhook/v1beta1"
 
-	"github.com/db-operator/db-operator/v2/internal/controller"
+	"github.com/kloeckner-i/db-operator/internal/controller"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -81,8 +81,8 @@ var ErrUnknownCommand = errors.New("unknown command")
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(kindarocksv1alpha1.AddToScheme(scheme))
-	utilruntime.Must(kindarocksv1beta1.AddToScheme(scheme))
+	utilruntime.Must(kcirocksv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(kcirocksv1beta1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 
 	thirdpartyapi.AppendToScheme(scheme)
@@ -131,7 +131,7 @@ func main() {
 		WebhookServer:          webhookSrv,
 		HealthProbeBindAddress: CLI.HealthProbeBindAddress,
 		LeaderElection:         CLI.EnableLeaderElection,
-		LeaderElectionID:       "6fe36c14.kinda.rocks",
+		LeaderElectionID:       "6fe36c14.kci.rocks",
 	})
 	if err != nil {
 		setupLog.Error(err, "Unable to start manager")

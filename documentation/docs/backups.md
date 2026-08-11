@@ -58,7 +58,7 @@ stringData:
 And then you can use it in the `Database` resource:
 
 ```yaml
-apiVersion: kinda.rocks/v1beta1
+apiVersion: kci.rocks/v1beta1
 kind: Database
 metadata:
   name: db-to-backup

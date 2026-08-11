@@ -27,7 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	// do not delete
-	"github.com/db-operator/db-operator/v2/pkg/utils/kci"
+	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
 	_ "github.com/go-sql-driver/mysql"
 )
 

@@ -14,9 +14,9 @@ cd "${WORKDIR}"
 
 echo "Workdir is ${WORKDIR}"
 
-go mod init github.com/db-operator/db-operator/v2
+go mod init github.com/kloeckner-i/db-operator
 
-kubebuilder init  --project-name db-operator --domain kinda.rocks
+kubebuilder init  --project-name db-operator --domain kci.rocks
 kubebuilder create api --kind DbInstance --version v1alpha1 --plural dbinstances --resource --controller
 kubebuilder create api --kind Database --version v1alpha1 --plural databases --resource --controller --namespaced
 

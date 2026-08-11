@@ -19,9 +19,9 @@ package kube_test
 import (
 	"testing"
 
-	kindav1beta1 "github.com/db-operator/db-operator/v2/api/v1beta1"
-	"github.com/db-operator/db-operator/v2/internal/helpers/kube"
-	"github.com/db-operator/db-operator/v2/pkg/consts"
+	kciv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
+	"github.com/kloeckner-i/db-operator/internal/helpers/kube"
+	"github.com/kloeckner-i/db-operator/pkg/consts"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -43,10 +43,10 @@ var (
 		},
 	}
 
-	database = &kindav1beta1.Database{
+	database = &kciv1beta1.Database{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Database",
-			APIVersion: "kinda.rocks/v1",
+			APIVersion: "kci.rocks/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "database",

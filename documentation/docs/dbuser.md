@@ -12,7 +12,7 @@ If you happen to need more users on your database, you can use `DbUser` Custom R
 
 Let's have a look at the manifest:
 ```
-apiVersion: kinda.rocks/v1beta1
+apiVersion: kci.rocks/v1beta1
 kind: DbUser
 metadata:
   name: mysql-readwrite
@@ -90,7 +90,7 @@ But it's not possible on the AWS instances with the `rds_iam` roles, because the
 
 That's where this workaround might be used. It will only grant the role to the admin when a user is being removed.
 ```yaml
-kinda.rocks/grant-to-admin-on-delete: "true"
+kci.rocks/grant-to-admin-on-delete: "true"
 ```
 
 ### Allow Existing User
@@ -102,5 +102,5 @@ So if a user already exists on a server, when a **CR** is created, operator will
 If you need the operator to be able to managed existing users, you need to set the following annotation:
 
 ```yaml
-kinda.rocks/allow-existing-user: "true"
+kci.rocks/allow-existing-user: "true"
 ```

@@ -25,10 +25,10 @@ import (
 	"strconv"
 	"strings"
 
-	kindav1beta1 "github.com/db-operator/db-operator/v2/api/v1beta1"
-	"github.com/db-operator/db-operator/v2/pkg/config"
-	"github.com/db-operator/db-operator/v2/pkg/utils/kci"
-	proxy "github.com/db-operator/db-operator/v2/pkg/utils/proxy"
+	kciv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
+	"github.com/kloeckner-i/db-operator/pkg/config"
+	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
+	proxy "github.com/kloeckner-i/db-operator/pkg/utils/proxy"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -40,7 +40,7 @@ var (
 	ErrNoProxySupport = errors.New("no proxy supported backend type")
 )
 
-func DetermineProxyTypeForDB(ctx context.Context, conf *config.Config, dbcr *kindav1beta1.Database, instance *kindav1beta1.DbInstance) (proxy.Proxy, error) {
+func DetermineProxyTypeForDB(ctx context.Context, conf *config.Config, dbcr *kciv1beta1.Database, instance *kciv1beta1.DbInstance) (proxy.Proxy, error) {
 	log := log.FromContext(ctx)
 	log.V(2).Info("Database determineProxyType", "namespace", dbcr.Namespace, "name", dbcr.Name)
 	backend, err := instance.GetBackendType()
@@ -84,7 +84,7 @@ func DetermineProxyTypeForDB(ctx context.Context, conf *config.Config, dbcr *kin
 	}
 }
 
-func DetermineProxyTypeForInstance(ctx context.Context, conf *config.Config, dbin *kindav1beta1.DbInstance) (proxy.Proxy, error) {
+func DetermineProxyTypeForInstance(ctx context.Context, conf *config.Config, dbin *kciv1beta1.DbInstance) (proxy.Proxy, error) {
 	log := log.FromContext(ctx)
 	log.V(2).Info("Instance determineProxyType", "name", dbin.Name)
 	operatorNamespace, err := GetOperatorNamespace()

@@ -1,7 +1,5 @@
 ‼️‼️ This repo is archived ‼️‼️
-
 Development has moved to this repo: https://github.com/db-operator/db-operator
-
 If you use this project, please consider migrating.
 
 # DB Operator

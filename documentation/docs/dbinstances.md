@@ -15,7 +15,7 @@ You need to have a **PostgreSQL** or a **MySQL** server running, and it has to b
 
 Now let's get started:
 ```yaml
-apiVersion: kinda.rocks/v1beta1
+apiVersion: kci.rocks/v1beta1
 kind: DbInstance
 metadata:
   name: cloudnative-pg
@@ -86,7 +86,7 @@ spec:
 
 ## Automatic Reconciliation on Resource Changes
 
-The `DbInstance` controller automatically reconciles when referenced `Secrets` or `ConfigMaps` change. The controller adds the label `kinda.rocks/dbinstance-name: <dbinstance-name>` to all Secrets or ConfigMaps that are referenced by a particular `DbInstance`.
+The `DbInstance` controller automatically reconciles when referenced `Secrets` or `ConfigMaps` change. The controller adds the label `kci.rocks/dbinstance-name: <dbinstance-name>` to all Secrets or ConfigMaps that are referenced by a particular `DbInstance`.
 
 **Note:** Since the operator uses a label to track the relationship, there is a **one-to-one relationship** between the `DbInstance` and its referenced resources. Sharing a Secret or ConfigMap between multiple `DbInstance` objects is discouraged, as the labeling won't be consistent.
 
@@ -156,7 +156,7 @@ To use ssl connection, set `sslConnection.enabled` to `true` in `DbInstance` spe
 * mysql: disabled
 
 ```YAML
-apiVersion: kinda.rocks/v1beta1
+apiVersion: kci.rocks/v1beta1
 kind: DbInstance
 metadata:
   name: example-generic
@@ -173,7 +173,7 @@ spec:
 * mysql: required
 
 ```YAML
-apiVersion: kinda.rocks/v1beta1
+apiVersion: kci.rocks/v1beta1
 kind: DbInstance
 metadata:
   name: example-generic
@@ -190,7 +190,7 @@ spec:
 * mysql: verify_ca
 
 ```YAML
-apiVersion: kinda.rocks/v1beta1
+apiVersion: kci.rocks/v1beta1
 kind: DbInstance
 metadata:
   name: example-generic

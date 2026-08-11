@@ -23,8 +23,8 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	kindarocksv1beta1 "github.com/db-operator/db-operator/v2/api/v1beta1"
-	"github.com/db-operator/db-operator/v2/pkg/consts"
+	kcirocksv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
+	"github.com/kloeckner-i/db-operator/pkg/consts"
 )
 
 // nolint:unused
@@ -33,7 +33,7 @@ var dbuserlog = logf.Log.WithName("dbuser-resource")
 
 // SetupDbUserWebhookWithManager registers the webhook for DbUser in the manager.
 func SetupDbUserWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr, &kindarocksv1beta1.DbUser{}).
+	return ctrl.NewWebhookManagedBy(mgr, &kcirocksv1beta1.DbUser{}).
 		WithValidator(&DbUserCustomValidator{}).
 		Complete()
 }
@@ -41,7 +41,7 @@ func SetupDbUserWebhookWithManager(mgr ctrl.Manager) error {
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 // NOTE: The 'path' attribute must follow a specific pattern and should not be modified directly here.
 // Modifying the path for an invalid path can cause API server errors; failing to locate the webhook.
-// +kubebuilder:webhook:path=/validate-kinda-rocks-v1beta1-dbuser,mutating=false,failurePolicy=fail,sideEffects=None,groups=kinda.rocks,resources=dbusers,verbs=create;update,versions=v1beta1,name=vdbuser-v1beta1.kb.io,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/validate-kci-rocks-v1beta1-dbuser,mutating=false,failurePolicy=fail,sideEffects=None,groups=kci.rocks,resources=dbusers,verbs=create;update,versions=v1beta1,name=vdbuser-v1beta1.kb.io,admissionReviewVersions=v1
 
 // DbUserCustomValidator struct is responsible for validating the DbUser resource
 // when it is created, updated, or deleted.
@@ -53,7 +53,7 @@ type DbUserCustomValidator struct {
 }
 
 // ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type DbUser.
-func (v *DbUserCustomValidator) ValidateCreate(_ context.Context, obj *kindarocksv1beta1.DbUser) (admission.Warnings, error) {
+func (v *DbUserCustomValidator) ValidateCreate(_ context.Context, obj *kcirocksv1beta1.DbUser) (admission.Warnings, error) {
 	dbuserlog.Info("Validation for DbUser upon creation", "name", obj.GetName())
 
 	warnings := []string{}
@@ -65,7 +65,7 @@ func (v *DbUserCustomValidator) ValidateCreate(_ context.Context, obj *kindarock
 	if err := TestExtraPrivileges(obj.Spec.ExtraPrivileges); err != nil {
 		return warnings, err
 	}
-	if err := kindarocksv1beta1.IsAccessTypeSupported(obj.Spec.AccessType); err != nil {
+	if err := kcirocksv1beta1.IsAccessTypeSupported(obj.Spec.AccessType); err != nil {
 		return warnings, err
 	}
 
@@ -73,7 +73,7 @@ func (v *DbUserCustomValidator) ValidateCreate(_ context.Context, obj *kindarock
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type DbUser.
-func (v *DbUserCustomValidator) ValidateUpdate(_ context.Context, oldObj, newObj *kindarocksv1beta1.DbUser) (admission.Warnings, error) {
+func (v *DbUserCustomValidator) ValidateUpdate(_ context.Context, oldObj, newObj *kcirocksv1beta1.DbUser) (admission.Warnings, error) {
 	dbuserlog.Info("Validation for DbUser upon update", "name", newObj.GetName())
 
 	warnings := []string{}
@@ -89,7 +89,7 @@ func (v *DbUserCustomValidator) ValidateUpdate(_ context.Context, oldObj, newObj
 		warnings = append(warnings, "After swtching from existing user to a generated user, the password is set to an empty string, remove the db secret to generate it")
 	}
 
-	if err := kindarocksv1beta1.IsAccessTypeSupported(newObj.Spec.AccessType); err != nil {
+	if err := kcirocksv1beta1.IsAccessTypeSupported(newObj.Spec.AccessType); err != nil {
 		return warnings, err
 	}
 	if newObj.Spec.Credentials.Templates != nil {
@@ -102,7 +102,7 @@ func (v *DbUserCustomValidator) ValidateUpdate(_ context.Context, oldObj, newObj
 }
 
 // ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type DbUser.
-func (v *DbUserCustomValidator) ValidateDelete(ctx context.Context, obj *kindarocksv1beta1.DbUser) (admission.Warnings, error) {
+func (v *DbUserCustomValidator) ValidateDelete(ctx context.Context, obj *kcirocksv1beta1.DbUser) (admission.Warnings, error) {
 	dbuserlog.Info("Validation for DbUser upon deletion", "name", obj.GetName())
 
 	// TODO(user): fill in your validation logic upon object deletion.

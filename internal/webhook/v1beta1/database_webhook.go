@@ -25,7 +25,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	kindarocksv1beta1 "github.com/db-operator/db-operator/v2/api/v1beta1"
+	kcirocksv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -40,23 +40,23 @@ const (
 
 // SetupDatabaseWebhookWithManager registers the webhook for Database in the manager.
 func SetupDatabaseWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr, &kindarocksv1beta1.Database{}).
+	return ctrl.NewWebhookManagedBy(mgr, &kcirocksv1beta1.Database{}).
 		WithValidator(&DatabaseCustomValidator{}).
 		WithDefaulter(&DatabaseCustomDefaulter{}).
 		Complete()
 }
 
-// +kubebuilder:webhook:path=/mutate-kinda-rocks-v1beta1-database,mutating=true,failurePolicy=fail,sideEffects=None,groups=kinda.rocks,resources=databases,verbs=create;update,versions=v1beta1,name=mdatabase-v1beta1.kb.io,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/mutate-kci-rocks-v1beta1-database,mutating=true,failurePolicy=fail,sideEffects=None,groups=kci.rocks,resources=databases,verbs=create;update,versions=v1beta1,name=mdatabase-v1beta1.kb.io,admissionReviewVersions=v1
 
 type DatabaseCustomDefaulter struct{}
 
-func (d *DatabaseCustomDefaulter) Default(_ context.Context, obj *kindarocksv1beta1.Database) error {
+func (d *DatabaseCustomDefaulter) Default(_ context.Context, obj *kcirocksv1beta1.Database) error {
 	databaselog.Info("Defaulting for Database", "name", obj.GetName())
 
 	if len(obj.Spec.SecretsTemplates) == 0 && len(obj.Spec.Credentials.Templates) == 0 {
-		obj.Spec.Credentials = kindarocksv1beta1.Credentials{
-			Templates: kindarocksv1beta1.Templates{
-				&kindarocksv1beta1.Template{
+		obj.Spec.Credentials = kcirocksv1beta1.Credentials{
+			Templates: kcirocksv1beta1.Templates{
+				&kcirocksv1beta1.Template{
 					Name:     DEFAULT_TEMPLATE_NAME,
 					Template: DEFAULT_TEMPLATE_VALUE,
 					Secret:   true,
@@ -68,14 +68,14 @@ func (d *DatabaseCustomDefaulter) Default(_ context.Context, obj *kindarocksv1be
 	return nil
 }
 
-// +kubebuilder:webhook:path=/validate-kinda-rocks-v1beta1-database,mutating=false,failurePolicy=fail,sideEffects=None,groups=kinda.rocks,resources=databases,verbs=create;update,versions=v1beta1,name=vdatabase-v1beta1.kb.io,admissionReviewVersions=v1
+// +kubebuilder:webhook:path=/validate-kci-rocks-v1beta1-database,mutating=false,failurePolicy=fail,sideEffects=None,groups=kci.rocks,resources=databases,verbs=create;update,versions=v1beta1,name=vdatabase-v1beta1.kb.io,admissionReviewVersions=v1
 
 type DatabaseCustomValidator struct {
 	// TODO(user): Add more fields as needed for validation
 }
 
 // ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type Database.
-func (v *DatabaseCustomValidator) ValidateCreate(_ context.Context, obj *kindarocksv1beta1.Database) (admission.Warnings, error) {
+func (v *DatabaseCustomValidator) ValidateCreate(_ context.Context, obj *kcirocksv1beta1.Database) (admission.Warnings, error) {
 	databaselog.Info("Validation for Database upon creation", "name", obj.GetName())
 
 	var warnings []string
@@ -99,7 +99,7 @@ func (v *DatabaseCustomValidator) ValidateCreate(_ context.Context, obj *kindaro
 	}
 
 	for _, extraGrant := range obj.Spec.ExtraGrants {
-		if err := kindarocksv1beta1.IsAccessTypeSupported(extraGrant.AccessType); err != nil {
+		if err := kcirocksv1beta1.IsAccessTypeSupported(extraGrant.AccessType); err != nil {
 			return warnings, err
 		}
 	}
@@ -122,7 +122,7 @@ func (v *DatabaseCustomValidator) ValidateCreate(_ context.Context, obj *kindaro
 }
 
 // ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type Database.
-func (v *DatabaseCustomValidator) ValidateUpdate(_ context.Context, oldObj, newObj *kindarocksv1beta1.Database) (admission.Warnings, error) {
+func (v *DatabaseCustomValidator) ValidateUpdate(_ context.Context, oldObj, newObj *kcirocksv1beta1.Database) (admission.Warnings, error) {
 	databaselog.Info("Validation for Database upon update", "name", newObj.GetName())
 
 	if newObj.Spec.SecretsTemplates != nil && newObj.Spec.Credentials.Templates != nil {
@@ -177,7 +177,7 @@ func (v *DatabaseCustomValidator) ValidateUpdate(_ context.Context, oldObj, newO
 }
 
 // ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type Database.
-func (v *DatabaseCustomValidator) ValidateDelete(ctx context.Context, obj *kindarocksv1beta1.Database) (admission.Warnings, error) {
+func (v *DatabaseCustomValidator) ValidateDelete(ctx context.Context, obj *kcirocksv1beta1.Database) (admission.Warnings, error) {
 	databaselog.Info("Validation for Database upon deletion", "name", obj.GetName())
 
 	// TODO(user): fill in your validation logic upon object deletion.

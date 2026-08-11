@@ -22,15 +22,15 @@ import (
 	"strconv"
 	"time"
 
-	kindav1beta1 "github.com/db-operator/db-operator/v2/api/v1beta1"
-	commonhelper "github.com/db-operator/db-operator/v2/internal/helpers/common"
-	kubehelper "github.com/db-operator/db-operator/v2/internal/helpers/kube"
-	proxyhelper "github.com/db-operator/db-operator/v2/internal/helpers/proxy"
-	"github.com/db-operator/db-operator/v2/pkg/config"
-	"github.com/db-operator/db-operator/v2/pkg/consts"
-	"github.com/db-operator/db-operator/v2/pkg/utils/database"
-	"github.com/db-operator/db-operator/v2/pkg/utils/dbinstance"
-	"github.com/db-operator/db-operator/v2/pkg/utils/proxy"
+	kciv1beta1 "github.com/kloeckner-i/db-operator/api/v1beta1"
+	commonhelper "github.com/kloeckner-i/db-operator/internal/helpers/common"
+	kubehelper "github.com/kloeckner-i/db-operator/internal/helpers/kube"
+	proxyhelper "github.com/kloeckner-i/db-operator/internal/helpers/proxy"
+	"github.com/kloeckner-i/db-operator/pkg/config"
+	"github.com/kloeckner-i/db-operator/pkg/consts"
+	"github.com/kloeckner-i/db-operator/pkg/utils/database"
+	"github.com/kloeckner-i/db-operator/pkg/utils/dbinstance"
+	"github.com/kloeckner-i/db-operator/pkg/utils/proxy"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -64,9 +64,9 @@ type DbInstanceReconciler struct {
 	kubeHelper *kubehelper.KubeHelper
 }
 
-//+kubebuilder:rbac:groups=kinda.rocks,resources=dbinstances,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=kinda.rocks,resources=dbinstances/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=kinda.rocks,resources=dbinstances/finalizers,verbs=update
+//+kubebuilder:rbac:groups=kci.rocks,resources=dbinstances,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=kci.rocks,resources=dbinstances/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=kci.rocks,resources=dbinstances/finalizers,verbs=update
 //+kubebuilder:rbac:groups="",resources=secrets;configmaps,verbs=get;list;watch;update;patch
 //+kubebuilder:rbac:groups="events.k8s.io",resources=events,verbs=get;list;watch;update;patch;create
 
@@ -76,7 +76,7 @@ func (r *DbInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	reconcileResult := reconcile.Result{RequeueAfter: reconcilePeriod}
 
 	// Fetch the DbInstance custom resource
-	dbin := &kindav1beta1.DbInstance{}
+	dbin := &kciv1beta1.DbInstance{}
 	err := r.Get(ctx, req.NamespacedName, dbin)
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
@@ -169,7 +169,7 @@ func (r *DbInstanceReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 // SetupWithManager sets up the controller with the Manager.
 func (r *DbInstanceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&kindav1beta1.DbInstance{}).
+		For(&kciv1beta1.DbInstance{}).
 		Watches(
 			&corev1.Secret{},
 			handler.EnqueueRequestsFromMapFunc(r.findDbInstanceForResource),
@@ -195,7 +195,7 @@ func (r *DbInstanceReconciler) findDbInstanceForResource(ctx context.Context, ob
 	return nil
 }
 
-func (r *DbInstanceReconciler) fetchInstanceData(ctx context.Context, dbin *kindav1beta1.DbInstance) (commonhelper.DbInstanceData, error) {
+func (r *DbInstanceReconciler) fetchInstanceData(ctx context.Context, dbin *kciv1beta1.DbInstance) (commonhelper.DbInstanceData, error) {
 	data := commonhelper.DbInstanceData{}
 
 	// Fetch Admin Secret
@@ -251,7 +251,7 @@ func (r *DbInstanceReconciler) fetchInstanceData(ctx context.Context, dbin *kind
 	return data, nil
 }
 
-func (r *DbInstanceReconciler) fetchFromRef(ctx context.Context, from *kindav1beta1.FromRef) (client.Object, error) {
+func (r *DbInstanceReconciler) fetchFromRef(ctx context.Context, from *kciv1beta1.FromRef) (client.Object, error) {
 	var obj client.Object
 	switch from.Kind {
 	case "Secret":
@@ -266,7 +266,7 @@ func (r *DbInstanceReconciler) fetchFromRef(ctx context.Context, from *kindav1be
 	return obj, err
 }
 
-func (r *DbInstanceReconciler) create(ctx context.Context, dbin *kindav1beta1.DbInstance, data commonhelper.DbInstanceData) error {
+func (r *DbInstanceReconciler) create(ctx context.Context, dbin *kciv1beta1.DbInstance, data commonhelper.DbInstanceData) error {
 	log := log.FromContext(ctx)
 
 	db := database.New(dbin.Spec.Engine)
@@ -359,8 +359,8 @@ func (r *DbInstanceReconciler) create(ctx context.Context, dbin *kindav1beta1.Db
 	return nil
 }
 
-func (r *DbInstanceReconciler) broadcast(ctx context.Context, dbin *kindav1beta1.DbInstance) error {
-	dbList := &kindav1beta1.DatabaseList{}
+func (r *DbInstanceReconciler) broadcast(ctx context.Context, dbin *kciv1beta1.DbInstance) error {
+	dbList := &kciv1beta1.DatabaseList{}
 	err := r.List(ctx, dbList)
 	if err != nil {
 		return err
@@ -383,7 +383,7 @@ func (r *DbInstanceReconciler) broadcast(ctx context.Context, dbin *kindav1beta1
 	return nil
 }
 
-func (r *DbInstanceReconciler) createProxy(ctx context.Context, dbin *kindav1beta1.DbInstance, _ []metav1.OwnerReference) error {
+func (r *DbInstanceReconciler) createProxy(ctx context.Context, dbin *kciv1beta1.DbInstance, _ []metav1.OwnerReference) error {
 	log := log.FromContext(ctx)
 	proxyInterface, err := proxyhelper.DetermineProxyTypeForInstance(ctx, r.Conf, dbin)
 	if err != nil {
@@ -441,7 +441,7 @@ func (r *DbInstanceReconciler) createProxy(ctx context.Context, dbin *kindav1bet
 	return nil
 }
 
-func (r *DbInstanceReconciler) labelReferencedResources(ctx context.Context, dbin *kindav1beta1.DbInstance, data commonhelper.DbInstanceData) error {
+func (r *DbInstanceReconciler) labelReferencedResources(ctx context.Context, dbin *kciv1beta1.DbInstance, data commonhelper.DbInstanceData) error {
 	if data.AdminSecret != nil {
 		if err := commonhelper.EnsureLabel(ctx, r.Client, data.AdminSecret, consts.DBINSTANCE_NAME_LABEL_KEY, dbin.Name); err != nil {
 			return err
