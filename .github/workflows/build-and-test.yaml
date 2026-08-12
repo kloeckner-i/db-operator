@@ -64,7 +64,7 @@ jobs:
           sudo apparmor_parser -R /etc/apparmor.d/usr.sbin.mysqld
       
       - name: Start dependencies using docker-compose
-        run: docker-compose up -d
+        run: docker compose up -d
       
       - name: Run the unit tests
         run: go test -tags tests ./... -v -cover
