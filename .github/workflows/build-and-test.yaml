@@ -65,6 +65,9 @@ jobs:
       
       - name: Start dependencies using docker-compose
         run: docker compose up -d
-      
+
+      - name: Prepare envtest binaries
+        run: make setup-envtest
+
       - name: Run the unit tests
         run: go test -tags tests ./... -v -cover
