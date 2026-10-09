@@ -16,7 +16,7 @@ COPY . .
 ARG GOARCH
 RUN GOOS=linux GOARCH=$GOARCH CGO_ENABLED=0 go build -tags build -o /usr/local/bin/db-operator ./cmd
 
-FROM alpine:3.21
+FROM alpine:3.23
 LABEL maintainer="dev@kloeckner-i.com"
 
 ENV USER_UID=1001

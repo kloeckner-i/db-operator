@@ -2,7 +2,7 @@ stages:
   - lint
   - test
   - build
-  - publish
+  - release
 
 variables:
   PRODUCT_NAME: db-operator
@@ -62,60 +62,21 @@ build:
   image: golang:${GO_VERSION}
   extends: .go-cache
   needs: [unit-test]
-  parallel:
-    matrix:
-      - GOARCH: [amd64, arm64]
   variables:
     GOOS: linux
+    GOARCH: amd64
     CGO_ENABLED: "0"
   script:
-    - mkdir -p dist/${GOARCH}
-    - go build -tags build -o dist/${GOARCH}/${PRODUCT_NAME} ${MAIN_GO_PATH}
+    - go build -tags build -o ${PRODUCT_NAME} ${MAIN_GO_PATH}
+
+release_dev_image:
+  stage: release
+  image: ${CI_REGISTRY}/build_images/build_image:latest
+  needs: [build]
+  script:
+    - build_image -f Dockerfile -t latest -o development
   artifacts:
     paths:
-      - dist/
-    expire_in: 1 day
+      - version.yml
   rules:
-    - if: $CI_COMMIT_TAG
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-
-publish-image:
-  stage: publish
-  image: docker:27
-  services:
-    - docker:27-dind
-  needs: [build]
-  variables:
-    DOCKER_TLS_CERTDIR: "/certs"
-  before_script:
-    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
-    - docker run --privileged --rm tonistiigi/binfmt --install arm64
-    - docker buildx create --use --name multiarch
-  script:
-    - |
-      if [ -n "$CI_COMMIT_TAG" ]; then
-        IMAGE_TAG="$CI_COMMIT_TAG"
-      else
-        IMAGE_TAG="$CI_COMMIT_SHORT_SHA"
-      fi
-      for arch in amd64 arm64; do
-        cp dist/${arch}/${PRODUCT_NAME} ./${PRODUCT_NAME}
-        docker buildx build \
-          --platform linux/${arch} \
-          --file Dockerfile-ci \
-          --label "pipeline_url=${CI_PIPELINE_URL}" \
-          --label "sha=${CI_COMMIT_SHA}" \
-          --label "ref=${CI_COMMIT_REF_NAME}" \
-          --tag ${CI_REGISTRY_IMAGE}:${IMAGE_TAG}-${arch} \
-          --tag ${CI_REGISTRY_IMAGE}:latest-${arch} \
-          --push .
-      done
-      for tag in ${IMAGE_TAG} latest; do
-        docker buildx imagetools create \
-          --tag ${CI_REGISTRY_IMAGE}:${tag} \
-          ${CI_REGISTRY_IMAGE}:${tag}-amd64 \
-          ${CI_REGISTRY_IMAGE}:${tag}-arm64
-      done
-  rules:
-    - if: $CI_COMMIT_TAG
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_BRANCH == "master"
