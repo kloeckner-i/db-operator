@@ -66,7 +66,6 @@ k3d_image: build ## rebuild the docker images and upload into your k3d cluster
 ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 manifests: controller-gen ## generate custom resource definitions
 	$(CONTROLLER_GEN) crd rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
-	$(CONTROLLER_GEN) crd webhook paths="./..." output:crd:artifacts:config=charts/db-operator/crds
 
 ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 generate: controller-gen ## generate supporting code for custom resource types
@@ -74,7 +73,15 @@ generate: controller-gen ## generate supporting code for custom resource types
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
-	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.11.3)
+	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.20.1)
+
+ENVTEST = $(shell pwd)/bin/setup-envtest
+ENVTEST_K8S_VERSION = 1.36.2
+envtest: ## Download setup-envtest locally if necessary.
+	$(call go-get-tool,$(ENVTEST),sigs.k8s.io/controller-runtime/tools/setup-envtest@release-0.24)
+
+setup-envtest: envtest ## Download the envtest binaries (etcd, kube-apiserver) required for the kubernetes integration tests.
+	@$(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(shell pwd)/bin -p path
 
 # go-get-tool will 'go get' any package $2 and install it to $1.
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))

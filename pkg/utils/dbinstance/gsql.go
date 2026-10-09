@@ -26,10 +26,10 @@ import (
 
 	"github.com/kloeckner-i/db-operator/pkg/utils/gcloud"
 	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
 	"google.golang.org/api/option"
 	sqladmin "google.golang.org/api/sqladmin/v1beta4"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // Gsql represents a google sql instance
@@ -43,8 +43,8 @@ type Gsql struct {
 }
 
 // GsqlNew create a new Gsql object and return
-func GsqlNew(name, config, user, password, apiEndpoint string) *Gsql {
-	projectID := gcloud.GetServiceAccount().ProjectID
+func GsqlNew(ctx context.Context, name, config, user, password, apiEndpoint string) *Gsql {
+	projectID := gcloud.GetServiceAccount(ctx).ProjectID
 
 	return &Gsql{
 		Name:        name,
@@ -57,6 +57,7 @@ func GsqlNew(name, config, user, password, apiEndpoint string) *Gsql {
 }
 
 func (ins *Gsql) getSqladminService(ctx context.Context) (*sqladmin.Service, error) {
+	log := log.FromContext(ctx)
 	opts := []option.ClientOption{}
 
 	// if APIEndpoint is defined, it considered as test mode and disable oauth
@@ -67,7 +68,7 @@ func (ins *Gsql) getSqladminService(ctx context.Context) (*sqladmin.Service, err
 
 	sqladminService, err := sqladmin.NewService(ctx, opts...)
 	if err != nil {
-		logrus.Debugf("error occurs during getting sqladminService %s", err)
+		log.V(2).Info("error occurs during getting sqladminService:", err)
 		return nil, err
 	}
 
@@ -92,7 +93,8 @@ func (ins *Gsql) getInstance() (*sqladmin.DatabaseInstance, error) {
 }
 
 func (ins *Gsql) createInstance() error {
-	logrus.Debugf("gsql instance create %s", ins.Name)
+	log := log.FromContext(context.TODO())
+	log.V(2).Info("gsql instance create", ins.Name)
 	request, err := ins.verifyConfig()
 	if err != nil {
 		return err
@@ -109,10 +111,10 @@ func (ins *Gsql) createInstance() error {
 	// Project ID of the project to which the newly created Cloud SQL instances should belong.
 	resp, err := sqladminService.Instances.Insert(ins.ProjectID, request).Context(ctx).Do()
 	if err != nil {
-		logrus.Errorf("gsql instance insert error - %s", err)
+		log.Error(err, "gsql instance insert error")
 		return err
 	}
-	logrus.Debugf("instance insert api response: %#v", resp)
+	log.V(2).Info("instance insert api response:", resp)
 	err = ins.waitUntilRunnable()
 	if err != nil {
 		return fmt.Errorf("gsql instance created but still not runnable - %s", err)
@@ -122,7 +124,8 @@ func (ins *Gsql) createInstance() error {
 }
 
 func (ins *Gsql) updateInstance() error {
-	logrus.Debugf("gsql instance create %s", ins.Name)
+	log := log.FromContext(context.TODO())
+	log.V(2).Info("gsql instance create", ins.Name)
 	request, err := ins.verifyConfig()
 	if err != nil {
 		return err
@@ -139,10 +142,10 @@ func (ins *Gsql) updateInstance() error {
 	// Project ID of the project to which the newly created Cloud SQL instances should belong.
 	resp, err := sqladminService.Instances.Patch(ins.ProjectID, ins.Name, request).Context(ctx).Do()
 	if err != nil {
-		logrus.Errorf("gsql instance patch error - %s", err)
+		log.Error(err, "gsql instance patch error")
 		return err
 	}
-	logrus.Debugf("instance patch api response: %#v", resp)
+	log.V(2).Info("instance patch api response:", resp)
 
 	err = ins.waitUntilRunnable()
 	if err != nil {
@@ -152,8 +155,9 @@ func (ins *Gsql) updateInstance() error {
 	return err
 }
 
-func (ins *Gsql) updateUser() error {
-	logrus.Debugf("gsql user update - instance: %s, user: %s", ins.Name, ins.User)
+func (ins *Gsql) updateUser(ctx context.Context) error {
+	log := log.FromContext(ctx)
+	log.V(2).Info("gsql user update", "instance", ins.Name, "user", ins.User)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -173,7 +177,7 @@ func (ins *Gsql) updateUser() error {
 	if err != nil {
 		return err
 	}
-	logrus.Debugf("user update api response: %#v", resp)
+	log.V(2).Info("user update api response:", resp)
 
 	err = ins.waitUntilRunnable()
 	if err != nil {
@@ -184,12 +188,12 @@ func (ins *Gsql) updateUser() error {
 }
 
 func (ins *Gsql) verifyConfig() (*sqladmin.DatabaseInstance, error) {
+	log := log.FromContext(context.TODO())
 	// require non empty name and config
 	rb := &sqladmin.DatabaseInstance{}
 	err := json.Unmarshal([]byte(ins.Config), rb)
 	if err != nil {
-		logrus.Errorf("can not verify config - %s", err)
-		logrus.Debugf("%#v\n", []byte(ins.Config))
+		log.Error(err, "can not verify config")
 		return nil, err
 	}
 	rb.Name = ins.Name
@@ -224,24 +228,27 @@ func (ins *Gsql) waitUntilRunnable() error {
 }
 
 func (ins *Gsql) state() (string, error) {
+	log := log.FromContext(context.TODO())
 	instance, err := ins.getInstance()
 	if err != nil {
 		return "", err
 	}
-	logrus.Debugf("check gsql instance %s state: %s", ins.Name, instance.State)
+	log.V(2).Info("check gsql", "instance", ins.Name, "state", instance.State)
 	return instance.State, nil
 }
 
 func (ins *Gsql) create() error {
+	// Gsql will be deprecated
+	log := log.FromContext(context.TODO())
 	err := ins.createInstance()
 	if err != nil {
-		logrus.Errorf("gsql instance creation error - %s", err)
+		log.Error(err, "gsql instance creation error")
 		return err
 	}
 
-	err = ins.updateUser()
+	err = ins.updateUser(context.TODO())
 	if err != nil {
-		logrus.Errorf("gsql user update error - %s", err)
+		log.Error(err, "gsql user update error")
 		return err
 	}
 
@@ -249,25 +256,27 @@ func (ins *Gsql) create() error {
 }
 
 func (ins *Gsql) update() error {
+	log := log.FromContext(context.TODO())
 	err := ins.updateInstance()
 	if err != nil {
-		logrus.Errorf("gsql instance update error - %s", err)
+		log.Error(err, "gsql instance update error")
 		return err
 	}
 
-	err = ins.updateUser()
+	err = ins.updateUser(context.TODO())
 	if err != nil {
-		logrus.Errorf("gsql user update error - %s", err)
+		log.Error(err, "gsql user update error")
 		return err
 	}
 
 	return nil
 }
 
-func (ins *Gsql) exist() error {
+func (ins *Gsql) exist(ctx context.Context) error {
+	log := log.FromContext(ctx)
 	_, err := ins.getInstance()
 	if err != nil {
-		logrus.Debugf("gsql instance get failed %s", err)
+		log.V(2).Info("gsql instance get failed:", err)
 		return err
 	}
 	return nil // instance exist

@@ -17,10 +17,9 @@
 package test
 
 import (
+	"log"
 	"os"
 	"strconv"
-
-	"github.com/sirupsen/logrus"
 )
 
 // GetMysqlHost set mysql host which used by unit test
@@ -34,9 +33,9 @@ func GetMysqlHost() string {
 // GetMysqlPort set mysql port which used by unit test
 func GetMysqlPort() uint16 {
 	if value, ok := os.LookupEnv("MYSQL_PORT"); ok {
-		port, err := strconv.Atoi(value)
+		port, err := strconv.ParseUint(value, 10, 16)
 		if err != nil {
-			logrus.Fatal(err)
+			log.Fatal(err)
 		}
 		return uint16(port)
 	}
@@ -62,9 +61,9 @@ func GetPostgresHost() string {
 // GetPostgresPort set postgres port which used by unit test
 func GetPostgresPort() uint16 {
 	if value, ok := os.LookupEnv("POSTGRES_PORT"); ok {
-		port, err := strconv.Atoi(value)
+		port, err := strconv.ParseUint(value, 10, 16)
 		if err != nil {
-			logrus.Fatal(err)
+			log.Fatal(err)
 		}
 		return uint16(port)
 	}
@@ -77,4 +76,12 @@ func GetPostgresAdminPassword() string {
 		return value
 	}
 	return "test1234"
+}
+
+// GetPostgresAdminUsername set postgres username which used by unit test
+func GetPostgresAdminUsername() string {
+	if value, ok := os.LookupEnv("POSTGRES_USER"); ok {
+		return value
+	}
+	return "postgres"
 }

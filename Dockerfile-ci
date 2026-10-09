@@ -1,4 +1,4 @@
-FROM alpine:3.15
+FROM alpine:3.23
 LABEL maintainer="dev@kloeckner-i.com"
 
 ENV USER_UID=1001

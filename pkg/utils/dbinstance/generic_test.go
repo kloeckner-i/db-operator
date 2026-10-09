@@ -33,7 +33,7 @@ func testGenericPostgresInstance() *Generic {
 		Host:     test.GetPostgresHost(),
 		Port:     test.GetPostgresPort(),
 		Engine:   "postgres",
-		User:     "postgres",
+		User:     test.GetPostgresAdminUsername(),
 		Password: test.GetPostgresAdminPassword(),
 	}
 }

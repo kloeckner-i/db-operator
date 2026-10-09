@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"github.com/mitchellh/hashstructure"
-	"github.com/sirupsen/logrus"
 )
 
 func appendIfMissing(slice []string, s string) []string {
@@ -80,13 +79,13 @@ func Retry(attempts int, intervals time.Duration, fn func() error) error {
 }
 
 // GenerateChecksum generates hash value of given interface
-func GenerateChecksum(v interface{}) string {
+func GenerateChecksum(v interface{}) (string, error) {
 	hash, err := hashstructure.Hash(v, nil)
 	if err != nil {
-		logrus.Fatalf("Failed to generate hash: %v", err)
+		return "", err
 	}
 
-	return fmt.Sprintf("%d", hash)
+	return fmt.Sprintf("%d", hash), nil
 }
 
 // TimeTrack tracks seconds since given start time

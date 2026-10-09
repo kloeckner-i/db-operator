@@ -17,11 +17,12 @@
 package dbinstance
 
 import (
+	"context"
 	"errors"
 	"strconv"
 
-	kcidb "github.com/kloeckner-i/db-operator/pkg/utils/database"
-	"github.com/sirupsen/logrus"
+	"github.com/kloeckner-i/db-operator/pkg/utils/database"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // Generic represents database instance which can be connected by address and port
@@ -36,25 +37,21 @@ type Generic struct {
 	SkipCAVerify bool
 }
 
-func makeInterface(in *Generic) (kcidb.Database, error) {
+func makeInterface(in *Generic) (database.Database, error) {
 	switch in.Engine {
 	case "postgres":
-		db := kcidb.Postgres{
+		db := database.Postgres{
 			Host:         in.Host,
 			Port:         in.Port,
-			User:         in.User,
-			Password:     in.Password,
 			Database:     "postgres",
 			SSLEnabled:   in.SSLEnabled,
 			SkipCAVerify: in.SkipCAVerify,
 		}
 		return db, nil
 	case "mysql":
-		db := kcidb.Mysql{
+		db := database.Mysql{
 			Host:         in.Host,
 			Port:         in.Port,
-			User:         in.User,
-			Password:     in.Password,
 			Database:     "mysql",
 			SSLEnabled:   in.SSLEnabled,
 			SkipCAVerify: in.SkipCAVerify,
@@ -66,30 +63,34 @@ func makeInterface(in *Generic) (kcidb.Database, error) {
 }
 
 func (ins *Generic) state() (string, error) {
-	logrus.Debug("generic db instance not support a state check")
 	return "NOT_SUPPORTED", nil
 }
 
-func (ins *Generic) exist() error {
+func (ins *Generic) exist(ctx context.Context) error {
+	log := log.FromContext(ctx)
 	db, err := makeInterface(ins)
 	if err != nil {
-		logrus.Errorf("can not check if instance exists because of %s", err)
+		log.Error(err, "can not check if instance exists")
 		return err
 	}
-	err = db.CheckStatus()
+	dbuser := &database.DatabaseUser{
+		Username: ins.User,
+		Password: ins.Password,
+	}
+
+	err = db.CheckStatus(ctx, dbuser)
 	if err != nil {
-		logrus.Error(err)
+		log.Error(err, "can not check db status")
 		return err
 	}
 	return nil // instance exist
 }
 
 func (ins *Generic) create() error {
-	return errors.New("creating generic db instance is not yet implimented")
+	return errors.New("creating generic db instance is not yet implemented")
 }
 
 func (ins *Generic) update() error {
-	logrus.Debug("updating generic db instance is not yet implimented")
 	return nil
 }
 

@@ -19,27 +19,80 @@ package config
 import (
 	"os"
 
-	"github.com/kloeckner-i/db-operator/pkg/utils/kci"
-	"github.com/sirupsen/logrus"
-	yaml "gopkg.in/yaml.v2"
+	corev1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/yaml"
 )
 
+// Config defines configurations needed by db-operator
+type Config struct {
+	Instances  instanceConfig   `yaml:"instance"`
+	Backup     *BackupConfig    `yaml:"backup"`
+	Monitoring monitoringConfig `yaml:"monitoring"`
+}
+type instanceConfig struct {
+	Google  googleInstanceConfig  `yaml:"google"`
+	Generic genericInstanceConfig `yaml:"generic"`
+	Percona perconaClusterConfig  `yaml:"percona"`
+}
+
+type googleInstanceConfig struct {
+	ClientSecretName string      `yaml:"clientSecretName"`
+	ProxyConfig      proxyConfig `yaml:"proxy"`
+}
+
+type genericInstanceConfig struct { // TODO
+}
+
+type perconaClusterConfig struct {
+	ProxyConfig proxyConfig `yaml:"proxy"`
+}
+
+type proxyConfig struct {
+	NodeSelector map[string]string `yaml:"nodeSelector"`
+	Image        string            `yaml:"image"`
+	MetricsPort  int               `yaml:"metricsPort"`
+}
+
+// BackupConfig defines docker image for creating database dump by backup cronjob
+// backup cronjob will be created by db-operator when backup is enabled
+type BackupConfig struct {
+	Postgres              *postgresBackupConfig        `yaml:"postgres"`
+	Mysql                 *mysqlBackupConfig           `yaml:"mysql"`
+	NodeSelector          map[string]string            `yaml:"nodeSelector"`
+	ActiveDeadlineSeconds int64                        `default:"1200" yaml:"activeDeadlineSeconds"`
+	Resources             *corev1.ResourceRequirements `yaml:"resources"`
+	// Must be in the same namespace as the DB Operator
+	StorageCredSecret string `yaml:"storageCredSecret"`
+}
+
+type postgresBackupConfig struct {
+	Image string `yaml:"image"`
+}
+
+type mysqlBackupConfig struct {
+	Image string `yaml:"image"`
+}
+
+// monitoringConfig defines prometheus exporter configurations
+// which will be created by db-operator when monitoring is enabled
+type monitoringConfig struct {
+	PromPushGateway string `yaml:"promPushGateway,omitempty"`
+}
+
 // LoadConfig reads config file for db-operator from defined path and parse
-func LoadConfig() Config {
-	path := kci.StringNotEmpty(os.Getenv("CONFIG_PATH"), "/srv/config/config.yaml")
+func LoadConfig(path string) (*Config, error) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		logrus.Fatalf("Failed to open config file: %v", err)
+		return nil, err
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
-		logrus.Fatalf("Loading of configuration failed: %v", err)
+		return nil, err
 	}
 
-	conf := Config{}
+	conf := &Config{}
 
-	err = yaml.Unmarshal(data, &conf)
-	if err != nil {
-		logrus.Fatalf("Decode of configuration failed: %v", err)
+	if err = yaml.Unmarshal(data, &conf); err != nil {
+		return nil, err
 	}
-	return conf
+	return conf, nil
 }

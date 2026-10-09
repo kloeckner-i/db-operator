@@ -1,0 +1,82 @@
+stages:
+  - lint
+  - test
+  - build
+  - release
+
+variables:
+  PRODUCT_NAME: db-operator
+  GO_VERSION: "1.26.5"
+  GOLANGCI_LINT_VERSION: v2.12.2 ## https://github.com/golangci/golangci-lint/releases
+  MAIN_GO_PATH: ./cmd
+  GOPATH: $CI_PROJECT_DIR/.go
+  GOCACHE: $CI_PROJECT_DIR/.cache/go-build
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+.go-cache:
+  cache:
+    key:
+      files:
+        - go.sum
+    paths:
+      - .go/pkg/mod/
+      - .cache/go-build/
+
+lint:
+  stage: lint
+  image: golangci/golangci-lint:${GOLANGCI_LINT_VERSION}
+  extends: .go-cache
+  script:
+    - golangci-lint run --timeout 3m0s
+
+unit-test:
+  stage: test
+  image: golang:${GO_VERSION}
+  extends: .go-cache
+  needs: [lint]
+  services:
+    - name: postgres:16-alpine
+      alias: postgres
+    - name: mysql:8.0
+      alias: mysql
+  variables:
+    POSTGRES_PASSWORD: "test1234"
+    MYSQL_ROOT_PASSWORD: "test1234"
+    POSTGRES_HOST: postgres
+    POSTGRES_PORT: "5432"
+    MYSQL_HOST: mysql
+    MYSQL_PORT: "3306"
+  script:
+    - make setup-envtest
+    - go test -tags tests ./... -v -cover
+
+build:
+  stage: build
+  image: golang:${GO_VERSION}
+  extends: .go-cache
+  needs: [unit-test]
+  variables:
+    GOOS: linux
+    GOARCH: amd64
+    CGO_ENABLED: "0"
+  script:
+    - go build -tags build -o ${PRODUCT_NAME} ${MAIN_GO_PATH}
+
+release_dev_image:
+  stage: release
+  image: ${CI_REGISTRY}/build_images/build_image:latest
+  needs: [build]
+  script:
+    - build_image -f Dockerfile -t latest -o development
+  artifacts:
+    paths:
+      - version.yml
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"

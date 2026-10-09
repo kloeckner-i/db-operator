@@ -17,22 +17,22 @@
 package kci
 
 import (
+	"github.com/kloeckner-i/db-operator/pkg/consts"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // ConfigMapBuilder builds kubernetes configmap object
-func ConfigMapBuilder(name string, namespace string, data map[string]string, ownership []metav1.OwnerReference) *corev1.ConfigMap {
+func ConfigMapBuilder(name string, namespace string, data map[string]string) *corev1.ConfigMap {
 	configmap := &corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ConfigMap",
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            name,
-			Namespace:       namespace,
-			Labels:          BaseLabelBuilder(),
-			OwnerReferences: ownership,
+			Name:      name,
+			Namespace: namespace,
+			Labels:    BaseLabelBuilder(),
 		},
 		Data: data,
 	}
@@ -41,17 +41,16 @@ func ConfigMapBuilder(name string, namespace string, data map[string]string, own
 }
 
 // SecretBuilder builds kubernetes secret object
-func SecretBuilder(secretName string, namespace string, data map[string][]byte, ownership []metav1.OwnerReference) *corev1.Secret {
+func SecretBuilder(secretName string, namespace string, data map[string][]byte) *corev1.Secret {
 	secret := &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Secret",
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            secretName,
-			Namespace:       namespace,
-			Labels:          BaseLabelBuilder(),
-			OwnerReferences: ownership,
+			Name:      secretName,
+			Namespace: namespace,
+			Labels:    BaseLabelBuilder(),
 		},
 		Data: data,
 	}
@@ -70,7 +69,7 @@ func BuildEnvVarSource(fieldPath string) *corev1.EnvVarSource {
 // It will be used as base label for the kubernetes objects which created by db-operator
 func BaseLabelBuilder() map[string]string {
 	return map[string]string{
-		"created-by": "db-operator",
+		consts.MANAGED_BY_LABEL_KEY: consts.MANAGED_BY_LABEL_VALUE,
 	}
 }
 

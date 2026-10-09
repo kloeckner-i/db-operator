@@ -17,6 +17,7 @@
 package dbinstance
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -25,11 +26,11 @@ import (
 // TestMysqlGenericInstanceCreate if creating mysql generic instance works as expected
 func TestMysqlGenericInstanceCreate(t *testing.T) {
 	mysqlInstance := testGenericMysqlInstance()
-	_, err := Create(mysqlInstance)
+	_, err := Create(context.TODO(), mysqlInstance)
 	assert.Error(t, err, "expected error already exits %v", err)
 
 	mysqlInstance.Host = "wronghost"
-	_, err = Create(mysqlInstance)
+	_, err = Create(context.TODO(), mysqlInstance)
 	assert.Error(t, err, "expected error %v", err)
 }
 
@@ -37,18 +38,18 @@ func TestMysqlGenericInstanceCreate(t *testing.T) {
 func TestPostgresGenericInstanceCreate(t *testing.T) {
 	postgresInstance := testGenericPostgresInstance()
 
-	_, err := Create(postgresInstance)
+	_, err := Create(context.TODO(), postgresInstance)
 	assert.Error(t, err, "expected error already exits %v", err)
 
 	postgresInstance.Host = "wronghost"
-	_, err = Create(postgresInstance)
+	_, err = Create(context.TODO(), postgresInstance)
 	assert.Error(t, err, "expected no error %v", err)
 }
 
 // TestMysqlGenericInstanceUpdateNoError if upgrading mysql generic instance works as expected
 func TestMysqlGenericInstanceUpdateNoError(t *testing.T) {
 	mysqlInstance := testGenericMysqlInstance()
-	_, err := Update(mysqlInstance)
+	_, err := Update(context.TODO(), mysqlInstance)
 	assert.NoError(t, err, "expected no error %v", err)
 }
 
@@ -56,17 +57,17 @@ func TestMysqlGenericInstanceUpdateNoError(t *testing.T) {
 func TestMysqlGenericInstanceUpdateNonExist(t *testing.T) {
 	mysqlInstance := testGenericMysqlInstance()
 	mysqlInstance.Host = "wronghost"
-	_, err := Update(mysqlInstance)
+	_, err := Update(context.TODO(), mysqlInstance)
 	assert.Error(t, err, "expected error %v", err)
 }
 
 // TestPostgresGenericInstanceUpdate if upgrading postgres generic instance works as expected
 func TestPostgresGenericInstanceUpdate(t *testing.T) {
 	postgresInstance := testGenericPostgresInstance()
-	_, err := Update(postgresInstance)
+	_, err := Update(context.TODO(), postgresInstance)
 	assert.NoError(t, err, "expected no error %v", err)
 
 	postgresInstance.Host = "wronghost"
-	_, err = Update(postgresInstance)
+	_, err = Update(context.TODO(), postgresInstance)
 	assert.Error(t, err, "expected error %v", err)
 }

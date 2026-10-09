@@ -22,7 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestStringSanitize(t *testing.T) {
+func TestUnitStringSanitize(t *testing.T) {
 	// Handles very short limits
 	src := "HelloWorld"
 	actual := StringSanitize(src, 6)

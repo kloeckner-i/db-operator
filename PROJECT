@@ -4,7 +4,7 @@
 # More info: https://book.kubebuilder.io/reference/project-config.html
 domain: kci.rocks
 layout:
-- go.kubebuilder.io/v3
+- go.kubebuilder.io/v4
 projectName: db-operator
 repo: github.com/kloeckner-i/db-operator
 resources:
@@ -44,6 +44,17 @@ resources:
   webhooks:
     conversion: true
     defaulting: true
+    validation: true
+    webhookVersion: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kci.rocks
+  kind: DbUser
+  path: github.com/kloeckner-i/db-operator/api/v1beta1
+  version: v1beta1
+  webhooks:
     validation: true
     webhookVersion: v1
 version: "3"

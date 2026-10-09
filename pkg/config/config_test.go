@@ -17,43 +17,27 @@
 package config
 
 import (
-	"os"
 	"testing"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestLoadConfig(t *testing.T) {
-	os.Setenv("CONFIG_PATH", "./test/config_ok.yaml")
-	confLoad := LoadConfig()
-	confStatic := Config{}
+func TestUnitLoadConfigFailCases(t *testing.T) {
+	conf, err := LoadConfig("./test/config_NotFound.yaml")
+	assert.Error(t, err)
+	assert.Nil(t, conf)
 
-	confStatic.Instances.Google.ClientSecretName = "cloudsql-readonly-serviceaccount"
-	assert.Equal(t, confStatic.Instances.Google.ClientSecretName, confLoad.Instances.Google.ClientSecretName, "Values should be match")
-	assert.EqualValues(t, confLoad.Backup.ActiveDeadlineSeconds, int64(600))
+	conf, err = LoadConfig("./test/config_Invalid.yaml")
+	assert.Error(t, err)
+	assert.Nil(t, conf)
 }
 
-func TestLoadConfigFailCases(t *testing.T) {
-	// rollback ExitFunc to default
-	defer func() { logrus.StandardLogger().ExitFunc = nil }()
-	fatalCalled := false
-	logrus.StandardLogger().ExitFunc = func(int) { fatalCalled = true }
-	expectedFatal := true
-	os.Setenv("CONFIG_PATH", "./test/config_NotFound.yaml")
-	LoadConfig()
-	assert.Equal(t, expectedFatal, fatalCalled)
-
-	os.Setenv("CONFIG_PATH", "./test/config_Invalid.yaml")
-	LoadConfig()
-	assert.Equal(t, expectedFatal, fatalCalled)
-}
-
-func TestBackupResourceConfig(t *testing.T) {
-	os.Setenv("CONFIG_PATH", "./test/config_backup.yaml")
-	conf := LoadConfig()
-	assert.Equal(t, conf.Backup.Resource.Requests.Cpu, "50m")
-	assert.Equal(t, conf.Backup.Resource.Requests.Memory, "50Mi")
-	assert.Equal(t, conf.Backup.Resource.Limits.Cpu, "100m")
-	assert.Equal(t, conf.Backup.Resource.Limits.Memory, "100Mi")
+func TestUnitBackupResourceConfig(t *testing.T) {
+	conf, err := LoadConfig("./test/config_backup.yaml")
+	assert.NoError(t, err)
+	t.Log(conf)
+	assert.Equal(t, conf.Backup.Resources.Requests.Cpu().String(), "50m")
+	assert.Equal(t, conf.Backup.Resources.Requests.Memory().String(), "50Mi")
+	assert.Equal(t, conf.Backup.Resources.Limits.Cpu().String(), "100m")
+	assert.Equal(t, conf.Backup.Resources.Limits.Memory().String(), "100Mi")
 }

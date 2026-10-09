@@ -6,6 +6,11 @@ metadata:
   labels:
     env: test
 spec:
+  credentials:
+    secretName:
+    templates:
+      -
+
   secretName: example-db-credentials # where to save db name user, password for application
   instance: example-generic
   deletionProtected: false

@@ -1,0 +1,8 @@
+## Append samples of your project ##
+resources:
+- v1alpha1_dbinstance.yaml
+- v1alpha1_database.yaml
+- v1beta1_dbinstance.yaml
+- v1beta1_database.yaml
+- v1beta1_dbuser.yaml
+# +kubebuilder:scaffold:manifestskustomizesamples

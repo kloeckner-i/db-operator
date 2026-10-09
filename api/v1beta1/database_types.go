@@ -1,5 +1,6 @@
 /*
  * Copyright 2021 kloeckner.i GmbH
+ * Copyright 2023 DB-Operator Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,22 +18,33 @@
 package v1beta1
 
 import (
-	"errors"
+	"fmt"
 
+	"github.com/kloeckner-i/db-operator/pkg/consts"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
-
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // DatabaseSpec defines the desired state of Database
 type DatabaseSpec struct {
 	SecretName        string            `json:"secretName"`
 	Instance          string            `json:"instance"`
 	DeletionProtected bool              `json:"deletionProtected"`
-	Backup            DatabaseBackup    `json:"backup"`
+	Backup            DatabaseBackup    `json:"backup,omitempty"`
 	SecretsTemplates  map[string]string `json:"secretsTemplates,omitempty"`
 	Postgres          Postgres          `json:"postgres,omitempty"`
 	Cleanup           bool              `json:"cleanup,omitempty"`
+	Credentials       Credentials       `json:"credentials,omitempty"`
+	ExtraGrants       []*ExtraGrant     `json:"extraGrants,omitempty"`
+	// If specified, DB Operator will try to use an existing user to assign permissions
+	// User will not be removed, when a database is removed, but the permissions added by the
+	// operator will be cleaned up
+	ExistingUser string `json:"existingUser,omitempty"`
+}
+
+type ExtraGrant struct {
+	User       string `json:"user"`
+	AccessType string `json:"accessType"`
 }
 
 // Postgres struct should be used to provide resource that only applicable to postgres
@@ -42,19 +54,22 @@ type Postgres struct {
 	DropPublicSchema bool `json:"dropPublicSchema,omitempty"`
 	// Specify schemas to be created. The user created by db-operator will have all access on them.
 	Schemas []string `json:"schemas,omitempty"`
+	// Let user create database from template
+	Template string `json:"template,omitempty"`
 }
 
 // DatabaseStatus defines the observed state of Database
 type DatabaseStatus struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
-	Phase                 string              `json:"phase"`
 	Status                bool                `json:"status"`
-	InstanceRef           *DbInstance         `json:"instanceRef"`
 	MonitorUserSecretName string              `json:"monitorUserSecret,omitempty"`
 	ProxyStatus           DatabaseProxyStatus `json:"proxyStatus,omitempty"`
 	DatabaseName          string              `json:"database"`
 	UserName              string              `json:"user"`
+	Engine                string              `json:"engine"`
+	OperatorVersion       string              `json:"operatorVersion,omitempty"`
+	ExtraGrants           []*ExtraGrant       `json:"extraGrants,omitempty"`
 }
 
 // DatabaseProxyStatus defines whether proxy for database is enabled or not
@@ -67,17 +82,18 @@ type DatabaseProxyStatus struct {
 
 // DatabaseBackup defines the desired state of backup and schedule
 type DatabaseBackup struct {
-	Enable bool   `json:"enable"`
-	Cron   string `json:"cron"`
+	Enable        bool   `json:"enable"`
+	Cron          string `json:"cron"`
+	EnvFromSecret string `json:"envFromSecret,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:shortName=db
-// +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`,description="current db phase"
 // +kubebuilder:printcolumn:name="Status",type=boolean,JSONPath=`.status.status`,description="current db status"
 // +kubebuilder:printcolumn:name="Protected",type=boolean,JSONPath=`.spec.deletionProtected`,description="If database is protected to not get deleted."
 // +kubebuilder:printcolumn:name="DBInstance",type=string,JSONPath=`.spec.instance`,description="instance reference"
+// +kubebuilder:printcolumn:name="OperatorVersion",type=string,JSONPath=`.status.operatorVersion`,description="db-operator version of last full reconcile"
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`,description="time since creation of resource"
 // +kubebuilder:storageversion
 // Database is the Schema for the databases API
@@ -102,43 +118,32 @@ func init() {
 	SchemeBuilder.Register(&Database{}, &DatabaseList{})
 }
 
-// GetInstanceRef returns DbInstance pointer which used by Database
-func (db *Database) GetInstanceRef() (*DbInstance, error) {
-	if db.Status.InstanceRef == nil {
-		return nil, errors.New("can not find instance ref")
+// GetProtocol returns the protocol that is required for connection (postgresql or mysql)
+func (db *Database) GetProtocol() (string, error) {
+	switch db.Status.Engine {
+	case consts.ENGINE_POSTGRES:
+		return "postgresql", nil
+	case consts.ENGINE_MYSQL:
+		return db.Status.Engine, nil
+	default:
+		return "", fmt.Errorf("unknown engine %s", db.Status.Engine)
 	}
-	return db.Status.InstanceRef, nil
 }
 
-// GetEngineType returns type of database engine ex) postgres or mysql
-func (db *Database) GetEngineType() (string, error) {
-	instance, err := db.GetInstanceRef()
-	if err != nil {
-		return "", err
-	}
-
-	return instance.Spec.Engine, nil
+func (db *Database) IsCleanup() bool {
+	return db.Spec.Cleanup
 }
 
-// GetBackendType returns type of instance infrastructure.
-// Infrastructure where database is running ex) google cloud sql, generic instance
-func (db *Database) GetBackendType() (string, error) {
-	instance, err := db.GetInstanceRef()
-	if err != nil {
-		return "", err
-	}
-
-	return instance.GetBackendType()
+func (db *Database) IsDeleted() bool {
+	return db.GetDeletionTimestamp() != nil
 }
 
-// IsMonitoringEnabled returns true if monitoring is enabled in DbInstance spec.
-func (db *Database) IsMonitoringEnabled() (bool, error) {
-	instance, err := db.GetInstanceRef()
-	if err != nil {
-		return false, err
-	}
+func (db *Database) GetSecretName() string {
+	return db.Spec.SecretName
+}
 
-	return instance.IsMonitoringEnabled(), nil
+func (db *Database) ToClientObject() client.Object {
+	return db
 }
 
 // AccessSecretName returns string value to define name of the secret resource for accessing instance
@@ -146,4 +151,15 @@ func (db *Database) InstanceAccessSecretName() string {
 	return "dbin-" + db.Spec.Instance + "-access-secret"
 }
 
+func (extraGrant *ExtraGrant) IsExtraGrant(extraGrants []*ExtraGrant) bool {
+	for _, existingExtraGrant := range extraGrants {
+		if existingExtraGrant.User == extraGrant.User &&
+			existingExtraGrant.AccessType == extraGrant.AccessType {
+			return true
+		}
+	}
+	return false
+}
+
+// Function to mark the Database as a hub
 func (db *Database) Hub() {}

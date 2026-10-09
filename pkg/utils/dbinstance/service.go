@@ -17,20 +17,23 @@
 package dbinstance
 
 import (
-	"github.com/sirupsen/logrus"
+	"context"
+
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // Create instance if not exists
-func Create(ins DbInstance) (map[string]string, error) {
-	err := ins.exist()
+func Create(ctx context.Context, ins DbInstance) (map[string]string, error) {
+	log := log.FromContext(ctx)
+	err := ins.exist(ctx)
 	if err == nil {
 		return nil, ErrAlreadyExists
 	}
 
-	logrus.Debug("instance doesn't exist, create instance")
+	log.V(2).Info("instance doesn't exist, create instance")
 	err = ins.create()
 	if err != nil {
-		logrus.Debug("creation failed")
+		log.V(2).Info("creation failed")
 		return nil, err
 	}
 
@@ -43,8 +46,9 @@ func Create(ins DbInstance) (map[string]string, error) {
 }
 
 // Update instance if instance exists
-func Update(ins DbInstance) (map[string]string, error) {
-	err := ins.exist()
+func Update(ctx context.Context, ins DbInstance) (map[string]string, error) {
+	log := log.FromContext(ctx)
+	err := ins.exist(ctx)
 	if err != nil {
 		return nil, ErrNotExists
 	}
@@ -60,7 +64,7 @@ func Update(ins DbInstance) (map[string]string, error) {
 
 	err = ins.update()
 	if err != nil {
-		logrus.Debug("update failed")
+		log.V(2).Info("update failed")
 		return nil, err
 	}
 
