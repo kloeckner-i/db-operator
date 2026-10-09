@@ -1,0 +1,121 @@
+stages:
+  - lint
+  - test
+  - build
+  - publish
+
+variables:
+  PRODUCT_NAME: db-operator
+  GO_VERSION: "1.26.5"
+  GOLANGCI_LINT_VERSION: v2.12.2 ## https://github.com/golangci/golangci-lint/releases
+  MAIN_GO_PATH: ./cmd
+  GOPATH: $CI_PROJECT_DIR/.go
+  GOCACHE: $CI_PROJECT_DIR/.cache/go-build
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+.go-cache:
+  cache:
+    key:
+      files:
+        - go.sum
+    paths:
+      - .go/pkg/mod/
+      - .cache/go-build/
+
+lint:
+  stage: lint
+  image: golangci/golangci-lint:${GOLANGCI_LINT_VERSION}
+  extends: .go-cache
+  script:
+    - golangci-lint run --timeout 3m0s
+
+unit-test:
+  stage: test
+  image: golang:${GO_VERSION}
+  extends: .go-cache
+  needs: [lint]
+  services:
+    - name: postgres:16-alpine
+      alias: postgres
+    - name: mysql:8.0
+      alias: mysql
+  variables:
+    POSTGRES_PASSWORD: "test1234"
+    MYSQL_ROOT_PASSWORD: "test1234"
+    POSTGRES_HOST: postgres
+    POSTGRES_PORT: "5432"
+    MYSQL_HOST: mysql
+    MYSQL_PORT: "3306"
+  script:
+    - make setup-envtest
+    - go test -tags tests ./... -v -cover
+
+build:
+  stage: build
+  image: golang:${GO_VERSION}
+  extends: .go-cache
+  needs: [unit-test]
+  parallel:
+    matrix:
+      - GOARCH: [amd64, arm64]
+  variables:
+    GOOS: linux
+    CGO_ENABLED: "0"
+  script:
+    - mkdir -p dist/${GOARCH}
+    - go build -tags build -o dist/${GOARCH}/${PRODUCT_NAME} ${MAIN_GO_PATH}
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 day
+  rules:
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+publish-image:
+  stage: publish
+  image: docker:27
+  services:
+    - docker:27-dind
+  needs: [build]
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  before_script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - docker run --privileged --rm tonistiigi/binfmt --install arm64
+    - docker buildx create --use --name multiarch
+  script:
+    - |
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        IMAGE_TAG="$CI_COMMIT_TAG"
+      else
+        IMAGE_TAG="$CI_COMMIT_SHORT_SHA"
+      fi
+      for arch in amd64 arm64; do
+        cp dist/${arch}/${PRODUCT_NAME} ./${PRODUCT_NAME}
+        docker buildx build \
+          --platform linux/${arch} \
+          --file Dockerfile-ci \
+          --label "pipeline_url=${CI_PIPELINE_URL}" \
+          --label "sha=${CI_COMMIT_SHA}" \
+          --label "ref=${CI_COMMIT_REF_NAME}" \
+          --tag ${CI_REGISTRY_IMAGE}:${IMAGE_TAG}-${arch} \
+          --tag ${CI_REGISTRY_IMAGE}:latest-${arch} \
+          --push .
+      done
+      for tag in ${IMAGE_TAG} latest; do
+        docker buildx imagetools create \
+          --tag ${CI_REGISTRY_IMAGE}:${tag} \
+          ${CI_REGISTRY_IMAGE}:${tag}-amd64 \
+          ${CI_REGISTRY_IMAGE}:${tag}-arm64
+      done
+  rules:
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
